@@ -5,10 +5,10 @@ from dataloader import DataLoader
 from model import VaccinatedModel
 from prcc import get_prcc_values
 from r0 import SeirR0Generator
-from sampler_npi import SeirSampler
+from sampler_npi import VaccinatedSampler
 
 
-class SimulationSeir:
+class SimulationVaccinated:
     def __init__(self):
         # Load data
         self.data = DataLoader()
@@ -20,8 +20,6 @@ class SimulationSeir:
         # Define initial configs
         self._get_initial_config()
 
-        self.lhs_output = {}
-
     def run(self):
         # 1. Update params by susceptibility vector
         susceptibility = np.ones(self.no_ag)
@@ -31,14 +29,11 @@ class SimulationSeir:
             # 2. Update params by calculated BASELINE beta
             for base_r0 in self.r0_choices:
                 r0generator = SeirR0Generator(param=self.params)
-                sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator}
+                sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
+                             "daily_vaccines": 1000}
 
-                param_generator = SeirSampler(sim_state=sim_state, sim_obj=self)
+                param_generator = VaccinatedSampler(sim_state=sim_state, sim_obj=self)
                 param_generator.run()
-
-                self.lhs_output.update({f"{susc} {base_r0}": np.c_[param_generator.lhs_table,
-                                                                   param_generator.sim_output.T]}
-                                       )
                 self.generate_prcc_plots_seir(lhs_output=np.c_[param_generator.lhs_table,
                                                                param_generator.sim_output.T])
 
@@ -61,6 +56,11 @@ class SimulationSeir:
             'alpha',
             'gamma',
             'beta_0',
+            "daily_vaccines",
+            "t_start",
+            "T",
+            "rho",
+            "psi"
         ])
 
         prcc_val = np.round(get_prcc_values(lhs_output), 3)
