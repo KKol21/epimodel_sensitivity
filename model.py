@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from itertools import islice
 
 import numpy as np
 from scipy.integrate import odeint
@@ -66,10 +65,10 @@ class VaccinatedModel(EpidemicModelBase):
     def get_model(self, xs, ts, ps, cm):
         # the same order as in self.compartments!
         vac_state_val = dict()
-        ini = xs.reshape(-1, self.n_age)
+        val = xs.reshape(-1, self.n_age)
         for idx, comp in enumerate(self.compartments[4:], 4):
-            vac_state_val[comp] = ini[idx]
-        s, e, i, r = ini[:4]
+            vac_state_val[comp] = val[idx]
+        s, e, i, r = val[:4]
 
         transmission = ps["beta_0"] * np.array(i).dot(cm)
         actual_population = self.population
@@ -85,11 +84,11 @@ class VaccinatedModel(EpidemicModelBase):
         }
 
         vac_eq_dict = dict()
-        vac_eq_dict["v_0"] = ps["v"] * ps["rho"] * s / (s + r) * vacc
-        if self.n_vac_states > 1:
-            for idx, state in enumerate(self.compartments[5:], 1):
-                prev_state = vac_state_val[f"v_{idx-1}"]
-                vac_eq_dict[state] = (prev_state - vac_state_val[state]) * ps["psi"]
+        vac_eq_dict["v_0"] = ps["v"] * ps["rho"] * s / (s + r) * vacc \
+                             - vac_state_val["v_0"] * ps["psi"]                   # V_0'(t)
+        for idx, state in enumerate(self.compartments[5:], 1):
+            prev_state = vac_state_val[f"v_{idx-1}"]
+            vac_eq_dict[state] = (prev_state - vac_state_val[state]) * ps["psi"]  # V_i'(t)
 
         model_eq_dict.update(vac_eq_dict)
         return self.get_array_from_dict(comp_dict=model_eq_dict)

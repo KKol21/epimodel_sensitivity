@@ -1,14 +1,11 @@
-from simulation import SimulationSeir
-#from plotter import generate_stacked_plots, plot_contact_matrix_as_grouped_bars
+from simulation import SimulationVaccinated
 
 
 def main():
-    simulation = SimulationSeir()
+    simulation = SimulationVaccinated()
     simulation.run()
 
 
 if __name__ == '__main__':
 
     main()
-    # generate_stacked_plots()
-    # plot_contact_matrix_as_grouped_bars()
