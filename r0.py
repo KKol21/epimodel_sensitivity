@@ -53,7 +53,7 @@ class R0GeneratorBase(ABC):
         pass
 
 
-class SeirR0Generator(R0GeneratorBase):
+class R0Generator(R0GeneratorBase):
     def __init__(self, param: dict, n_age: int = 16):
         states = ["e", "i"]
         super().__init__(param=param, states=states, n_age=n_age)

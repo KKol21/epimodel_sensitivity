@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from dataloader import DataLoader
 from model import VaccinatedModel
 from prcc import get_prcc_values
-from r0 import SeirR0Generator
+from r0 import R0Generator
 from sampler_npi import VaccinatedSampler
 
 
@@ -21,21 +21,19 @@ class SimulationVaccinated:
         self._get_initial_config()
 
     def run(self):
-        # 1. Update params by susceptibility vector
         susceptibility = np.ones(self.no_ag)
         for susc in self.susc_choices:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})
-            # 2. Update params by calculated BASELINE beta
             for base_r0 in self.r0_choices:
-                r0generator = SeirR0Generator(param=self.params)
+                r0generator = R0Generator(param=self.params)
                 sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
                              "daily_vaccines": 1000}
 
                 param_generator = VaccinatedSampler(sim_state=sim_state, sim_obj=self)
                 param_generator.run()
-                self.generate_prcc_plots_seir(lhs_output=np.c_[param_generator.lhs_table,
-                                                               param_generator.sim_output.T])
+                self.generate_prcc_plot(lhs_output=np.c_[param_generator.lhs_table,
+                                                         param_generator.sim_output.T])
 
     def _get_initial_config(self):
         self.no_ag = self.data.contact_data["home"].shape[0]
@@ -48,10 +46,10 @@ class SimulationVaccinated:
                               self.data.contact_data["school"] + self.data.contact_data["other"]
         self.contact_home = self.data.contact_data["home"]
         self.upper_tri_indexes = np.triu_indices(self.no_ag)
-        # 0. Get base parameter dictionary
         self.params = self.data.model_parameters_data
 
-    def generate_prcc_plots_seir(self, lhs_output):
+    @staticmethod
+    def generate_prcc_plot(lhs_output):
         variables = np.array([
             'alpha',
             'gamma',
@@ -68,7 +66,7 @@ class SimulationVaccinated:
 
         prcc_val = prcc_val[sorted_idx]
 
-        plt.title("PRCC values of SEIR model parameters, R0 as the target variable", fontsize=15)
+        plt.title("PRCC values of vaccinated model parameters, target variable: R0", fontsize=15)
 
         ys = range(len(variables))[::-1]
         # Plot the bars one by one
