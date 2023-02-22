@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from itertools import islice
 
 import numpy as np
 from scipy.integrate import odeint
@@ -92,7 +93,7 @@ class RostModelHungary(EpidemicModelBase):
             "icr": (1 - ps["mu"]) * ps["gamma_c"] * ic - ps["gamma_cr"] * icr,  # Icr'(t)
 
             "r": 3 * ps["gamma_a"] * ia3 + (1 - ps["h"]) * 3 * ps["gamma_s"] * is3
-            + ps["gamma_h"] * ih + ps["gamma_cr"] * icr,  # R'(t)
+                 + ps["gamma_h"] * ih + ps["gamma_cr"] * icr,  # R'(t)
             "d": ps["mu"] * ps["gamma_c"] * ic,  # D'(t)
 
             "c": 2 * ps["alpha_l"] * l2  # C'(t)
@@ -112,33 +113,47 @@ class RostModelHungary(EpidemicModelBase):
 
 class VaccinatedModel(EpidemicModelBase):
     def __init__(self, model_data):
-        compartments = self.get_compartments(model_data.n_classes)
+        self.n_vac_states = model_data.model_parameters_data["n_vac_states"]
+        compartments = ["s", "e", "i", "r"] + self.get_vac_compartments(self.n_vac_states)
         super().__init__(model_data=model_data, compartments=compartments)
 
-    @abstractmethod
-    def get_compartments(n_classes):
-        vac = [f"v_{i}" for i in range(n_classes)]
-        return ["S", "E", "I", "R"] + vac
+    @staticmethod
+    def get_vac_compartments(n_classes):
+        return [f"v_{i}" for i in range(n_classes)]
 
     def update_initial_values(self, iv):
         iv.update({
             "s": self.population - (iv["e"] + iv["i"])
         })
 
-    def get_model(self, xs, _, ps, cm):
+    def get_model(self, xs, ts, ps, cm):
         # the same order as in self.compartments!
-        s, e, i, r = xs.reshape(-1, self.n_age)
+        vac_state_val = dict()
+        ini = xs.reshape(-1, self.n_age)
+        for idx, comp in enumerate(self.compartments[4:], 4):
+            vac_state_val[comp] = ini[idx]
+
+        s, e, i, r = ini[:4]
 
         transmission = ps["beta_0"] * np.array(i).dot(cm)
         actual_population = self.population
 
         vacc = np.array(ps["t_start"] < ts < (ps["t_start"] + ps["T"])).astype(float)
-        
+
         model_eq_dict = {
-            "s": -ps["susc"] * (s / actual_population) * transmission,                   # S'(t)
+            "s": - ps["susc"] * (s / actual_population) * transmission
+            - ps["v"] * ps["rho"] * s / (s + r) * vacc
+            + ps["psi"] * vac_state_val[self.compartments[-1]],  # S'(t)
             "e": ps["susc"] * (s / actual_population) * transmission - ps["alpha"] * e,  # E'(t)
-            "i": ps["alpha"] * e - ps["gamma"] * i,                                      # I'(t)
-            "r": ps["gamma"] * i                                                         # R'(t)
+            "i": ps["alpha"] * e - ps["gamma"] * i,  # I'(t)
+            "r": ps["gamma"] * i  # R'(t)
         }
 
+        vac_eq_dict = dict()
+        vac_eq_dict["v_0"] = ps["v"] * ps["rho"] * s / (s + r) * vacc
+        if self.n_vac_states > 1:
+            for idx, state in enumerate(self.compartments[5:], 1):
+                prev_state = vac_state_val[f"v_{idx-1}"]
+                vac_eq_dict[state] = (prev_state - vac_state_val[state]) * ps["psi"]
+        model_eq_dict.update(vac_eq_dict)
         return self.get_array_from_dict(comp_dict=model_eq_dict)

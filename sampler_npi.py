@@ -23,7 +23,7 @@ class SeirSampler(SamplerBase):
         self.get_beta_0_boundaries()
 
     def run(self):
-        n_samples = 10000
+        n_samples = 1000
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(n_samples)

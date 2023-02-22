@@ -1,4 +1,45 @@
 {
+    "n_vac_states": {
+        "value": 5,
+        "description": "Number of vaccinated compartments"
+    },
+    "rho": {
+        "value": 0.9746794344808963,
+        "description": "Sqrt of efficacy of the vaccine"
+    },
+    "psi": {
+        "value": 0.6,
+        "description": "Ratio of transition between vaccinated states"
+    },
+    "t_start": {
+        "value": 0.0,
+        "description": "Start of vaccination campaign"
+    },
+    "T": {
+        "value": 60.0,
+        "description": "Duration of the vaccination campaign"
+    },
+    "v": {
+        "value": [
+            625,
+            625,
+            625,
+            625,
+            625,
+            625,
+            625,
+            625,
+            625,
+            625,
+            625,
+            625,
+            625,
+            625,
+            625,
+            625
+        ],
+        "description": "Number of vaccines given to a specific age group"
+    },
     "p": {
         "value": [
             0.95,

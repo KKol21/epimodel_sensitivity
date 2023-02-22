@@ -1,5 +1,5 @@
-from simulation_seir import SimulationSeir
-from plotter import generate_stacked_plots, plot_contact_matrix_as_grouped_bars
+from simulation import SimulationSeir
+#from plotter import generate_stacked_plots, plot_contact_matrix_as_grouped_bars
 
 
 def main():
