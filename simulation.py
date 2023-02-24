@@ -5,7 +5,7 @@ from dataloader import DataLoader
 from model import VaccinatedModel
 from prcc import get_prcc_values
 from r0 import R0Generator
-from sampler_npi import VaccinatedSampler
+from sampler_vaccinated import SamplerVaccinated
 
 
 class SimulationVaccinated:
@@ -30,9 +30,10 @@ class SimulationVaccinated:
                 sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
                              "daily_vaccines": 1000}
 
-                param_generator = VaccinatedSampler(sim_state=sim_state, sim_obj=self)
+                param_generator = SamplerVaccinated(sim_state=sim_state, sim_obj=self)
                 param_generator.run()
-                self.generate_prcc_plot(lhs_output=np.c_[param_generator.lhs_table,
+                self.generate_prcc_plot(params=param_generator.parameters,
+                                        lhs_output=np.c_[param_generator.lhs_table,
                                                          param_generator.sim_output.T])
 
     def _get_initial_config(self):
@@ -49,26 +50,15 @@ class SimulationVaccinated:
         self.params = self.data.model_parameters_data
 
     @staticmethod
-    def generate_prcc_plot(lhs_output):
-        variables = np.array([
-            'alpha',
-            'gamma',
-            'beta_0',
-            "daily_vaccines",
-            "t_start",
-            "T",
-            "rho",
-            "psi"
-        ])
-
+    def generate_prcc_plot(params, lhs_output):
         prcc_val = np.round(get_prcc_values(lhs_output), 3)
-        sorted_idx = (np.abs(prcc_val)).argsort()[::-1]
+        sorted_idx = np.abs(prcc_val).argsort()[::-1]
 
         prcc_val = prcc_val[sorted_idx]
 
         plt.title("PRCC values of vaccinated model parameters, target variable: R0", fontsize=15)
 
-        ys = range(len(variables))[::-1]
+        ys = range(len(params))[::-1]
         # Plot the bars one by one
         for y, value in zip(ys, prcc_val):
             plt.broken_barh(
@@ -94,12 +84,12 @@ class SimulationVaccinated:
         axes.spines['bottom'].set_visible(False)
         axes.xaxis.set_ticks_position('top')
 
-        # Make the y-axis display the variables
-        plt.yticks(ys, variables[sorted_idx])
+        # Make the y-axis display the params
+        plt.yticks(ys, params[sorted_idx])
 
         # Set the portion of the x- and y-axes to show
         plt.xlim(-1.1, 1.1)
-        plt.ylim(-1, len(variables))
+        plt.ylim(-1, len(params))
 
         # plt.text()
         plt.show()

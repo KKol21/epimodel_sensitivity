@@ -7,16 +7,17 @@ from tqdm import tqdm
 from sampler_base import SamplerBase
 
 
-class VaccinatedSampler(SamplerBase):
+class SamplerVaccinated(SamplerBase):
     def __init__(self, sim_state: dict, sim_obj):
         super().__init__(sim_state, sim_obj)
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
-        self.lhs_boundaries = {"lower": [0.1, 0.1, None, 0, 0, 0, 0, 0],     # alpha, gamma,  beta_0, daily vaccines,
-                               "upper": [1, 1, None, 1000, 100, 120, 1, 1],  # t_start, T, rho, psi
+        self.lhs_boundaries = {"lower": [0.1, 0.1, None, 0, 0, 0, 0],   # alpha, gamma,  beta_0, daily vaccines,
+                               "upper": [1, 1, None, 1000, 100, 1, 1],  # t_start, rho, psi
                                }
         self.lhs_table = None
         self.sim_output = None
+        self.parameters = np.array(["alpha", "gamma", "beta_0", "daily_vaccines", "t_start", "rho", "psi"])
 
         self.get_beta_0_boundaries()
 
@@ -42,8 +43,7 @@ class VaccinatedSampler(SamplerBase):
         self.sim_output = sim_output
 
     def get_output(self, params: np.ndarray):
-        param_names = ["alpha", "gamma", "beta_0", "daily_vaccines", "t_start", "T", "rho", "psi"]
-        params_dict = {key: value for (key, value) in zip(param_names, params)}
+        params_dict = {key: value for (key, value) in zip(self.parameters, params)}
         self.r0generator.parameters.update(params_dict)
         r0_lhs = params[2] * self.r0generator.get_eig_val(contact_mtx=self.sim_obj.contact_matrix,
                                                           susceptibles=self.sim_obj.susceptibles.reshape(1, -1),

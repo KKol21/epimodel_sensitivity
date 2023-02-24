@@ -40,8 +40,7 @@ class SamplerBase(ABC):
 
         # Save LHS output
         os.makedirs("./sens_data/" + folder_name, exist_ok=True)
-        filename = "./sens_data/" + folder_name + "/" + folder_name + "_Hungary_" + \
-                   "_".join(self._get_variable_parameters())
+        filename = f"./sens_data/{folder_name}/{folder_name}_{self._get_variable_parameters}"
         np.savetxt(fname=filename + ".csv", X=np.asarray(output), delimiter=";")
 
 
