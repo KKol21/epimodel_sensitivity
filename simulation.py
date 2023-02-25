@@ -16,7 +16,8 @@ class SimulationVaccinated:
 
         # User-defined parameters
         self.susc_choices = [0.5, 1.0]
-        self.r0_choices = [1.1, 1.35, 1.6, 2.5]
+        self.r0_choices = [1.1, 2.5]
+        self.target_var_choices = ["infected_max"] #icu_max, death_max
 
         # Define initial configs
         self._get_initial_config()
@@ -30,7 +31,8 @@ class SimulationVaccinated:
             self.params.update({"susc": susceptibility})
             for base_r0 in self.r0_choices:
                 r0generator = R0Generator(param=self.params)
-                sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator}
+                sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
+                             "target_var": "infected_max"}
                 param_generator = SamplerVaccinated(sim_state=sim_state, sim_obj=self)
                 sim_state.update({"params": param_generator.parameters})
 

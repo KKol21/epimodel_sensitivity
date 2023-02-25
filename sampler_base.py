@@ -8,6 +8,7 @@ from smt.sampling_methods import LHS
 class SamplerBase(ABC):
     def __init__(self, sim_state: dict, sim_obj):
         self.sim_obj = sim_obj
+        self.sim_state = sim_state
         self.base_r0 = sim_state["base_r0"]
         self.beta = sim_state["beta"] if "beta" in sim_state.keys() else None
         self.type = sim_state["type"] if "type" in sim_state.keys() else None

@@ -29,9 +29,16 @@ class SamplerVaccinated(SamplerBase):
         print("Simulation for", n_samples,
               "samples (", "-".join(self._get_variable_parameters()), ")")
 
-        results = list(tqdm(map(self.get_output, lhs_table), total=lhs_table.shape[0]))
-        results = np.array(results)
+        target_var = self.sim_state["target_var"]
+        if target_var == "r0":
+            get_output = self.get_r0
+        elif target_var == "infected_max":
+            get_output = self.get_infected_max
+        else:
+            get_output = lambda x: np.sum(x)
 
+        results = list(tqdm(map(get_output, lhs_table), total=lhs_table.shape[0]))
+        results = np.array(results)
         # Sort tables by R0 values
         sorted_idx = results.argsort()
         results = results[sorted_idx]
@@ -42,13 +49,22 @@ class SamplerVaccinated(SamplerBase):
         self._save_output(output=lhs_table, folder_name='lhs')
         self._save_output(output=sim_output, folder_name='simulations')
 
-    def get_output(self, params: np.ndarray):
+    def get_r0(self, params):
         params_dict = {key: value for (key, value) in zip(self.parameters, params)}
-        self.r0generator.parameters.update(params_dict)
+        self.r0generator.parameters.update(params)
         r0_lhs = params[2] * self.r0generator.get_eig_val(contact_mtx=self.sim_obj.contact_matrix,
                                                           susceptibles=self.sim_obj.susceptibles.reshape(1, -1),
                                                           population=self.sim_obj.population)[0]
         return r0_lhs
+
+    def get_infected_max(self, params):
+        params_dict = {key: value for (key, value) in zip(self.parameters, params)}
+        t = np.linspace(1, 1000)
+        params = self.sim_obj.params.copy()
+        inf = self.sim_obj.model.get_solution(t=t, parameters=params.update(params_dict),
+                                              cm=self.sim_obj.contact_matrix)
+        print(inf)
+        return RecursionError
 
     def _get_variable_parameters(self):
         return f'{self.susc}_{self.base_r0}'
