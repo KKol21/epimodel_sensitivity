@@ -39,8 +39,8 @@ class SamplerVaccinated(SamplerBase):
         sim_output = np.array(results)
         sleep(0.3)
 
-        self.lhs_table = lhs_table
-        self.sim_output = sim_output
+        self._save_output(output=lhs_table, folder_name='lhs')
+        self._save_output(output=sim_output, folder_name='simulations')
 
     def get_output(self, params: np.ndarray):
         params_dict = {key: value for (key, value) in zip(self.parameters, params)}
@@ -51,7 +51,7 @@ class SamplerVaccinated(SamplerBase):
         return r0_lhs
 
     def _get_variable_parameters(self):
-        return [str(self.susc), str(self.base_r0)]
+        return f'{self.susc}_{self.base_r0}'
 
     def get_beta_0_boundaries(self):
         for bound in ["lower", "upper"]:
