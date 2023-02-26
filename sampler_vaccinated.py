@@ -17,7 +17,7 @@ class SamplerVaccinated(SamplerBase):
                                }
         self.lhs_table = None
         self.sim_output = None
-        self.parameters = np.array(["alpha", "gamma", "beta_0", "daily_vaccines", "t_start", "rho", "psi"])
+        self.param_names = np.array(["alpha", "gamma", "beta_0", "daily_vaccines", "t_start", "rho", "psi"])
 
         self.get_beta_0_boundaries()
 
@@ -50,21 +50,21 @@ class SamplerVaccinated(SamplerBase):
         self._save_output(output=sim_output, folder_name='simulations')
 
     def get_r0(self, params):
-        params_dict = {key: value for (key, value) in zip(self.parameters, params)}
-        self.r0generator.parameters.update(params)
+        params_dict = {key: value for (key, value) in zip(self.param_names, params)}
+        self.r0generator.parameters.update(params_dict)
         r0_lhs = params[2] * self.r0generator.get_eig_val(contact_mtx=self.sim_obj.contact_matrix,
                                                           susceptibles=self.sim_obj.susceptibles.reshape(1, -1),
                                                           population=self.sim_obj.population)[0]
         return r0_lhs
 
     def get_infected_max(self, params):
-        params_dict = {key: value for (key, value) in zip(self.parameters, params)}
-        t = np.linspace(1, 1000)
-        params = self.sim_obj.params.copy()
-        inf = self.sim_obj.model.get_solution(t=t, parameters=params.update(params_dict),
-                                              cm=self.sim_obj.contact_matrix)
-        print(inf)
-        return RecursionError
+        params_dict = {key: value for (key, value) in zip(self.param_names, params)}
+        t = np.linspace(1, 1000, 1000)
+        params = self.sim_obj.params
+        params.update(params_dict)
+        sol = self.sim_obj.model.get_solution(t=t, parameters=params, cm=self.sim_obj.contact_matrix)
+        inf_max = np.max(sol[:, 2])
+        return inf_max
 
     def _get_variable_parameters(self):
         return f'{self.susc}_{self.base_r0}'

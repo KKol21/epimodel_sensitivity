@@ -1,7 +1,6 @@
 from model_base import EpidemicModelBase
 
 import numpy as np
-from scipy.integrate import odeint
 
 
 class VaccinatedModel(EpidemicModelBase):
@@ -35,6 +34,7 @@ class VaccinatedModel(EpidemicModelBase):
         transmission = ps["beta_0"] * np.array(i).dot(cm)
         actual_population = self.population
         vacc = self.get_vacc_bool(ts, ps)
+
 
         model_eq_dict = {
             "s": - ps["susc"] * (s / actual_population) * transmission

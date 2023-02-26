@@ -35,7 +35,7 @@ def generate_prcc_plot(sim_state: dict):
     prcc_val = prcc_val[sorted_idx]
     params = sim_state["params"]
 
-    plt.title("PRCC values of vaccinated model parameters, target variable: R0", fontsize=15)
+    plt.title("PRCC values of vaccinated model param_names, target variable: R0", fontsize=15)
 
     ys = range(len(params))[::-1]
     # Plot the bars one by one

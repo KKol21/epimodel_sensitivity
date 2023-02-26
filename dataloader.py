@@ -26,7 +26,7 @@ class DataLoader:
         self.age_data = datalist
 
     def _get_model_parameters_data(self):
-        # Load model parameters
+        # Load model param_names
         with open(self._model_parameters_data_file) as f:
             parameters = json.load(f)
         self.model_parameters_data = dict()

@@ -13,6 +13,7 @@ class EpidemicModelBase(ABC):
 
     def initialize(self):
         iv = {key: np.zeros(self.n_age) for key in self.compartments}
+        iv.update({"i": np.ones(self.n_age)})
         return iv
 
     def aggregate_by_age(self, solution, idx):
