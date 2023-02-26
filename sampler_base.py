@@ -16,7 +16,7 @@ class SamplerBase(ABC):
         self.lhs_boundaries = None
 
     @abstractmethod
-    def run(self):
+    def run_sampling(self):
         pass
 
     @abstractmethod

@@ -21,8 +21,8 @@ class SamplerVaccinated(SamplerBase):
 
         self.get_beta_0_boundaries()
 
-    def run(self):
-        n_samples = 1000
+    def run_sampling(self):
+        n_samples = 10000
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(n_samples)
@@ -34,8 +34,6 @@ class SamplerVaccinated(SamplerBase):
             get_output = self.get_r0
         elif target_var == "infected_max":
             get_output = self.get_infected_max
-        else:
-            get_output = lambda x: np.sum(x)
 
         results = list(tqdm(map(get_output, lhs_table), total=lhs_table.shape[0]))
         results = np.array(results)
@@ -59,9 +57,9 @@ class SamplerVaccinated(SamplerBase):
 
     def get_infected_max(self, params):
         params_dict = {key: value for (key, value) in zip(self.param_names, params)}
-        t = np.linspace(1, 1000, 1000)
         params = self.sim_obj.params
         params.update(params_dict)
+        t = np.linspace(1, 1000, 1000)
         sol = self.sim_obj.model.get_solution(t=t, parameters=params, cm=self.sim_obj.contact_matrix)
         inf_max = np.max(sol[:, 2])
         return inf_max

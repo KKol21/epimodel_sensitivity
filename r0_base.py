@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import List
 
 import numpy as np
-from scipy.linalg import block_diag
 
 
 class R0GeneratorBase(ABC):
