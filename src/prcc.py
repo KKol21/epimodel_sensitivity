@@ -25,17 +25,17 @@ def get_prcc_values(lhs_output_table):
     return prcc_vector
 
 
-def generate_prcc_plot(sim_state: dict, prcc_input: np.ndarray, filename: str):
-    prcc_val = np.round(get_prcc_values(prcc_input), 3)
-    sorted_idx = np.abs(prcc_val).argsort()[::-1]
-    prcc_val = prcc_val[sorted_idx]
+def generate_prcc_plot(sim_state: dict, prcc: np.ndarray, filename: str):
+    prcc = np.round(prcc, 3)
+    sorted_idx = np.abs(prcc).argsort()[::-1]
+    prcc = prcc[sorted_idx]
     params = sim_state["params"]
 
     plt.title("PRCC values of vaccinated model param_names, target variable: R0", fontsize=15)
 
     ys = range(len(params))[::-1]
     # Plot the bars one by one
-    for y, value in zip(ys, prcc_val):
+    for y, value in zip(ys, prcc):
         plt.broken_barh(
             [(value if value < 0 else 0, abs(value))],
             (y - 0.4, 0.8),

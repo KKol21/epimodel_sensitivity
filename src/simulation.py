@@ -4,7 +4,7 @@ import numpy as np
 
 from dataloader import DataLoader
 from model import VaccinatedModel
-from prcc import generate_prcc_plot
+from prcc import generate_prcc_plot, get_prcc_values
 from r0 import R0Generator
 from sampler_vaccinated import SamplerVaccinated
 
@@ -21,10 +21,8 @@ class SimulationVaccinated:
         # Define initial configs
         self._get_initial_config()
 
-    def run(self):
+    def run_sampling(self):
         susceptibility = np.ones(self.no_ag)
-        is_lhs_generated = False
-        is_prcc_plot_generated = False
         for susc in self.susc_choices:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})
@@ -34,18 +32,27 @@ class SimulationVaccinated:
                              "target_var": "r0"}
                 param_generator = SamplerVaccinated(sim_state=sim_state, sim_obj=self)
                 sim_state.update({"params": param_generator.param_names})
+                param_generator.run_sampling()
 
-                if not is_lhs_generated:
-                    param_generator.run_sampling()
+    def run_prcc(self):
+        susceptibility = np.ones(self.no_ag)
+        for susc in self.susc_choices:
+            susceptibility[:4] = susc
+            self.params.update({"susc": susceptibility})
+            for base_r0 in self.r0_choices:
+                r0generator = R0Generator(param=self.params)
+                sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
+                             "target_var": "r0"}
+                param_generator = SamplerVaccinated(sim_state=sim_state, sim_obj=self)
+                sim_state.update({"params": param_generator.param_names})
                 filename = f'{sim_state["susc"]}_{sim_state["base_r0"]}'
                 lhs_table = np.loadtxt(f'./sens_data/lhs/lhs_{filename}.csv', delimiter=';')
                 sim_output = np.loadtxt(f'./sens_data/simulations/simulations_{filename}.csv', delimiter=';')
-
-                if not is_prcc_plot_generated:
-                    os.makedirs('../sens_data/plots', exist_ok=True)
-                    generate_prcc_plot(sim_state=sim_state,
-                                       prcc_input=np.c_[lhs_table, sim_output.T],
-                                       filename=filename)
+                prcc = get_prcc_values(np.c_[lhs_table, sim_output.T])
+                os.makedirs('../sens_data/plots', exist_ok=True)
+                generate_prcc_plot(sim_state=sim_state,
+                                   prcc=prcc,
+                                   filename=filename)
 
     def _get_initial_config(self):
         self.no_ag = self.data.contact_data["home"].shape[0]
