@@ -25,12 +25,8 @@ def get_prcc_values(lhs_output_table):
     return prcc_vector
 
 
-def generate_prcc_plot(sim_state: dict):
-    filename = f'{sim_state["susc"]}_{sim_state["base_r0"]}'
-    lhs_table = np.loadtxt(f'./sens_data/lhs/lhs_{filename}.csv', delimiter=';')
-    sim_output = np.loadtxt(f'./sens_data/simulations/simulations_{filename}.csv', delimiter=';')
-
-    prcc_val = np.round(get_prcc_values(np.c_[lhs_table, sim_output.T]), 3)
+def generate_prcc_plot(sim_state: dict, prcc_input: np.ndarray, filename: str):
+    prcc_val = np.round(get_prcc_values(prcc_input), 3)
     sorted_idx = np.abs(prcc_val).argsort()[::-1]
     prcc_val = prcc_val[sorted_idx]
     params = sim_state["params"]

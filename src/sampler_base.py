@@ -37,7 +37,7 @@ class SamplerBase(ABC):
 
     def _save_output(self, output, folder_name):
         # Create directories for saving calculation outputs
-        os.makedirs("./sens_data", exist_ok=True)
+        os.makedirs("../sens_data", exist_ok=True)
 
         # Save LHS output
         os.makedirs("./sens_data/" + folder_name, exist_ok=True)

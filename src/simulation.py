@@ -37,10 +37,15 @@ class SimulationVaccinated:
 
                 if not is_lhs_generated:
                     param_generator.run_sampling()
+                filename = f'{sim_state["susc"]}_{sim_state["base_r0"]}'
+                lhs_table = np.loadtxt(f'./sens_data/lhs/lhs_{filename}.csv', delimiter=';')
+                sim_output = np.loadtxt(f'./sens_data/simulations/simulations_{filename}.csv', delimiter=';')
 
                 if not is_prcc_plot_generated:
-                    os.makedirs('./sens_data/plots', exist_ok=True)
-                    generate_prcc_plot(sim_state=sim_state)
+                    os.makedirs('../sens_data/plots', exist_ok=True)
+                    generate_prcc_plot(sim_state=sim_state,
+                                       prcc_input=np.c_[lhs_table, sim_output.T],
+                                       filename=filename)
 
     def _get_initial_config(self):
         self.no_ag = self.data.contact_data["home"].shape[0]
