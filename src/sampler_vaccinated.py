@@ -17,7 +17,7 @@ class SamplerVaccinated(SamplerBase):
                                }
         self.lhs_table = None
         self.sim_output = None
-        self.param_names = np.array(["alpha", "gamma", "beta_0", "daily_vaccines", "t_start", "rho", "psi"])
+        self.param_names = self.sim_obj.data.param_names
 
         self.get_beta_0_boundaries()
 
