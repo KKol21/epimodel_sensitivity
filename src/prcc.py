@@ -68,4 +68,4 @@ def generate_prcc_plot(sim_state: dict, prcc: np.ndarray, filename: str):
 
     # plt.text()
     plt.show()
-    plt.savefig(f'./sens_data/plots/prcc_tornado_{filename}.pdf', format="pdf", bbox_inches='tight')
+    plt.savefig(f'./sens_data/plots/prcc_tornado_plot_{filename}.pdf', format="pdf", bbox_inches='tight')

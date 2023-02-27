@@ -31,18 +31,28 @@ class SimulationVaccinated:
                 sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
                              "target_var": "r0"}
                 param_generator = SamplerVaccinated(sim_state=sim_state, sim_obj=self)
-                sim_state.update({"params": param_generator.param_names})
+                sim_state.update({"params": self.data.param_names})
                 param_generator.run_sampling()
 
-    def run_prcc(self):
+    def calculate_prcc(self):
         for susc in self.susc_choices:
             for base_r0 in self.r0_choices:
-                sim_state = {"base_r0": base_r0, "susc": susc, "target_var": "r0"}
-                sim_state.update({"params": self.data.param_names})
+                sim_state = {"base_r0": base_r0, "susc": susc}
                 filename = f'{sim_state["susc"]}_{sim_state["base_r0"]}'
                 lhs_table = np.loadtxt(f'./sens_data/lhs/lhs_{filename}.csv', delimiter=';')
                 sim_output = np.loadtxt(f'./sens_data/simulations/simulations_{filename}.csv', delimiter=';')
+
                 prcc = get_prcc_values(np.c_[lhs_table, sim_output.T])
+                os.makedirs('./sens_data/prcc', exist_ok=True)
+                np.savetxt(fname=f'./sens_data/prcc/prcc_{filename}.csv', X=prcc)
+
+    def plot_prcc(self):
+        for susc in self.susc_choices:
+            for base_r0 in self.r0_choices:
+                sim_state = {"base_r0": base_r0, "susc": susc}
+                sim_state.update({"params": self.data.param_names})
+                filename = f'{sim_state["susc"]}_{sim_state["base_r0"]}'
+                prcc = np.loadtxt(fname=f'./sens_data/prcc/prcc_{filename}.csv')
                 os.makedirs('../sens_data/plots', exist_ok=True)
                 generate_prcc_plot(sim_state=sim_state,
                                    prcc=prcc,
