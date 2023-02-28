@@ -6,7 +6,8 @@ import numpy as np
 class VaccinatedModel(EpidemicModelBase):
     def __init__(self, model_data):
         self.n_vac_states = model_data.model_parameters_data["n_vac_states"]
-        compartments = ["s", "e", "i", "r"] + self.get_vac_compartments(self.n_vac_states)
+        self.base_comps = ["s", "e", "i", "r"]
+        compartments = self.base_comps + self.get_vac_compartments(self.n_vac_states)
         super().__init__(model_data=model_data, compartments=compartments)
 
     @staticmethod
@@ -27,9 +28,9 @@ class VaccinatedModel(EpidemicModelBase):
         vac_state_val = dict()
         vac_comp = self.get_vac_compartments(self.n_vac_states)
         val = xs.reshape(-1, self.n_age)
-        for idx, comp in enumerate(vac_comp, 4):
+        for idx, comp in enumerate(vac_comp, len(self.base_comps)):
             vac_state_val[comp] = val[idx]
-        s, e, i, r = val[:4]
+        s, e, i, r = val[:len(self.base_comps)]
 
         transmission = ps["beta_0"] * np.array(i).dot(cm)
         actual_population = self.population
