@@ -38,8 +38,7 @@ class SimulationVaccinated:
         os.makedirs('./sens_data/prcc', exist_ok=True)
         for susc in self.susc_choices:
             for base_r0 in self.r0_choices:
-                sim_state = {"base_r0": base_r0, "susc": susc}
-                filename = f'{sim_state["susc"]}_{sim_state["base_r0"]}'
+                filename = f'{susc}_{base_r0}'
                 lhs_table = np.loadtxt(f'./sens_data/lhs/lhs_{filename}.csv', delimiter=';')
                 sim_output = np.loadtxt(f'./sens_data/simulations/simulations_{filename}.csv', delimiter=';')
 
@@ -50,12 +49,10 @@ class SimulationVaccinated:
         os.makedirs('../sens_data/plots', exist_ok=True)
         for susc in self.susc_choices:
             for base_r0 in self.r0_choices:
-                sim_state = {"base_r0": base_r0, "susc": susc}
-                sim_state.update({"params": self.data.param_names})
-                filename = f'{sim_state["susc"]}_{sim_state["base_r0"]}'
+                filename = f'{susc}_{base_r0}'
                 prcc = np.loadtxt(fname=f'./sens_data/prcc/prcc_{filename}.csv')
 
-                generate_prcc_plot(sim_state=sim_state,
+                generate_prcc_plot(params=self.data.param_names,
                                    prcc=prcc,
                                    filename=filename)
 

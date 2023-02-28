@@ -25,11 +25,10 @@ def get_prcc_values(lhs_output_table):
     return prcc_vector
 
 
-def generate_prcc_plot(sim_state: dict, prcc: np.ndarray, filename: str):
+def generate_prcc_plot(params, prcc: np.ndarray, filename: str):
     prcc = np.round(prcc, 3)
     sorted_idx = np.abs(prcc).argsort()[::-1]
     prcc = prcc[sorted_idx]
-    params = sim_state["params"]
 
     plt.title("PRCC values of vaccinated model param_names, target variable: R0", fontsize=15)
 
