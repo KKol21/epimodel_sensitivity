@@ -35,7 +35,6 @@ class VaccinatedModel(EpidemicModelBase):
         actual_population = self.population
         vacc = self.get_vacc_bool(ts, ps)
 
-
         model_eq_dict = {
             "s": - ps["susc"] * (s / actual_population) * transmission
             - ps["v"] * ps["rho"] * s / (s + r) * vacc
@@ -47,7 +46,7 @@ class VaccinatedModel(EpidemicModelBase):
 
         vac_eq_dict = dict()
         vac_eq_dict["v_0"] = ps["v"] * ps["rho"] * s / (s + r) * vacc \
-                            - vac_state_val["v_0"] * ps["psi"]                   # V_0'(t)
+            - vac_state_val["v_0"] * ps["psi"]                   # V_0'(t)
 
         for idx, state in enumerate(vac_comp[0:], 1):
             prev_state = vac_state_val[f"v_{idx-1}"]

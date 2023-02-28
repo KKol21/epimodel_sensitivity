@@ -51,4 +51,3 @@ class R0GeneratorBase(ABC):
     @abstractmethod
     def _get_f(self, contact_matrix: np.ndarray):
         pass
-

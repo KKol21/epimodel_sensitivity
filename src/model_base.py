@@ -46,4 +46,3 @@ class EpidemicModelBase(ABC):
     @abstractmethod
     def get_model(self, xs, ts, ps, cm):
         pass
-
