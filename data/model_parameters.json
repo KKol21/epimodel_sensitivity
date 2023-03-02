@@ -1,7 +1,19 @@
 {
-    "n_vac_states": {
-        "value": 5,
+    "n_v_states": {
+        "value": 3,
         "description": "Number of vaccinated compartments"
+    },
+    "n_e_states": {
+        "value": 3,
+        "description": "Number of exposed compartments"
+    },
+    "n_i_states": {
+        "value": 3,
+        "description": "Number of infected states"
+    },
+    "n_ic_states": {
+        "value": 3,
+        "description": "Number of intensive care states"
     },
     "rho": {
         "value": 0.9746794344808963,
@@ -39,5 +51,76 @@
             625
         ],
         "description": "Number of vaccines given to a specific age group"
+    },
+    "mu": {
+        "value": [
+            0.2,
+            0.2,
+            0.2,
+            0.216,
+            0.216,
+            0.216,
+            0.3,
+            0.3,
+            0.3,
+            0.3,
+            0.3,
+            0.3,
+            0.582,
+            0.582,
+            0.678,
+            0.687
+        ],
+        "description": "Probability of fatal outcome"
+    },
+    "h": {
+        "value": [
+            0.0003,
+            0.0003,
+            0.0003,
+            0.0003,
+            0.0039,
+            0.0039,
+            0.0145,
+            0.0145,
+            0.0255,
+            0.0255,
+            0.0495,
+            0.0495,
+            0.0775,
+            0.0775,
+            0.1788,
+            0.3297
+        ],
+        "description": "Probability of hospitalization (or intensive care)"
+    },
+    "xi": {
+        "value": [
+            0.333333,
+            0.333333,
+            0.333333,
+            0.333333,
+            0.282051,
+            0.282051,
+            0.296552,
+            0.296552,
+            0.294118,
+            0.294118,
+            0.292929,
+            0.292929,
+            0.292903,
+            0.292903,
+            0.293624,
+            0.2936
+        ],
+        "description": "Probability of intensive care (given hospitalization)"
+    },
+    "gamma_c": {
+        "value": 0.1,
+        "description": "Reciprocal of time on intensive care until transition to D/Icr"
+    },
+    "gamma_cr": {
+        "value": 0.07142857142857142,
+        "description": "Reciprocal of recovery time from Icr"
     }
 }
