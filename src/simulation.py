@@ -29,7 +29,7 @@ class SimulationVaccinated:
             r0generator = R0Generator(param=self.params)
             for base_r0 in self.r0_choices:
                 sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
-                             "target_var": "r0"}
+                             "target_var": "r0"}  # r0, infected_max
                 param_generator = SamplerVaccinated(sim_state=sim_state, sim_obj=self)
                 sim_state.update({"params": self.data.param_names})
                 param_generator.run_sampling()
@@ -57,14 +57,15 @@ class SimulationVaccinated:
                                    filename=filename)
 
     def _get_initial_config(self):
+        self.params = self.data.model_parameters_data
         self.no_ag = self.data.contact_data["home"].shape[0]
         self.model = VaccinatedModel(model_data=self.data)
         self.population = self.model.population
         self.age_vector = self.population.reshape((-1, 1))
-        self.susceptibles = self.model.get_initial_values()[self.model.c_idx["s"] *
+        self.susceptibles = self.model.get_initial_values(parameters=self.params)[self.model.c_idx["s"] *
                                                             self.no_ag:(self.model.c_idx["s"] + 1) * self.no_ag]
         self.contact_matrix = self.data.contact_data["home"] + self.data.contact_data["work"] + \
             self.data.contact_data["school"] + self.data.contact_data["other"]
         self.contact_home = self.data.contact_data["home"]
         self.upper_tri_indexes = np.triu_indices(self.no_ag)
-        self.params = self.data.model_parameters_data
+

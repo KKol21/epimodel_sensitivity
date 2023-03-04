@@ -4,8 +4,10 @@ import numpy as np
 
 
 def get_transition_state_eq(states, val, param):
+    if len(states) < 2:
+        return None
     eq = dict()
-    for idx, state in enumerate(states[0:], 1):
+    for idx, state in enumerate(states[1:], 1):
         prev_state = val[idx - 1]
         eq[state] = param * (prev_state - val[idx])
     return eq
@@ -13,8 +15,8 @@ def get_transition_state_eq(states, val, param):
 
 def get_n_state_val(ps, val):
     n_state_val = dict()
-    slice_start = 0
-    slice_end = 0
+    slice_start = 1
+    slice_end = 1
     for comp in ["e", "i", "ic", "v"]:
         n_states = ps[f'n_{comp}_states']
         slice_end += n_states
@@ -43,9 +45,13 @@ class VaccinatedModel(EpidemicModelBase):
     def get_vacc_bool(ts, ps):
         return np.array(ps["t_start"] < ts < (ps["t_start"] + ps["T"])).astype(float)
 
-    def update_initial_values(self, iv):
+    def update_initial_values(self, iv, parameters):
+        e_states = self.get_n_states(n_classes=parameters["n_e_states"], comp_name="e")
+        i_states = self.get_n_states(n_classes=parameters["n_i_states"], comp_name="i")
+        e = np.sum([iv[state] for state in e_states])
+        i = np.sum([iv[state] for state in i_states])
         iv.update({
-            "s": self.population - (iv["e"] + iv["i"])
+            "s": self.population - (e + i)
         })
 
     def get_model(self, xs, ts, ps, cm):
@@ -55,23 +61,26 @@ class VaccinatedModel(EpidemicModelBase):
         s = val[0]
         r, d = val[-2:]
 
-        i = np.sum(n_state_val["i"])
+        i = np.sum([i_state for i_state in n_state_val["i"]], axis=0)
         transmission = ps["beta_0"] * np.array(i).dot(cm)
         actual_population = self.population
         vacc = self.get_vacc_bool(ts, ps)
+
         model_eq_dict = {
             "s": - ps["susc"] * (s / actual_population) * transmission
                  - ps["v"] * ps["rho"] * s / (s + r) * vacc
                  + ps["psi"] * n_state_val["v"][-1],                       # S'(t)
-            "r": (1 - ps["h"]) * ps["gamma"] * n_state_val["i"][-1]
-                 + (1 - ps["mu"]) * n_state_val["ic"][-1],                 # R'(t)
+            "r": (1 - ps["h"] * ps["xi"]) * ps["gamma"] * n_state_val["i"][-1]
+               + (1 - ps["mu"]) * n_state_val["ic"][-1],                   # R'(t)
             "d": ps["mu"] * n_state_val["ic"][-1]                          # D'(t)
         }
-        e_eq = self.get_e_eq(val=n_state_val["e"], ps=ps, s=s, transmission=transmission)
-        v_eq = self.get_v_eq(val=n_state_val["v"], ps=ps, ts=ts, s=s, r=r)
 
-        model_eq_dict.update(e_eq)
-        model_eq_dict.update(v_eq)
+        e_eq = self.get_e_eq(val=n_state_val["e"], ps=ps, s=s, transmission=transmission)
+        i_eq = self.get_i_eq(n_state_val=n_state_val, ps=ps)
+        ic_eq = self.get_ic_eq(n_state_val=n_state_val, ps=ps)
+        v_eq = self.get_v_eq(val=n_state_val["v"], ps=ps, vacc=vacc, s=s, r=r)
+
+        model_eq_dict.update(**e_eq, **i_eq, **ic_eq, **v_eq)
         return self.get_array_from_dict(comp_dict=model_eq_dict)
 
     def get_e_eq(self, val, ps, s, transmission):
@@ -98,9 +107,8 @@ class VaccinatedModel(EpidemicModelBase):
         ic_eq.update(get_transition_state_eq(ic_states, val, ps['gamma_c']))
         return ic_eq
 
-    def get_v_eq(self, val, ts, ps, s, r):
+    def get_v_eq(self, val, vacc, ps, s, r):
         v_states = self.get_n_states(ps["n_v_states"], "v")
-        vacc = self.get_vacc_bool(ts, ps)
         v_eq = {'v_0': ps["v"] * ps["rho"] * s / (s + r) * vacc - val[0] * ps["psi"]}
         v_eq.update(get_transition_state_eq(v_states, val, ps['psi']))
         return v_eq

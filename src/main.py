@@ -3,7 +3,7 @@ from simulation import SimulationVaccinated
 
 def main():
     simulation = SimulationVaccinated()
-    # simulation.run_sampling()
+    #simulation.run_sampling()
     simulation.calculate_prcc()
     simulation.plot_prcc()
 
