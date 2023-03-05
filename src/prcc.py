@@ -25,12 +25,11 @@ def get_prcc_values(lhs_output_table):
     return prcc_vector
 
 
-def generate_prcc_plot(params, prcc: np.ndarray, filename: str):
+def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str):
     prcc = np.round(prcc, 3)
     sorted_idx = np.abs(prcc).argsort()[::-1]
     prcc = prcc[sorted_idx]
-
-    plt.title("PRCC values of vaccinated model param_names, target variable: R0", fontsize=15)
+    plt.title(f"PRCC of model parameters, target variable: {target_var}", fontsize=15, wrap=True)
 
     ys = range(len(params))[::-1]
     # Plot the bars one by one
@@ -66,5 +65,6 @@ def generate_prcc_plot(params, prcc: np.ndarray, filename: str):
     plt.ylim(-1, len(params))
 
     # plt.text()
-    plt.show()
     plt.savefig(f'./sens_data/plots/prcc_tornado_plot_{filename}.pdf', format="pdf", bbox_inches='tight')
+    plt.show()
+

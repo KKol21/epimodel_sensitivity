@@ -12,8 +12,8 @@ class SamplerVaccinated(SamplerBase):
         super().__init__(sim_state, sim_obj)
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
-        self.lhs_boundaries = {"lower": [0.1, 0.1, None, 0, 0, 0, 0],   # alpha, gamma,  beta_0, daily vaccines,
-                               "upper": [1, 1, None, 1000, 100, 1, 1],  # t_start, rho, psi
+        self.lhs_boundaries = {"lower": [0.1, 0.1, None, 0, 0, 0.1, 0.1],  # alpha, gamma,  beta_0, daily vaccines,
+                               "upper": [1, 1, None, 1, 100, 1, 1],  # t_start, rho, psi
                                }
         self.lhs_table = None
         self.sim_output = None
@@ -32,8 +32,12 @@ class SamplerVaccinated(SamplerBase):
         target_var = self.sim_state["target_var"]
         if target_var == "r0":
             get_output = self.get_r0
-        elif target_var == "infected_max":
-            get_output = self.get_infected_max
+        elif target_var == "i_max":
+            get_output = self.get_i_max
+        elif target_var == "ic_max":
+            get_output = self.get_ic_max
+        elif target_var == "d_max":
+            get_output = self.get_d_max
 
         results = list(tqdm(map(get_output, lhs_table), total=lhs_table.shape[0]))
         results = np.array(results)
@@ -55,16 +59,33 @@ class SamplerVaccinated(SamplerBase):
                                                           population=self.sim_obj.population)[0]
         return r0_lhs
 
-    def get_infected_max(self, params):
+    def get_i_max(self, params):
+        return self.get_max(params, 'i')
+
+    def get_ic_max(self, params):
+        return self.get_max(params, 'ic')
+
+    def get_d_max(self, params):
+        return self.get_max(params, 'd')
+
+    def get_max(self, params, comp):
         params_dict = {key: value for (key, value) in zip(self.param_names, params)}
         parameters = self.sim_obj.params
         parameters.update(params_dict)
-        t = np.linspace(1, 1000, 1000)
+        parameters['v'] = parameters['v'] * parameters['daily_vaccines']
+        t = np.linspace(1, 300, 300)
         sol = self.sim_obj.model.get_solution(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
-        inf_0_idx = params_dict["n_e_states"] + 1
-        inf = np.sum(sol[:, inf_0_idx:inf_0_idx + parameters["n_i_states"]])
-        inf_max = np.max(inf)
-        return inf_max
+
+        idx_start = 16 * (self.sim_obj.model.c_idx[f"{comp}_0"])
+        try:
+            n_states = parameters[f"n_{comp}_states"]
+        except:
+            n_states = 1
+
+        idx_end = idx_start + 16 * n_states
+        comp_sol = np.sum(sol[:, idx_start:idx_end], axis=1)
+        comp_max = np.max(comp_sol)
+        return comp_max
 
     def _get_variable_parameters(self):
         return f'{self.susc}_{self.base_r0}'

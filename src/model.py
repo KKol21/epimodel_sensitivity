@@ -55,6 +55,7 @@ class VaccinatedModel(EpidemicModelBase):
         })
 
     def get_model(self, xs, ts, ps, cm):
+
         # the same order as in self.compartments!
         val = xs.reshape(-1, self.n_age)
         n_state_val = get_n_state_val(ps, val)

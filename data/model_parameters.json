@@ -1,6 +1,6 @@
 {
     "alpha": {
-        "value": 0.5,
+        "value": 1,
         "description": "Reciprocal of expected time spent in exposed states"
     },
     "gamma": {
@@ -24,11 +24,11 @@
         "description": "Duration of the vaccination campaign"
     },
     "n_e_states": {
-        "value": 3,
+        "value": 2,
         "description": "Number of exposed compartments"
     },
     "n_i_states": {
-        "value": 5,
+        "value": 3,
         "description": "Number of infected states"
     },
     "n_ic_states": {
@@ -124,7 +124,7 @@
         "description": "Probability of intensive care (given hospitalization)"
     },
     "gamma_c": {
-        "value": 0.1,
+        "value": 0.05,
         "description": "Reciprocal of time on intensive care until transition to D/Icr"
     },
     "gamma_cr": {

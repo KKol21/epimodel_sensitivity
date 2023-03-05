@@ -17,6 +17,7 @@ class SimulationVaccinated:
         # User-defined param_names
         self.susc_choices = [0.5, 1.0]
         self.r0_choices = [1.1, 2.5]
+        self.target_var = "ic_max"  # r0, i_max, ic_max, d_max
 
         # Define initial configs
         self._get_initial_config()
@@ -29,7 +30,7 @@ class SimulationVaccinated:
             r0generator = R0Generator(param=self.params)
             for base_r0 in self.r0_choices:
                 sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
-                             "target_var": "r0"}  # r0, infected_max
+                             "target_var": self.target_var}
                 param_generator = SamplerVaccinated(sim_state=sim_state, sim_obj=self)
                 sim_state.update({"params": self.data.param_names})
                 param_generator.run_sampling()
@@ -53,6 +54,7 @@ class SimulationVaccinated:
                 prcc = np.loadtxt(fname=f'./sens_data/prcc/prcc_{filename}.csv')
 
                 generate_prcc_plot(params=self.data.param_names,
+                                   target_var=self.target_var,
                                    prcc=prcc,
                                    filename=filename)
 
