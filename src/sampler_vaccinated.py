@@ -22,7 +22,7 @@ class SamplerVaccinated(SamplerBase):
         self.get_beta_0_boundaries()
 
     def run_sampling(self):
-        n_samples = 1000
+        n_samples = 50
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(n_samples)
@@ -76,7 +76,8 @@ class SamplerVaccinated(SamplerBase):
         t = np.linspace(1, 300, 300)
         sol = self.sim_obj.model.get_solution(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
 
-        if comp in ["i", "ic", "e"]:
+
+        if comp in ["i", "ic", "e", "h", "icr"]:
             n_states = parameters[f"n_{comp}_states"]
             idx_start = self.sim_obj.model.n_age * (self.sim_obj.model.c_idx[f"{comp}_0"])
         else:
@@ -84,7 +85,7 @@ class SamplerVaccinated(SamplerBase):
             idx_start = self.sim_obj.model.n_age * self.sim_obj.model.c_idx[comp]
 
         if self.sim_obj.test:
-            if self.sim_obj.model.pop_diff > 1:
+            if np.sum(self.sim_obj.population) - np.sum(sol[-1, :]) > 1:
                 raise Exception("Unexpected change in population size")
 
         comp_max = np.max(self.sim_obj.model.aggregate_by_age(solution=sol, idx=idx_start, n_states=n_states))

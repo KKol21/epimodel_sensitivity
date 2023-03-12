@@ -31,9 +31,17 @@
         "value": 3,
         "description": "Number of infected states"
     },
+    "n_h_states": {
+        "value": 3,
+        "description": "Number of hospitalized states"
+    },
     "n_ic_states": {
         "value": 3,
         "description": "Number of intensive care states"
+    },
+    "n_icr_states": {
+        "value": 3,
+        "description": "Number of intensive care recovery states"
     },
     "n_v_states": {
         "value": 3,
@@ -130,5 +138,9 @@
     "gamma_cr": {
         "value": 0.07142857142857142,
         "description": "Reciprocal of recovery time from Icr"
+    },
+     "gamma_h": {
+        "value": 0.1,
+        "description": "Reciprocal of hospitalization period"
     }
 }
