@@ -28,8 +28,10 @@ def get_n_state_val(ps, val):
 class VaccinatedModel(EpidemicModelBase):
     def __init__(self, model_data):
         self.n_vac_states = model_data.model_parameters_data["n_v_states"]
-        compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
+        self.base_compartments = ["s", "r", "d"]
+        compartments = self.base_compartments + self.get_n_compartments(model_data.model_parameters_data)
         super().__init__(model_data=model_data, compartments=compartments)
+        self.sum = 0
 
     @staticmethod
     def get_n_states(n_classes, comp_name):
@@ -59,8 +61,7 @@ class VaccinatedModel(EpidemicModelBase):
         # the same order as in self.compartments!
         val = xs.reshape(-1, self.n_age)
         n_state_val = get_n_state_val(ps, val)
-        s = val[0]
-        r, d = val[-2:]
+        s, r, d = [val[self.c_idx[comp]] for comp in ["s", "r", "d"]]
 
         i = np.sum([i_state for i_state in n_state_val["i"]], axis=0)
         transmission = ps["beta_0"] * np.array(i).dot(cm)
@@ -70,10 +71,10 @@ class VaccinatedModel(EpidemicModelBase):
         model_eq_dict = {
             "s": - ps["susc"] * (s / actual_population) * transmission
                  - ps["v"] * ps["rho"] * s / (s + r) * vacc
-                 + ps["psi"] * n_state_val["v"][-1],                       # S'(t)
+                 + ps["psi"] * n_state_val["v"][-1],                                    # S'(t)
             "r": (1 - ps["h"] * ps["xi"]) * ps["gamma"] * n_state_val["i"][-1]
-               + (1 - ps["mu"]) * n_state_val["ic"][-1],                   # R'(t)
-            "d": ps["mu"] * n_state_val["ic"][-1]                          # D'(t)
+               + (1 - ps["mu"]) * ps["gamma_c"] * n_state_val["ic"][-1],                # R'(t)
+            "d": ps["mu"] * ps["gamma_c"] * n_state_val["ic"][-1]                       # D'(t)
         }
 
         e_eq = self.get_e_eq(val=n_state_val["e"], ps=ps, s=s, transmission=transmission)
@@ -104,7 +105,7 @@ class VaccinatedModel(EpidemicModelBase):
         i_end = n_state_val["i"][-1]
         val = n_state_val["ic"]
         ic_states = self.get_n_states(ps["n_ic_states"], "ic")
-        ic_eq = {"ic_0": ps["gamma"] * ps["xi"] * ps["h"] * i_end - ps["gamma_c"] * val[0]}
+        ic_eq = {"ic_0": ps["xi"] * ps["h"] * ps["gamma"] * i_end - ps["gamma_c"] * val[0]}
         ic_eq.update(get_transition_state_eq(ic_states, val, ps['gamma_c']))
         return ic_eq
 

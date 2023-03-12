@@ -16,8 +16,8 @@ class EpidemicModelBase(ABC):
         iv.update({"i_0": np.full(self.n_age, fill_value=10)})
         return iv
 
-    def aggregate_by_age(self, solution, idx):
-        return np.sum(solution[:, idx * self.n_age:(idx + 1) * self.n_age], axis=1)
+    def aggregate_by_age(self, solution, idx, n_states=1):
+        return np.sum(solution[:, idx * self.n_age:(idx + n_states) * self.n_age], axis=1)
 
     def get_cumulative(self, solution):
         idx = self.c_idx["c"]
@@ -29,7 +29,7 @@ class EpidemicModelBase(ABC):
 
     def get_solution(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
-        return np.array(odeint(self.get_model, initial_values, t, args=(parameters, cm)))
+        return np.array(odeint(self.get_model, initial_values, t, args=(parameters, cm),  mxstep=3000))
 
     def get_array_from_dict(self, comp_dict):
         return np.array([comp_dict[comp] for comp in self.compartments]).flatten()

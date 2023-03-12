@@ -76,15 +76,14 @@ class SamplerVaccinated(SamplerBase):
         t = np.linspace(1, 300, 300)
         sol = self.sim_obj.model.get_solution(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
 
-        idx_start = 16 * (self.sim_obj.model.c_idx[f"{comp}_0"])
-        try:
+        if comp in ["i", "ic", "e"]:
             n_states = parameters[f"n_{comp}_states"]
-        except:
+            idx_start = self.sim_obj.model.n_age * (self.sim_obj.model.c_idx[f"{comp}_0"])
+        else:
             n_states = 1
+            idx_start = self.sim_obj.model.n_age * self.sim_obj.model.c_idx[comp]
 
-        idx_end = idx_start + 16 * n_states
-        comp_sol = np.sum(sol[:, idx_start:idx_end], axis=1)
-        comp_max = np.max(comp_sol)
+        comp_max = np.max(self.sim_obj.model.aggregate_by_age(solution=sol, idx=idx_start, n_states=n_states))
         return comp_max
 
     def _get_variable_parameters(self):
