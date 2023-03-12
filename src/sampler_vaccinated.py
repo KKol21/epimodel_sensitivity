@@ -83,6 +83,10 @@ class SamplerVaccinated(SamplerBase):
             n_states = 1
             idx_start = self.sim_obj.model.n_age * self.sim_obj.model.c_idx[comp]
 
+        if self.sim_obj.test:
+            if self.sim_obj.model.pop_diff > 1:
+                raise Exception("Unexpected change in population size")
+
         comp_max = np.max(self.sim_obj.model.aggregate_by_age(solution=sol, idx=idx_start, n_states=n_states))
         return comp_max
 

@@ -26,12 +26,11 @@ def get_n_state_val(ps, val):
 
 
 class VaccinatedModel(EpidemicModelBase):
-    def __init__(self, model_data):
-        self.n_vac_states = model_data.model_parameters_data["n_v_states"]
-        self.base_compartments = ["s", "r", "d"]
-        compartments = self.base_compartments + self.get_n_compartments(model_data.model_parameters_data)
+    def __init__(self, model_data, test_bool):
+        compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
-        self.sum = 0
+        self.pop_diff = 0
+        self.test = test_bool
 
     @staticmethod
     def get_n_states(n_classes, comp_name):
@@ -50,8 +49,8 @@ class VaccinatedModel(EpidemicModelBase):
     def update_initial_values(self, iv, parameters):
         e_states = self.get_n_states(n_classes=parameters["n_e_states"], comp_name="e")
         i_states = self.get_n_states(n_classes=parameters["n_i_states"], comp_name="i")
-        e = np.sum([iv[state] for state in e_states])
-        i = np.sum([iv[state] for state in i_states])
+        e = np.sum([iv[state] for state in e_states], axis=0)
+        i = np.sum([iv[state] for state in i_states], axis=0)
         iv.update({
             "s": self.population - (e + i)
         })
@@ -61,7 +60,9 @@ class VaccinatedModel(EpidemicModelBase):
         # the same order as in self.compartments!
         val = xs.reshape(-1, self.n_age)
         n_state_val = get_n_state_val(ps, val)
-        s, r, d = [val[self.c_idx[comp]] for comp in ["s", "r", "d"]]
+        s = val[0]
+        r, d = val[-2:]
+        diff = np.sum(self.population) - np.sum(val)
 
         i = np.sum([i_state for i_state in n_state_val["i"]], axis=0)
         transmission = ps["beta_0"] * np.array(i).dot(cm)
@@ -83,6 +84,8 @@ class VaccinatedModel(EpidemicModelBase):
         v_eq = self.get_v_eq(val=n_state_val["v"], ps=ps, vacc=vacc, s=s, r=r)
 
         model_eq_dict.update(**e_eq, **i_eq, **ic_eq, **v_eq)
+        if self.test:
+            self.pop_diff += np.sum([val for val in model_eq_dict.values()])
         return self.get_array_from_dict(comp_dict=model_eq_dict)
 
     def get_e_eq(self, val, ps, s, transmission):
