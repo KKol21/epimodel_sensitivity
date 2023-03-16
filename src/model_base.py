@@ -29,7 +29,7 @@ class EpidemicModelBase(ABC):
 
     def get_solution(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
-        return np.array(odeint(self.get_model, initial_values, t, args=(parameters, cm),  mxstep=3000))
+        return np.array(odeint(self.get_model, initial_values, t, args=(parameters, cm)))
 
     def get_array_from_dict(self, comp_dict):
         return np.array([comp_dict[comp] for comp in self.compartments]).flatten()

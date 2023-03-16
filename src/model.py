@@ -1,3 +1,6 @@
+from functools import partial
+# from torchdiffeq import odeint
+
 from model_base import EpidemicModelBase
 
 import numpy as np
@@ -55,15 +58,14 @@ class VaccinatedModel(EpidemicModelBase):
         })
 
     def get_model(self, xs, ts, ps, cm):
-
-        # the same order as in self.compartments!
         val = xs.reshape(-1, self.n_age)
         n_state_val = self.get_n_state_val(ps, val)
+        # the same order as in self.compartments!
         s = val[0]
         r, d = val[-2:]
 
         i = np.sum([i_state for i_state in n_state_val["i"]], axis=0)
-        transmission = ps["beta_0"] * np.array(i).dot(cm)
+        transmission = ps["beta"] * np.array(i).dot(cm)
         actual_population = self.population
         vacc = self.get_vacc_bool(ts, ps)
 
@@ -105,7 +107,7 @@ class VaccinatedModel(EpidemicModelBase):
 
     def get_h_eq(self, n_state_val, ps):
         i_end = n_state_val["i"][-1]
-        val = n_state_val["ic"]
+        val = n_state_val["h"]
         h_states = self.get_n_states(ps["n_h_states"], "h")
         h_eq = {"h_0": (1 - ps["xi"]) * ps["h"] * ps["gamma"] * i_end - ps["gamma_h"] * val[0]}
         h_eq.update(get_transition_state_eq(h_states, val, ps['gamma_h']))
@@ -121,7 +123,7 @@ class VaccinatedModel(EpidemicModelBase):
 
     def get_icr_eq(self, n_state_val, ps):
         ic_end = n_state_val["ic"][-1]
-        val = n_state_val["ic"]
+        val = n_state_val["icr"]
         icr_states = self.get_n_states(ps["n_icr_states"], "icr")
         icr_eq = {"icr_0": (1 - ps["mu"]) * ps["gamma_c"] * ic_end - ps["gamma_cr"] * val[0]}
         icr_eq.update(get_transition_state_eq(icr_states, val, ps['gamma_cr']))
@@ -132,3 +134,8 @@ class VaccinatedModel(EpidemicModelBase):
         v_eq = {'v_0': ps["v"] * s / (s + r) * vacc - val[0] * ps["psi"]}
         v_eq.update(get_transition_state_eq(v_states, val, ps['psi']))
         return v_eq
+
+    def get_solution_torch(self, t, parameters, cm):
+        initial_values = self.get_initial_values(parameters)
+        model = partial(self.get_model, ps=parameters, cm=cm)
+        return None #np.array(odeint(model, t, initial_values))

@@ -17,7 +17,7 @@ class DataLoader:
         self._get_age_data()
         self._get_model_parameters_data()
         self._get_contact_mtx()
-        self.param_names = np.array(["alpha", "gamma", "beta_0", "daily_vaccines", "t_start", "rho", "psi"])
+        self.param_names = np.array([f'daily_vac_{i}' for i in range(self.contact_data["home"].shape[0])])
 
     def _get_age_data(self):
         wb = xlrd.open_workbook(self._age_data_file)

@@ -30,6 +30,10 @@ class SimulationVaccinated:
             self.params.update({"susc": susceptibility})
             r0generator = R0Generator(param=self.params)
             for base_r0 in self.r0_choices:
+                beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.contact_matrix,
+                                                         susceptibles=self.susceptibles.reshape(1, -1),
+                                                         population=self.population)[0]
+                self.params.update({"beta": beta})
                 sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
                              "target_var": self.target_var}
                 param_generator = SamplerVaccinated(sim_state=sim_state, sim_obj=self)
