@@ -23,6 +23,41 @@ class VaccinatedModel(EpidemicModelBase):
         super().__init__(model_data=model_data, compartments=compartments)
         self.pop_diff = 0
 
+    def get_model(self, xs, ts, ps, cm):
+        val = xs.reshape(-1, self.n_age)
+        n_state_val = self.get_n_state_val(ps, val)
+        # the same order as in self.compartments!
+        s = val[0]
+        r, d = val[-2:]
+
+        i = np.sum([i_state for i_state in n_state_val["i"]], axis=0)
+        transmission = ps["beta"] * np.array(i).dot(cm)
+        actual_population = self.population
+        vacc = self.get_vacc_bool(ts, ps)
+
+        model_eq_dict = {
+            "s":
+            - ps["susc"] * (s / actual_population) * transmission
+            - ps["v"] * s / (s + r) * vacc
+            + ps["psi"] * n_state_val["v"][-1],                                    # S'(t)
+            "r":
+            (1 - ps["h"]) * ps["gamma"] * n_state_val["i"][-1]
+            + ps["gamma_h"] * n_state_val["h"][-1]
+            + ps["gamma_cr"] * n_state_val["icr"][-1],                             # R'(t)
+            "d":
+            ps["mu"] * ps["gamma_c"] * n_state_val["ic"][-1]                       # D'(t)
+        }
+
+        e_eqns = self.get_e_eqns(val=n_state_val["e"], ps=ps, s=s, transmission=transmission)
+        i_eqns = self.get_i_eqns(n_state_val=n_state_val, ps=ps)
+        h_eqns = self.get_h_eqns(n_state_val=n_state_val, ps=ps)
+        ic_eqns = self.get_ic_eqns(n_state_val=n_state_val, ps=ps)
+        icr_eqns = self.get_icr_eqns(n_state_val=n_state_val, ps=ps)
+        v_eqns = self.get_v_eqns(val=n_state_val["v"], ps=ps, vacc=vacc, s=s, r=r)
+
+        model_eq_dict.update(**e_eqns, **i_eqns, **h_eqns, **ic_eqns, **icr_eqns, **v_eqns)
+        return self.get_array_from_dict(comp_dict=model_eq_dict)
+
     @staticmethod
     def get_n_states(n_classes, comp_name):
         return [f"{comp_name}_{i}" for i in range(n_classes)]
@@ -57,85 +92,54 @@ class VaccinatedModel(EpidemicModelBase):
             "s": self.population - (e + i)
         })
 
-    def get_model(self, xs, ts, ps, cm):
-        val = xs.reshape(-1, self.n_age)
-        n_state_val = self.get_n_state_val(ps, val)
-        # the same order as in self.compartments!
-        s = val[0]
-        r, d = val[-2:]
-
-        i = np.sum([i_state for i_state in n_state_val["i"]], axis=0)
-        transmission = ps["beta"] * np.array(i).dot(cm)
-        actual_population = self.population
-        vacc = self.get_vacc_bool(ts, ps)
-
-        model_eq_dict = {
-            "s": - ps["susc"] * (s / actual_population) * transmission
-                 - ps["v"] * s / (s + r) * vacc
-                 + ps["psi"] * n_state_val["v"][-1],                                    # S'(t)
-            "r": (1 - ps["h"]) * ps["gamma"] * n_state_val["i"][-1]
-                 + ps["gamma_h"] * n_state_val["h"][-1]
-                 + ps["gamma_cr"] * n_state_val["icr"][-1],                             # R'(t)
-            "d": ps["mu"] * ps["gamma_c"] * n_state_val["ic"][-1]                       # D'(t)
-        }
-
-        e_eq = self.get_e_eq(val=n_state_val["e"], ps=ps, s=s, transmission=transmission)
-        i_eq = self.get_i_eq(n_state_val=n_state_val, ps=ps)
-        h_eq = self.get_h_eq(n_state_val=n_state_val, ps=ps)
-        ic_eq = self.get_ic_eq(n_state_val=n_state_val, ps=ps)
-        icr_eq = self.get_icr_eq(n_state_val=n_state_val, ps=ps)
-        v_eq = self.get_v_eq(val=n_state_val["v"], ps=ps, vacc=vacc, s=s, r=r)
-
-        model_eq_dict.update(**e_eq, **i_eq, **h_eq, **ic_eq, **icr_eq, **v_eq)
-        return self.get_array_from_dict(comp_dict=model_eq_dict)
-
-    def get_e_eq(self, val, ps, s, transmission):
+    def get_e_eqns(self, val, ps, s, transmission):
         e_states = self.get_n_states(ps["n_e_states"], "e")
         actual_population = self.population
-        e_eq = {"e_0": ps["susc"] * (s / actual_population) * transmission
-                       - ps["alpha"] * val[0]}
-        e_eq.update(get_transition_state_eq(e_states, val, ps["alpha"]))
-        return e_eq
+        e_eqns = {"e_0":
+                  ps["susc"] * (s / actual_population) * transmission
+                  - ps["alpha"] * val[0]}
+        e_eqns.update(get_transition_state_eq(e_states, val, ps["alpha"]))
+        return e_eqns
 
-    def get_i_eq(self, n_state_val, ps):
+    def get_i_eqns(self, n_state_val, ps):
         e_end = n_state_val["e"][-1]
         val = n_state_val["i"]
         i_states = self.get_n_states(ps["n_i_states"], "i")
-        i_eq = {"i_0": ps["alpha"] * e_end - ps["gamma"] * val[0]}
-        i_eq.update(get_transition_state_eq(i_states, val, ps['gamma']))
-        return i_eq
+        i_eqns = {"i_0": ps["alpha"] * e_end - ps["gamma"] * val[0]}
+        i_eqns.update(get_transition_state_eq(i_states, val, ps['gamma']))
+        return i_eqns
 
-    def get_h_eq(self, n_state_val, ps):
+    def get_h_eqns(self, n_state_val, ps):
         i_end = n_state_val["i"][-1]
         val = n_state_val["h"]
         h_states = self.get_n_states(ps["n_h_states"], "h")
-        h_eq = {"h_0": (1 - ps["xi"]) * ps["h"] * ps["gamma"] * i_end - ps["gamma_h"] * val[0]}
-        h_eq.update(get_transition_state_eq(h_states, val, ps['gamma_h']))
-        return h_eq
+        h_eqns = {"h_0": (1 - ps["xi"]) * ps["h"] * ps["gamma"] * i_end - ps["gamma_h"] * val[0]}
+        h_eqns.update(get_transition_state_eq(h_states, val, ps['gamma_h']))
+        return h_eqns
 
-    def get_ic_eq(self, n_state_val, ps):
+    def get_ic_eqns(self, n_state_val, ps):
         i_end = n_state_val["i"][-1]
         val = n_state_val["ic"]
         ic_states = self.get_n_states(ps["n_ic_states"], "ic")
-        ic_eq = {"ic_0": ps["xi"] * ps["h"] * ps["gamma"] * i_end - ps["gamma_c"] * val[0]}
-        ic_eq.update(get_transition_state_eq(ic_states, val, ps['gamma_c']))
-        return ic_eq
+        ic_eqns = {"ic_0": ps["xi"] * ps["h"] * ps["gamma"] * i_end - ps["gamma_c"] * val[0]}
+        ic_eqns.update(get_transition_state_eq(ic_states, val, ps['gamma_c']))
+        return ic_eqns
 
-    def get_icr_eq(self, n_state_val, ps):
+    def get_icr_eqns(self, n_state_val, ps):
         ic_end = n_state_val["ic"][-1]
         val = n_state_val["icr"]
         icr_states = self.get_n_states(ps["n_icr_states"], "icr")
-        icr_eq = {"icr_0": (1 - ps["mu"]) * ps["gamma_c"] * ic_end - ps["gamma_cr"] * val[0]}
-        icr_eq.update(get_transition_state_eq(icr_states, val, ps['gamma_cr']))
-        return icr_eq
+        icr_eqns = {"icr_0": (1 - ps["mu"]) * ps["gamma_c"] * ic_end - ps["gamma_cr"] * val[0]}
+        icr_eqns.update(get_transition_state_eq(icr_states, val, ps['gamma_cr']))
+        return icr_eqns
 
-    def get_v_eq(self, val, vacc, ps, s, r):
+    def get_v_eqns(self, val, vacc, ps, s, r):
         v_states = self.get_n_states(ps["n_v_states"], "v")
-        v_eq = {'v_0': ps["v"] * s / (s + r) * vacc - val[0] * ps["psi"]}
-        v_eq.update(get_transition_state_eq(v_states, val, ps['psi']))
-        return v_eq
+        v_eqns = {'v_0': ps["v"] * s / (s + r) * vacc - val[0] * ps["psi"]}
+        v_eqns.update(get_transition_state_eq(v_states, val, ps['psi']))
+        return v_eqns
 
     def get_solution_torch(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
         model = partial(self.get_model, ps=parameters, cm=cm)
-        return None #np.array(odeint(model, t, initial_values))
+        return None  # np.array(odeint(model, t, initial_values))

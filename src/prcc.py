@@ -1,5 +1,5 @@
-import numpy as np
 from matplotlib import pyplot as plt
+import numpy as np
 
 
 def get_prcc_values(lhs_output_table):
@@ -67,4 +67,3 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str):
     # plt.text()
     plt.savefig(f'./sens_data/plots/prcc_tornado_plot_{filename}.pdf', format="pdf", bbox_inches='tight')
     plt.show()
-

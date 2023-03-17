@@ -2,7 +2,6 @@ from functools import partial
 from time import sleep
 
 import numpy as np
-from scipy.integrate import odeint
 from smt.sampling_methods import LHS
 from tqdm import tqdm
 
