@@ -11,10 +11,10 @@ from torchdiffeq import odeint
 
 class VaccinatedModel(EpidemicModelBase):
     def __init__(self, model_data):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.n_state_comp = ["e", "i", "h", "ic", "icr", "v"]
         compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
-        self.pop_diff = 0
 
     def get_model(self, ts, xs, ps, cm):
 
@@ -25,7 +25,7 @@ class VaccinatedModel(EpidemicModelBase):
         r, d = val[-2:]
 
         i = torch.stack([i_state for i_state in n_state_val["i"]]).sum(0)
-        transmission = ps["beta"] * np.array(i).dot(cm)
+        transmission = ps["beta"] * i.matmul(cm)
         actual_population = self.population
         vacc = self.get_vacc_bool(ts, ps)
 
@@ -70,5 +70,15 @@ class VaccinatedModel(EpidemicModelBase):
 
     def get_solution_torch(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
-        model = partial(self.get_model, ps=parameters, cm=cm)
+        model_wrapper = ModelFun(self).to(self.device)
+        model = partial(model_wrapper.forward, ps=parameters, cm=cm)
         return odeint(model, initial_values, t, method="euler")
+
+
+class ModelFun(torch.nn.Module):
+    def __init__(self, model):
+        super(ModelFun, self).__init__()
+        self.model = model
+
+    def forward(self, ts, xs, ps, cm):
+        return self.model.get_model(ts, xs, ps, cm)

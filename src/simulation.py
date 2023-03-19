@@ -19,7 +19,7 @@ class SimulationVaccinated:
         # User-defined param_names
         self.susc_choices = [0.5, 1.0]
         self.r0_choices = [1.1, 2.5]
-        self.target_var = "ic_max"  # r0, i_max, ic_max, d_max
+        self.target_var = "i_max"  # i_max, ic_max, d_max
 
         # Define initial configs
         self._get_initial_config()
