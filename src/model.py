@@ -1,10 +1,12 @@
 from functools import partial
-# from torchdiffeq import odeint
+
+import torch
 
 from model_base import EpidemicModelBase
 from eqns_generator import EquationGenerator
 
 import numpy as np
+from torchdiffeq import odeint
 
 
 class VaccinatedModel(EpidemicModelBase):
@@ -14,14 +16,15 @@ class VaccinatedModel(EpidemicModelBase):
         super().__init__(model_data=model_data, compartments=compartments)
         self.pop_diff = 0
 
-    def get_model(self, xs, ts, ps, cm):
+    def get_model(self, ts, xs, ps, cm):
+
         val = xs.reshape(-1, self.n_age)
         n_state_val = self.get_n_state_val(ps, val)
         # the same order as in self.compartments!
         s = val[0]
         r, d = val[-2:]
 
-        i = np.sum([i_state for i_state in n_state_val["i"]], axis=0)
+        i = torch.stack([i_state for i_state in n_state_val["i"]]).sum(0)
         transmission = ps["beta"] * np.array(i).dot(cm)
         actual_population = self.population
         vacc = self.get_vacc_bool(ts, ps)
@@ -59,8 +62,8 @@ class VaccinatedModel(EpidemicModelBase):
     def update_initial_values(self, iv, parameters):
         e_states = self.get_n_states(n_classes=parameters["n_e_states"], comp_name="e")
         i_states = self.get_n_states(n_classes=parameters["n_i_states"], comp_name="i")
-        e = np.sum([iv[state] for state in e_states], axis=0)
-        i = np.sum([iv[state] for state in i_states], axis=0)
+        e = torch.stack([iv[state] for state in e_states]).sum(0)
+        i = torch.stack([iv[state] for state in i_states]).sum(0)
         iv.update({
             "s": self.population - (e + i)
         })
@@ -68,4 +71,4 @@ class VaccinatedModel(EpidemicModelBase):
     def get_solution_torch(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
         model = partial(self.get_model, ps=parameters, cm=cm)
-        return None  # np.array(odeint(model, t, initial_values))
+        return odeint(model, initial_values, t, method="euler")

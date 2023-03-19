@@ -3,6 +3,7 @@ from time import sleep
 
 import numpy as np
 from smt.sampling_methods import LHS
+import torch
 from tqdm import tqdm
 
 from sampler_base import SamplerBase
@@ -21,7 +22,7 @@ class SamplerVaccinated(SamplerBase):
         self.param_names = self.sim_obj.data.param_names
 
     def run_sampling(self):
-        n_samples = 500
+        n_samples = 50
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(n_samples)
@@ -57,18 +58,20 @@ class SamplerVaccinated(SamplerBase):
         parameters = self.sim_obj.params
         parameters.update({'daily_vaccines': params})
 
-        t = np.linspace(1, 300, 300)
-        sol = self.sim_obj.model.get_solution(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
+        t = torch.linspace(1, 300, 300)
+        sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
         if self.sim_obj.test:
-            if abs(np.sum(self.sim_obj.population) - np.sum(sol[-1, :])) > 1:
+            if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 100:
                 raise Exception("Unexpected change in population size")
+
         if comp in self.sim_obj.model.n_state_comp:
             n_states = parameters[f"n_{comp}_states"]
             idx_start = self.sim_obj.model.n_age * (self.sim_obj.model.c_idx[f"{comp}_0"])
         else:
             n_states = 1
             idx_start = self.sim_obj.model.n_age * self.sim_obj.model.c_idx[comp]
-        comp_max = np.max(self.sim_obj.model.aggregate_by_age(solution=sol, idx=idx_start, n_states=n_states))
+
+        comp_max = torch.max(self.sim_obj.model.aggregate_by_age(solution=sol, idx=idx_start, n_states=n_states))
         return comp_max
 
     def _get_variable_parameters(self):

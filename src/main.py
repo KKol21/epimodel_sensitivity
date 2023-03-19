@@ -1,7 +1,9 @@
 from simulation import SimulationVaccinated
+import torch
 
 
 def main():
+    print(torch.cuda.is_available(), torch.version.cuda)
     simulation = SimulationVaccinated()
     simulation.run_sampling()
     simulation.calculate_prcc()

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+import torch
 from scipy.integrate import odeint
 
 
@@ -12,12 +13,12 @@ class EpidemicModelBase(ABC):
         self.n_age = self.population.shape[0]
 
     def initialize(self):
-        iv = {key: np.zeros(self.n_age) for key in self.compartments}
-        iv.update({"i_0": np.full(self.n_age, fill_value=10)})
+        iv = {key: torch.zeros(self.n_age) for key in self.compartments}
+        iv.update({"i_0": torch.full(size=(self.n_age,), fill_value=10)})
         return iv
 
     def aggregate_by_age(self, solution, idx, n_states=1):
-        return np.sum(solution[:, idx * self.n_age:(idx + n_states) * self.n_age], axis=1)
+        return solution[:, idx:idx + n_states * self.n_age].sum(0)
 
     def get_cumulative(self, solution):
         idx = self.c_idx["c"]
@@ -32,7 +33,7 @@ class EpidemicModelBase(ABC):
         return np.array(odeint(self.get_model, initial_values, t, args=(parameters, cm)))
 
     def get_array_from_dict(self, comp_dict):
-        return np.array([comp_dict[comp] for comp in self.compartments]).flatten()
+        return torch.cat([comp_dict[comp] for comp in self.compartments], 0)
 
     def get_initial_values(self, parameters):
         iv = self.initialize()

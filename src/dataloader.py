@@ -1,6 +1,7 @@
 import json
 import os
 
+import torch
 import numpy as np
 import xlrd
 
@@ -22,7 +23,7 @@ class DataLoader:
     def _get_age_data(self):
         wb = xlrd.open_workbook(self._age_data_file)
         sheet = wb.sheet_by_index(0)
-        datalist = np.array([sheet.row_values(i) for i in range(0, sheet.nrows)])
+        datalist = torch.Tensor([sheet.row_values(i) for i in range(0, sheet.nrows)])
         wb.unload_sheet(0)
         self.age_data = datalist
 
@@ -34,7 +35,7 @@ class DataLoader:
         for param in parameters.keys():
             param_value = parameters[param]["value"]
             if isinstance(param_value, list):
-                self.model_parameters_data.update({param: np.array(param_value)})
+                self.model_parameters_data.update({param: torch.Tensor(param_value)})
             else:
                 self.model_parameters_data.update({param: param_value})
 
@@ -43,7 +44,7 @@ class DataLoader:
         contact_matrices = dict()
         for idx in range(4):
             sheet = wb.sheet_by_index(idx)
-            datalist = np.array([sheet.row_values(i) for i in range(0, sheet.nrows)])
+            datalist = torch.Tensor([sheet.row_values(i) for i in range(0, sheet.nrows)])
             cm_type = wb.sheet_names()[idx]
             wb.unload_sheet(0)
             datalist = self.transform_matrix(datalist)

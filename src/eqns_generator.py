@@ -1,3 +1,6 @@
+import torch
+
+
 def get_transition_state_eq(states, val, param):
     if len(states) < 2:
         return None

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 import numpy as np
+import torch
 
 
 class R0GeneratorBase(ABC):
@@ -26,7 +27,7 @@ class R0GeneratorBase(ABC):
         if contact_mtx is not None:
             self.contact_matrix = contact_mtx
         contact_matrix = self.contact_matrix / population.reshape((-1, 1))
-        cm_tensor = np.tile(contact_matrix, (susceptibles.shape[0], 1, 1))
+        cm_tensor = torch.tile(contact_matrix, (susceptibles.shape[0], 1, 1))
         susc_tensor = susceptibles.reshape((susceptibles.shape[0], susceptibles.shape[1], 1))
         contact_matrix_tensor = cm_tensor * susc_tensor
         eig_val_eff = []
