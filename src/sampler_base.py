@@ -4,6 +4,8 @@ import os
 import numpy as np
 from smt.sampling_methods import LHS
 
+from dataloader import PROJECT_PATH
+
 
 class SamplerBase(ABC):
     def __init__(self, sim_state: dict, sim_obj):
@@ -37,11 +39,11 @@ class SamplerBase(ABC):
 
     def _save_output(self, output, folder_name):
         # Create directories for saving calculation outputs
-        os.makedirs("../sens_data", exist_ok=True)
+        os.makedirs(f"../sens_data", exist_ok=True)
 
         # Save LHS output
-        os.makedirs("./sens_data/" + folder_name, exist_ok=True)
-        filename = f"./sens_data/{folder_name}/{folder_name}_{self._get_variable_parameters()}"
+        os.makedirs(f"../sens_data/" + folder_name, exist_ok=True)
+        filename = f"../sens_data/{folder_name}/{folder_name}_{self._get_variable_parameters()}"
         np.savetxt(fname=filename + ".csv", X=output, delimiter=";")
 
 

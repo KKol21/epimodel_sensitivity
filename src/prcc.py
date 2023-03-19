@@ -1,5 +1,3 @@
-from dataloader import PROJECT_PATH
-
 from matplotlib import pyplot as plt
 import numpy as np
 
@@ -67,6 +65,6 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str):
     plt.ylim(-1, len(params))
 
     # plt.text()
-    plt.savefig(f'{PROJECT_PATH}/sens_data/plots/prcc_tornado_plot_{filename}.pdf',
+    plt.savefig(f'../sens_data/plots/prcc_tornado_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()

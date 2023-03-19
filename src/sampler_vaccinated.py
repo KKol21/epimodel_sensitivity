@@ -15,14 +15,14 @@ class SamplerVaccinated(SamplerBase):
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
         self.lhs_boundaries = {"lower": np.zeros(sim_obj.no_ag),    # Number of daily vaccines per age group
-                               "upper": np.full(fill_value=2000, shape=sim_obj.no_ag)
+                               "upper": np.full(fill_value=2500, shape=sim_obj.no_ag)
                                }
         self.lhs_table = None
         self.sim_output = None
         self.param_names = self.sim_obj.data.param_names
 
     def run_sampling(self):
-        n_samples = 500
+        n_samples = 10
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(n_samples)
@@ -58,11 +58,11 @@ class SamplerVaccinated(SamplerBase):
         parameters = self.sim_obj.params
         parameters.update({'daily_vaccines': params})
 
-        t = torch.linspace(1, 200, 200)
+        t = torch.linspace(1, 500, 500)
         sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
         if self.sim_obj.test:
-            if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 100:
-                raise Exception("Unexpected change in population size")
+            if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 10:
+                raise Exception("Unexpected change in population size!")
 
         if comp in self.sim_obj.model.n_state_comp:
             n_states = parameters[f"n_{comp}_states"]

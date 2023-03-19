@@ -3,7 +3,7 @@ import os
 import numpy as np
 import torch
 
-from dataloader import DataLoader, PROJECT_PATH as PATH
+from dataloader import DataLoader
 from model import VaccinatedModel
 from prcc import generate_prcc_plot, get_prcc_values
 from r0 import R0Generator
@@ -19,7 +19,7 @@ class SimulationVaccinated:
         # User-defined param_names
         self.susc_choices = [0.5, 1.0]
         self.r0_choices = [1.1, 2.5]
-        self.target_var = "i_max"  # i_max, ic_max, d_max
+        self.target_var = "ic_max"  # i_max, ic_max, d_max
 
         # Define initial configs
         self._get_initial_config()
@@ -42,22 +42,22 @@ class SimulationVaccinated:
                 param_generator.run_sampling()
 
     def calculate_prcc(self):
-        os.makedirs(f'{PATH}/sens_data/prcc', exist_ok=True)
+        os.makedirs(f'../sens_data/prcc', exist_ok=True)
         for susc in self.susc_choices:
             for base_r0 in self.r0_choices:
                 filename = f'{susc}_{base_r0}'
-                lhs_table = np.loadtxt(f'{PATH}/sens_data/lhs/lhs_{filename}.csv', delimiter=';')
-                sim_output = np.loadtxt(f'{PATH}/sens_data/simulations/simulations_{filename}.csv', delimiter=';')
+                lhs_table = np.loadtxt(f'../sens_data/lhs/lhs_{filename}.csv', delimiter=';')
+                sim_output = np.loadtxt(f'../sens_data/simulations/simulations_{filename}.csv', delimiter=';')
 
                 prcc = get_prcc_values(np.c_[lhs_table, sim_output.T])
-                np.savetxt(fname=f'{PATH}/sens_data/prcc/prcc_{filename}.csv', X=prcc)
+                np.savetxt(fname=f'../sens_data/prcc/prcc_{filename}.csv', X=prcc)
 
     def plot_prcc(self):
-        os.makedirs(f'{PATH}/sens_data//plots', exist_ok=True)
+        os.makedirs(f'../sens_data//plots', exist_ok=True)
         for susc in self.susc_choices:
             for base_r0 in self.r0_choices:
                 filename = f'{susc}_{base_r0}'
-                prcc = np.loadtxt(fname=f'{PATH}/sens_data/prcc/prcc_{filename}.csv')
+                prcc = np.loadtxt(fname=f'../sens_data/prcc/prcc_{filename}.csv')
 
                 generate_prcc_plot(params=self.data.param_names,
                                    target_var=self.target_var,

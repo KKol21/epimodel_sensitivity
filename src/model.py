@@ -1,5 +1,3 @@
-from functools import partial
-
 import torch
 
 from model_base import EpidemicModelBase
@@ -70,15 +68,20 @@ class VaccinatedModel(EpidemicModelBase):
 
     def get_solution_torch(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
-        model_wrapper = ModelFun(self).to(self.device)
-        model = partial(model_wrapper.forward, ps=parameters, cm=cm)
-        return odeint(model, initial_values, t, method="euler")
+        model_wrapper = ModelFun(self, parameters, cm).to(self.device)
+        return odeint(model_wrapper.forward, initial_values, t, method='euler')
 
 
 class ModelFun(torch.nn.Module):
-    def __init__(self, model):
+    """
+    Wrapper class for VaccinatedModel.get_model. Inherits from torch.nn.Module, enabling
+    the use of a GPU for evaluation through the library torchdiffeq.
+    """
+    def __init__(self, model, ps, cm):
         super(ModelFun, self).__init__()
         self.model = model
+        self.ps = ps
+        self.cm = cm
 
-    def forward(self, ts, xs, ps, cm):
-        return self.model.get_model(ts, xs, ps, cm)
+    def forward(self, ts, xs):
+        return self.model.get_model(ts, xs, self.ps, self.cm)
