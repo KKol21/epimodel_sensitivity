@@ -14,21 +14,22 @@ class SamplerVaccinated(SamplerBase):
         super().__init__(sim_state, sim_obj)
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
-        self.lhs_boundaries = {"lower": np.zeros(sim_obj.no_ag),    # Number of daily vaccines per age group
-                               "upper": np.full(fill_value=2500, shape=sim_obj.no_ag)
+        self.lhs_boundaries = {"lower": np.zeros(sim_obj.no_ag),    # Ratio of daily vaccines given to each age group
+                               "upper": np.ones(sim_obj.no_ag)
                                }
         self.lhs_table = None
         self.sim_output = None
         self.param_names = self.sim_obj.data.param_names
 
     def run_sampling(self):
-        n_samples = 10
+        n_samples = 100
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(n_samples)
+        # Norm sample vectors
+        lhs_table = torch.Tensor(np.apply_along_axis(lambda x: x / x.sum(), 1, lhs_table))
         print("Simulation for", n_samples,
               "samples (", "-".join(self._get_variable_parameters()), ")")
-
         target_var = self.sim_state["target_var"]
         if target_var == "r0":
             get_output = self.get_r0
@@ -56,7 +57,7 @@ class SamplerVaccinated(SamplerBase):
 
     def get_max(self, params, comp):
         parameters = self.sim_obj.params
-        parameters.update({'daily_vaccines': params})
+        parameters.update({'daily_vaccines':  params * parameters["daily_vaccines"]})
 
         t = torch.linspace(1, 500, 500)
         sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)

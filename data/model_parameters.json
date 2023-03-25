@@ -47,25 +47,8 @@
         "value": 3,
         "description": "Number of vaccinated compartments"
     },
-    "v": {
-        "value": [
-            625,
-            625,
-            625,
-            625,
-            625,
-            625,
-            625,
-            625,
-            625,
-            625,
-            625,
-            625,
-            625,
-            625,
-            625,
-            625
-        ],
+    "daily_vaccines": {
+        "value": 1E6,
         "description": "Number of vaccines given to a specific age group"
     },
     "mu": {
