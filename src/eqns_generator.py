@@ -1,3 +1,6 @@
+import numpy
+
+
 def get_transition_state_eq(states, val, param):
     if len(states) < 2:
         return None
@@ -17,6 +20,7 @@ class EquationGenerator:
         self.vacc = vacc
         self.s = s
         self.r = r
+        numpy.seterr(all='raise')
 
     @staticmethod
     def get_n_states(n_classes, comp_name):
@@ -32,18 +36,21 @@ class EquationGenerator:
         n_state_val = self.n_state_val
         s = self.s
         r = self.r
-        eq = {
-            "s":
-            - ps["susc"] * (s / self.actual_population) * self.transmission
-            - ps["daily_vaccines"] * s / (s + r) * self.vacc
-            + ps["psi"] * n_state_val["v"][-1],                                    # S'(t)
-            "r":
-            (1 - ps["h"]) * ps["gamma"] * n_state_val["i"][-1]
-            + ps["gamma_h"] * n_state_val["h"][-1]
-            + ps["gamma_cr"] * n_state_val["icr"][-1],                             # R'(t)
-            "d":
-            ps["mu"] * ps["gamma_c"] * n_state_val["ic"][-1]                       # D'(t)
-        }
+        try:
+            eq = {
+                "s":
+                - ps["susc"] * (s / self.actual_population) * self.transmission
+                - ps["v"] * s / (s + r) * self.vacc
+                + ps["psi"] * n_state_val["v"][-1],                                    # S'(t)
+                "r":
+                (1 - ps["h"]) * ps["gamma"] * n_state_val["i"][-1]
+                + ps["gamma_h"] * n_state_val["h"][-1]
+                + ps["gamma_cr"] * n_state_val["icr"][-1],                             # R'(t)
+                "d":
+                ps["mu"] * ps["gamma_c"] * n_state_val["ic"][-1]                       # D'(t)
+            }
+        except:
+            print('asd')
         return eq
 
     def get_e_eqns(self):
@@ -101,6 +108,6 @@ class EquationGenerator:
         val = self.n_state_val["v"]
         ps = self.ps
         v_states = self.get_n_states(ps["n_v_states"], "v")
-        v_eqns = {'v_0': ps["daily_vaccines"] * self.s / (self.s + self.r) * self.vacc - val[0] * ps["psi"]}
+        v_eqns = {'v_0': ps["v"] * self.s / (self.s + self.r) * self.vacc - val[0] * ps["psi"]}
         v_eqns.update(get_transition_state_eq(v_states, val, ps['psi']))
         return v_eqns
