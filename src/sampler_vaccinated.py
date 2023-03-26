@@ -1,5 +1,5 @@
 from functools import partial
-from time import sleep, time
+from time import sleep
 
 import numpy as np
 from smt.sampling_methods import LHS
@@ -21,16 +21,18 @@ class SamplerVaccinated(SamplerBase):
         self.sim_output = None
         self.param_names = self.sim_obj.data.param_names
 
+    @staticmethod
+    def norm_table_rows(table):
+        return table / np.sum(table, axis=1, keepdims=True)
+
     def run_sampling(self):
-        n_samples = 100
+        n_samples = 50
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(n_samples)
         # Make sure that total vaccines given to an age group
         # doesn't exceed the population of that age group
-        lhs_table = self.redistribute_vaccines(
-                np.apply_along_axis(lambda x: x / x.sum(), 1, lhs_table)
-            )
+        lhs_table = self.allocate_vaccines(lhs_table)
         print("Simulation for", n_samples,
               "samples (", "-".join(self._get_variable_parameters()), ")")
         target_var = self.sim_state["target_var"]
@@ -62,7 +64,7 @@ class SamplerVaccinated(SamplerBase):
         parameters = self.sim_obj.params
         parameters.update({'v':  params * parameters["total_vaccines"] / parameters["T"]})
 
-        t = torch.linspace(1, 500, 500)
+        t = torch.linspace(1, 200, 200)
         sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
         if self.sim_obj.test:
             if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 10:
@@ -79,21 +81,22 @@ class SamplerVaccinated(SamplerBase):
         return comp_max
 
     def _get_variable_parameters(self):
-        return f'{self.susc}_{self.base_r0}'
+        return f'{self.susc}_{self.base_r0}_{self.sim_obj.target_var}'
 
-    def redistribute_vaccines(self, lhs_table):
+    def allocate_vaccines(self, lhs_table):
+        lhs_table = self.norm_table_rows(lhs_table)
         params = self.sim_obj.params
         total_vac = params["total_vaccines"] * lhs_table
         population = np.array(self.sim_obj.population)
 
-        while np.any(total_vac > population) or not np.allclose(np.sum(lhs_table, axis=1), 1):
-            total_vac = params["total_vaccines"] * lhs_table
+        while np.any(total_vac > population):
             mask = total_vac > population
             excess = population - total_vac
-
             redistribution = excess * lhs_table
+
             total_vac[mask] = np.tile(population, (lhs_table.shape[0], 1))[mask]
             total_vac[~mask] += redistribution[~mask]
-            lhs_table = total_vac / (self.sim_obj.params["T"] * self.sim_obj.params["daily_vaccines"])
-            lhs_table /= np.sum(lhs_table, axis=1, keepdims=True)
+
+            lhs_table = self.norm_table_rows(total_vac / params['total_vaccines'])
+            total_vac = params["total_vaccines"] * lhs_table
         return torch.Tensor(lhs_table)

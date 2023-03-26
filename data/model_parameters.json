@@ -48,7 +48,7 @@
         "description": "Number of vaccinated compartments"
     },
     "total_vaccines": {
-        "value": 2000000,
+        "value": 3000000,
         "description": "Number of vaccines given to a specific age group"
     },
     "mu": {
