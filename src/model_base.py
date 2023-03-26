@@ -18,7 +18,7 @@ class EpidemicModelBase(ABC):
         return iv
 
     def aggregate_by_age(self, solution, idx, n_states=1):
-        return solution[:, idx:idx + n_states * self.n_age].sum(0)
+        return solution[:, idx:idx + n_states * self.n_age].sum(1)
 
     def get_cumulative(self, solution):
         idx = self.c_idx["c"]
