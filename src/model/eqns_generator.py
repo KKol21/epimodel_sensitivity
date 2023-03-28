@@ -51,9 +51,8 @@ class EquationGenerator:
         ps = self.ps
         val = n_state_val["e"]
         e_states = self.get_n_states(ps["n_e_states"], "e")
-        e_eqns = {"e_0":
-                      ps["susc"] * (self.s / self.actual_population) * self.transmission
-                      - ps["alpha"] * val[0]}
+        e_eqns = {
+            "e_0": ps["susc"] * (self.s / self.actual_population) * self.transmission - ps["alpha"] * val[0]}
         e_eqns.update(get_transition_state_eq(e_states, val, ps["alpha"]))
         return e_eqns
 
