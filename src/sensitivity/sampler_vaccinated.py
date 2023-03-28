@@ -6,7 +6,7 @@ from smt.sampling_methods import LHS
 import torch
 from tqdm import tqdm
 
-from sampler_base import SamplerBase
+from src.sensitivity.sampler_base import SamplerBase
 
 
 class SamplerVaccinated(SamplerBase):

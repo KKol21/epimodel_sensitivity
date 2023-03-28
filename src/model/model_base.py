@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-import torch
 from scipy.integrate import odeint
+import torch
 
 
 class EpidemicModelBase(ABC):

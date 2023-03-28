@@ -1,4 +1,4 @@
-from simulation import SimulationVaccinated
+from src.simulation import SimulationVaccinated
 
 
 def main():

@@ -3,11 +3,11 @@ import os
 import numpy as np
 import torch
 
-from dataloader import DataLoader
-from model import VaccinatedModel
-from prcc import generate_prcc_plot, get_prcc_values
-from r0 import R0Generator
-from sampler_vaccinated import SamplerVaccinated
+from src.dataloader import DataLoader
+from src.model.model import VaccinatedModel
+from src.sensitivity.prcc import generate_prcc_plot, get_prcc_values
+from src.model.r0 import R0Generator
+from src.sensitivity.sampler_vaccinated import SamplerVaccinated
 
 
 class SimulationVaccinated:
@@ -76,4 +76,3 @@ class SimulationVaccinated:
             self.data.contact_data["school"] + self.data.contact_data["other"]
         self.contact_home = self.data.contact_data["home"]
         self.upper_tri_indexes = np.triu_indices(self.no_ag)
-

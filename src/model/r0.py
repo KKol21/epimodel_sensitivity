@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import block_diag
 
-from r0_base import R0GeneratorBase
+from src.model.r0_base import R0GeneratorBase
 
 
 class R0Generator(R0GeneratorBase):

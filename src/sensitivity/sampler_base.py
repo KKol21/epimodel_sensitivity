@@ -4,7 +4,7 @@ import os
 import numpy as np
 from smt.sampling_methods import LHS
 
-from dataloader import PROJECT_PATH
+from src.dataloader import PROJECT_PATH
 
 
 class SamplerBase(ABC):

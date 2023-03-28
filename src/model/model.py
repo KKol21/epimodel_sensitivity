@@ -1,10 +1,9 @@
-import torch
-
-from model_base import EpidemicModelBase
-from eqns_generator import EquationGenerator
-
 import numpy as np
+import torch
 from torchdiffeq import odeint
+
+from src.model.eqns_generator import EquationGenerator
+from src.model.model_base import EpidemicModelBase
 
 
 class VaccinatedModel(EpidemicModelBase):
