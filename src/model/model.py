@@ -1,6 +1,7 @@
-import numpy as np
 import torch
+import numpy as np
 from torchdiffeq import odeint
+import time
 
 from src.model.eqns_generator import EquationGenerator
 from src.model.model_base import EpidemicModelBase
@@ -12,7 +13,9 @@ class VaccinatedModel(EpidemicModelBase):
         self.n_state_comp = ["e", "i", "h", "ic", "icr", "v"]
         compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
-        self.time = 0
+        self.time_ = 0
+        self.eq_solver = EquationGenerator(ps=model_data.model_parameters_data,
+                                           actual_population=self.population)
 
     def get_model(self, ts, xs, ps, cm):
 
@@ -24,13 +27,17 @@ class VaccinatedModel(EpidemicModelBase):
 
         i = torch.stack([i_state for i_state in n_state_val["i"]]).sum(0)
         transmission = ps["beta"] * i.matmul(cm)
-        actual_population = self.population
         vacc = self.get_vacc_bool(ts, ps)
 
-        eq_generator = EquationGenerator(n_state_val=n_state_val, ps=ps, actual_population=actual_population,
-                                         transmission=transmission, vacc=vacc, s=s, r=r)
-        model_eq_dict = eq_generator.get_eqns()
-        return self.get_array_from_dict(comp_dict=model_eq_dict)
+        start = time.time()
+        i_end = n_state_val['i'][-1]
+        ic_end = n_state_val['ic'][-1]
+        v_end = n_state_val['v'][-1]
+        model_eq = self.eq_solver.evaluate_eqns(n_state_val=n_state_val, s=s, r=r,
+                                                i_end=i_end, ic_end=ic_end, v_end=v_end,
+                                                transmission=transmission, vacc=vacc)
+        self.time_ += time.time() - start
+        return model_eq
 
     @staticmethod
     def get_n_states(n_classes, comp_name):
@@ -117,7 +124,7 @@ class ModelFunTest(torch.nn.Module):
                      ps["susc"] * (s / actual_population) * transmission - ps["alpha"] * e,  # E'(t)
                      ps["alpha"] * e - ps["gamma"] * i,  # I'(t)
                      ps["gamma"] * i]  # R'(t)
-        return model_eq
+        return torch.Tensor([val for eq in model_eq for val in eq])
 
 
 

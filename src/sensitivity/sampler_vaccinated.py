@@ -65,7 +65,9 @@ class SamplerVaccinated(SamplerBase):
         parameters.update({'v':  params * parameters["total_vaccines"] / parameters["T"]})
 
         t = torch.linspace(1, 200, 200).to(self.sim_obj.data.device)
-        sol = self.sim_obj.model.get_solution_torch_test(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
+        sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
+        print(self.sim_obj.model.time_)
+        self.sim_obj.model.time_ = 0
         if self.sim_obj.test:
             if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 10:
                 raise Exception("Unexpected change in population size!")
