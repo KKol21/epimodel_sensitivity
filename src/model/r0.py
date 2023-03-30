@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.linalg import block_diag
+import torch
 
 from src.model.r0_base import R0GeneratorBase
 
@@ -30,7 +31,7 @@ class R0Generator(R0GeneratorBase):
 
         f = np.zeros((self.n_age * n_states, self.n_age * n_states))
         susc_vec = self.parameters["susc"].reshape((-1, 1))
-        f[i["e"]:s_mtx:n_states, i["i"]:s_mtx:n_states] = contact_mtx.T * susc_vec
+        f[i["e"]:s_mtx:n_states, i["i"]:s_mtx:n_states] = torch.mul(contact_mtx.T.to('cpu'), susc_vec.to('cpu'))
         return f
 
     def _get_e(self):

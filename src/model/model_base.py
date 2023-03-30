@@ -11,10 +11,11 @@ class EpidemicModelBase(ABC):
         self.compartments = compartments
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
         self.n_age = self.population.shape[0]
+        self.device = model_data.device
 
     def initialize(self):
-        iv = {key: torch.zeros(self.n_age) for key in self.compartments}
-        iv.update({"i_0": torch.full(size=(self.n_age,), fill_value=10)})
+        iv = {key: torch.zeros(self.n_age).to(self.device) for key in self.compartments}
+        iv.update({"i_0": torch.full(size=(self.n_age,), fill_value=10).to(self.device)})
         return iv
 
     def aggregate_by_age(self, solution, idx, n_states=1):

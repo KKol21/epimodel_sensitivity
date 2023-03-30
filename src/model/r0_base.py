@@ -22,7 +22,7 @@ class R0GeneratorBase(ABC):
         return np.arange(self.n_age * self.n_states) % self.n_states == self.i[state]
 
     def get_eig_val(self, susceptibles: np.ndarray, population: np.ndarray,
-                    contact_mtx: np.array = None) -> List[np.float]:
+                    contact_mtx: np.array = None) -> List[np.float64]:
         # contact matrix needed for effective reproduction number: [c_{j,i} * S_i(t) / N_i(t)]
         if contact_mtx is not None:
             self.contact_matrix = contact_mtx

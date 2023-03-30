@@ -25,7 +25,7 @@ class SimulationVaccinated:
         self._get_initial_config()
 
     def run_sampling(self):
-        susceptibility = torch.ones(self.no_ag)
+        susceptibility = torch.ones(self.no_ag).to(self.data.device)
         for susc in self.susc_choices:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})

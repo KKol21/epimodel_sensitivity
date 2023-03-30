@@ -32,7 +32,7 @@ class SamplerVaccinated(SamplerBase):
         lhs_table = sampling(n_samples)
         # Make sure that total vaccines given to an age group
         # doesn't exceed the population of that age group
-        lhs_table = self.allocate_vaccines(lhs_table)
+        lhs_table = self.allocate_vaccines(lhs_table).to(self.sim_obj.data.device)
         print("Simulation for", n_samples,
               "samples (", "-".join(self._get_variable_parameters()), ")")
         target_var = self.sim_state["target_var"]

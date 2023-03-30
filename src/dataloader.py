@@ -11,6 +11,7 @@ PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 class DataLoader:
     def __init__(self):
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self._model_parameters_data_file = os.path.join(PROJECT_PATH, "../data", "model_parameters.json")
         self._contact_data_file = os.path.join(PROJECT_PATH, "../data", "contact_matrices.xls")
         self._age_data_file = os.path.join(PROJECT_PATH, "../data", "age_distribution.xls")
@@ -25,7 +26,7 @@ class DataLoader:
         sheet = wb.sheet_by_index(0)
         datalist = torch.Tensor([sheet.row_values(i) for i in range(0, sheet.nrows)])
         wb.unload_sheet(0)
-        self.age_data = datalist
+        self.age_data = datalist.to(self.device)
 
     def _get_model_parameters_data(self):
         # Load model param_names
@@ -35,7 +36,7 @@ class DataLoader:
         for param in parameters.keys():
             param_value = parameters[param]["value"]
             if isinstance(param_value, list):
-                self.model_parameters_data.update({param: torch.Tensor(param_value)})
+                self.model_parameters_data.update({param: torch.Tensor(param_value).to(self.device)})
             else:
                 self.model_parameters_data.update({param: param_value})
 
@@ -47,11 +48,11 @@ class DataLoader:
             datalist = torch.Tensor([sheet.row_values(i) for i in range(0, sheet.nrows)])
             cm_type = wb.sheet_names()[idx]
             wb.unload_sheet(0)
-            datalist = self.transform_matrix(datalist)
+            datalist = self.transform_matrix(datalist.to(self.device))
             contact_matrices.update({cm_type: datalist})
         self.contact_data = contact_matrices
 
-    def transform_matrix(self, matrix: np.ndarray):
+    def transform_matrix(self, matrix: torch.Tensor):
         # Get age vector as a column vector
         age_distribution = self.age_data.reshape((-1, 1))
         # Get matrix of total number of contacts
