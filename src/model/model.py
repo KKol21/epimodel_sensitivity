@@ -12,6 +12,7 @@ class VaccinatedModel(EpidemicModelBase):
         self.n_state_comp = ["e", "i", "h", "ic", "icr", "v"]
         compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
+        self.time = 0
 
     def get_model(self, ts, xs, ps, cm):
 
@@ -54,7 +55,7 @@ class VaccinatedModel(EpidemicModelBase):
 
     @staticmethod
     def get_vacc_bool(ts, ps):
-        return np.array(ps["t_start"] < ts < (ps["t_start"] + ps["T"])).astype(float)
+        return int(ps["t_start"] < ts < (ps["t_start"] + ps["T"]))
 
     def update_initial_values(self, iv, parameters):
         e_states = self.get_n_states(n_classes=parameters["n_e_states"], comp_name="e")
@@ -68,6 +69,14 @@ class VaccinatedModel(EpidemicModelBase):
     def get_solution_torch(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
         model_wrapper = ModelFun(self, parameters, cm).to(self.device)
+        return odeint(model_wrapper.forward, initial_values, t, method='euler')
+
+    def get_solution_torch_test(self, t, parameters, cm):
+        initial_values = torch.cat([self.population,
+                                    torch.zeros(self.n_age).to(self.device),
+                                    torch.ones(self.n_age).to(self.device),
+                                    torch.zeros(self.n_age).to(self.device)]).to(self.device)
+        model_wrapper = ModelFunTest(self, parameters, cm).to(self.device)
         return odeint(model_wrapper.forward, initial_values, t, method='euler')
 
 
@@ -84,3 +93,31 @@ class ModelFun(torch.nn.Module):
 
     def forward(self, ts, xs):
         return self.model.get_model(ts, xs, self.ps, self.cm)
+
+
+class ModelFunTest(torch.nn.Module):
+    """
+    Wrapper class for VaccinatedModel.get_model. Inherits from torch.nn.Module, enabling
+    the use of a GPU for evaluation through the library torchdiffeq.
+    """
+    def __init__(self, model, ps, cm):
+        super(ModelFunTest, self).__init__()
+        self.model = model
+        self.ps = ps
+        self.cm = cm
+
+    def forward(self, ts, xs):
+        ps = self.ps
+        s, e, i, r = xs.reshape(-1, self.model.n_age)
+
+        transmission = 2 * i.matmul(self.cm)
+        actual_population = self.model.population
+
+        model_eq = [-ps["susc"] * (s / actual_population) * transmission,  # S'(t)
+                     ps["susc"] * (s / actual_population) * transmission - ps["alpha"] * e,  # E'(t)
+                     ps["alpha"] * e - ps["gamma"] * i,  # I'(t)
+                     ps["gamma"] * i]  # R'(t)
+        return model_eq
+
+
+

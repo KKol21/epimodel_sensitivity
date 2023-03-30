@@ -26,7 +26,7 @@ class SamplerVaccinated(SamplerBase):
         return table / np.sum(table, axis=1, keepdims=True)
 
     def run_sampling(self):
-        n_samples = 50
+        n_samples = 5000
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(n_samples)
@@ -41,12 +41,12 @@ class SamplerVaccinated(SamplerBase):
         else:
             get_output = partial(self.get_max, comp=target_var.split('_')[0])
         results = list(tqdm(map(get_output, lhs_table), total=lhs_table.shape[0]))
-        results = np.array(results)
+        results = torch.tensor(results)
         # Sort tables by R0 values
         sorted_idx = results.argsort()
         results = results[sorted_idx]
-        lhs_table = np.array(lhs_table[sorted_idx])
-        sim_output = np.array(results)
+        lhs_table = lhs_table[sorted_idx]
+        sim_output = results
         sleep(0.3)
 
         self._save_output(output=lhs_table, folder_name='lhs')
@@ -64,8 +64,8 @@ class SamplerVaccinated(SamplerBase):
         parameters = self.sim_obj.params
         parameters.update({'v':  params * parameters["total_vaccines"] / parameters["T"]})
 
-        t = torch.linspace(1, 200, 200)
-        sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
+        t = torch.linspace(1, 200, 200).to(self.sim_obj.data.device)
+        sol = self.sim_obj.model.get_solution_torch_test(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
         if self.sim_obj.test:
             if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 10:
                 raise Exception("Unexpected change in population size!")
@@ -87,7 +87,7 @@ class SamplerVaccinated(SamplerBase):
         lhs_table = self.norm_table_rows(lhs_table)
         params = self.sim_obj.params
         total_vac = params["total_vaccines"] * lhs_table
-        population = np.array(self.sim_obj.population)
+        population = np.array(self.sim_obj.population.cpu())
 
         while np.any(total_vac > population):
             mask = total_vac > population
