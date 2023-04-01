@@ -30,14 +30,10 @@ class VaccinatedModel(EpidemicModelBase):
         vacc = self.get_vacc_bool(ts, ps)
 
         start = time.time()
-        i_end = n_state_val['i'][-1]
-        ic_end = n_state_val['ic'][-1]
-        v_end = n_state_val['v'][-1]
         model_eq = self.eq_solver.evaluate_eqns(n_state_val=n_state_val, s=s, r=r,
-                                                i_end=i_end, ic_end=ic_end, v_end=v_end,
                                                 transmission=transmission, vacc=vacc)
         self.time_ += time.time() - start
-        return model_eq
+        return torch.cat(tuple(model_eq))
 
     @staticmethod
     def get_n_states(n_classes, comp_name):
@@ -117,14 +113,14 @@ class ModelFunTest(torch.nn.Module):
         ps = self.ps
         s, e, i, r = xs.reshape(-1, self.model.n_age)
 
-        transmission = 2 * i.matmul(self.cm)
+        transmission = 0.1 * i.matmul(self.cm)
         actual_population = self.model.population
 
         model_eq = [-ps["susc"] * (s / actual_population) * transmission,  # S'(t)
                      ps["susc"] * (s / actual_population) * transmission - ps["alpha"] * e,  # E'(t)
                      ps["alpha"] * e - ps["gamma"] * i,  # I'(t)
                      ps["gamma"] * i]  # R'(t)
-        return torch.Tensor([val for eq in model_eq for val in eq])
+        return torch.cat(tuple(model_eq))
 
 
 
