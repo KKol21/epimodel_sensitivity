@@ -10,7 +10,7 @@ PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 class DataLoader:
     def __init__(self):
-        self.device = 'cpu' # 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self._model_parameters_data_file = os.path.join(PROJECT_PATH, "../data", "model_parameters.json")
         self._contact_data_file = os.path.join(PROJECT_PATH, "../data", "contact_matrices.xls")
         self._age_data_file = os.path.join(PROJECT_PATH, "../data", "age_distribution.xls")

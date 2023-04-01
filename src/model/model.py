@@ -75,7 +75,7 @@ class VaccinatedModel(EpidemicModelBase):
         return odeint(model_wrapper.forward, initial_values, t, method='euler')
 
     def get_solution_torch_test(self, t, parameters, cm):
-        initial_values = torch.cat([self.population,
+        initial_values = torch.cat([self.population - torch.ones(self.n_age).to(self.device),
                                     torch.zeros(self.n_age).to(self.device),
                                     torch.ones(self.n_age).to(self.device),
                                     torch.zeros(self.n_age).to(self.device)]).to(self.device)
