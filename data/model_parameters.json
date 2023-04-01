@@ -1,10 +1,10 @@
 {
     "alpha": {
-        "value": 1,
+        "value": 0.5,
         "description": "Reciprocal of expected time spent in exposed states"
     },
     "gamma": {
-        "value": 1,
+        "value":0.5,
         "description": "Reciprocal of expected time spent in infected states"
     },
     "rho": {
@@ -16,7 +16,7 @@
         "description": "Ratio of transition between vaccinated states"
     },
     "t_start": {
-        "value": 1000.0,
+        "value": 0.0,
         "description": "Start of vaccination campaign"
     },
     "T": {
