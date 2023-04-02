@@ -16,11 +16,11 @@
         "description": "Ratio of transition between vaccinated states"
     },
     "t_start": {
-        "value": 0.0,
+        "value": 30.0,
         "description": "Start of vaccination campaign"
     },
     "T": {
-        "value": 60.0,
+        "value": 90.0,
         "description": "Duration of the vaccination campaign"
     },
     "n_e_states": {

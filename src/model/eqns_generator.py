@@ -30,11 +30,11 @@ class EquationGenerator:
         ic_end = n_state_val['ic'][-1]
         v_end = n_state_val['v'][-1]
 
-        n_state_result = self.get_n_state_result(i_end, ic_end, n_state_val, r, s, transmission, vacc)
+        n_state_result = self.get_n_state_result(i_end, ic_end, n_state_val, s, r, transmission, vacc)
         return [self.s_eq(s, r, v_end, transmission, vacc)] + n_state_result \
                + [self.r_eq(n_state_val, i_end), self.d_eq(ic_end)]
 
-    def get_n_state_result(self, i_end, ic_end, n_state_val, r, s, transmission, vacc):
+    def get_n_state_result(self, i_end, ic_end, n_state_val, s, r, transmission, vacc):
         n_state_result = self.eval_e_eqns(n_state_val, s, transmission) + \
                          self.eval_i_eqns(n_state_val) + \
                          self.eval_h_eqns(n_state_val, i_end) + \
@@ -67,7 +67,7 @@ class EquationGenerator:
     def eval_icr_eqns(self, n_state_val, ic_end):
         val = n_state_val['icr']
         icr_0 = val[0]
-        return [self.ic_eqns[0](ic_end, icr_0)] + self.eval_transition_state_eqns(self.icr_eqns, val)
+        return [self.icr_eqns[0](ic_end, icr_0)] + self.eval_transition_state_eqns(self.icr_eqns, val)
 
     def eval_v_eqns(self, n_state_val, s, r, vacc):
         val = n_state_val["v"]
@@ -84,10 +84,6 @@ class EquationGenerator:
         self._get_ic_eqns()
         self._get_icr_eqns()
         self._get_v_eqns()
-
-    @staticmethod
-    def get_n_states(n_classes, comp_name):
-        return [f"{comp_name}_{i}" for i in range(n_classes)]
 
     def _get_s_eq(self):
         ps = self.ps

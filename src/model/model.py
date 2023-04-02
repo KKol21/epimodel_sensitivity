@@ -1,7 +1,5 @@
 import torch
-import numpy as np
 from torchdiffeq import odeint
-import time
 
 from src.model.eqns_generator import EquationGenerator
 from src.model.model_base import EpidemicModelBase
@@ -23,16 +21,13 @@ class VaccinatedModel(EpidemicModelBase):
         n_state_val = self.get_n_state_val(ps, val)
         # the same order as in self.compartments!
         s = val[0]
-        r, d = val[-2:]
-
+        r = val[-2]
         i = torch.stack([i_state for i_state in n_state_val["i"]]).sum(0)
         transmission = ps["beta"] * i.matmul(cm)
         vacc = self.get_vacc_bool(ts, ps)
 
-        start = time.time()
         model_eq = self.eq_solver.evaluate_eqns(n_state_val=n_state_val, s=s, r=r,
                                                 transmission=transmission, vacc=vacc)
-        self.time_ += time.time() - start
         return torch.cat(tuple(model_eq))
 
     @staticmethod
