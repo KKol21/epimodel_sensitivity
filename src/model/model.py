@@ -50,10 +50,6 @@ class VaccinatedModel(EpidemicModelBase):
             slice_start += n_states
         return n_state_val
 
-    @staticmethod
-    def get_vacc_bool(ts, ps):
-        return int(ps["t_start"] < ts < (ps["t_start"] + ps["T"]))
-
     def update_initial_values(self, iv, parameters):
         iv["e_0"][2] = 1
         e_states = get_n_states(n_classes=parameters["n_e_states"], comp_name="e")
@@ -69,6 +65,9 @@ class VaccinatedModel(EpidemicModelBase):
         model_wrapper = ModelFun(self, parameters, cm).to(self.device)
         return odeint(model_wrapper.forward, initial_values, t, method='euler')
 
+    @staticmethod
+    def get_vacc_bool(ts, ps):
+        return int(ps["t_start"] < ts < (ps["t_start"] + ps["T"]))
 
 class ModelFun(torch.nn.Module):
     """
@@ -83,3 +82,44 @@ class ModelFun(torch.nn.Module):
 
     def forward(self, ts, xs):
         return self.model.get_model(ts, xs, self.ps, self.cm)
+
+
+class ModelEq(torch.nn.Module):
+    def __init__(self, model: EpidemicModelBase, ps, cm):
+        super(ModelEq, self).__init__()
+        self.model = model
+        self.cm = cm
+        self.ps = ps
+
+        self.c_idx = model.c_idx
+        self.n_age = model.n_age
+        self.n_comp = len(model.compartments)
+        self.s_mtx = self.n_age * self.n_comp
+
+    def _get_A(self):
+        A = torch.zeros((self.s_mtx, self.s_mtx))
+        transmission = self.ps["beta"] * self.ps["susc"] / self.model.population
+        indices = slice(self.c_idx("s"), self.s_mtx, self.n_comp)
+
+        A[indices, indices] = - transmission
+        A[self.c_idx("e_0"):self.s_mtx:self.n_comp, indices] = transmission
+        self.A = A
+
+    def _get_transmission_right(self):
+        T_r = torch.zeros((self.s_mtx, self.n_age))
+        for i_state in get_n_states(self.ps["n_i_states"], "i"):
+            T_r[self.c_idx(i_state):self.s_mtx:self.n_age, :] = self.cm
+        self.T_r = T_r.T
+
+    def _get_transmission_left(self):
+        T_l = torch.zeros((self.s_mtx, self.n_age * self.ps["n_i_states"]))
+        for i_state in get_n_states(self.ps["n_i_states"], "i"):
+            T_l[self.c_idx('s'):self.s_mtx:self.n_comp, self.c_idx(i_state)] = 1
+            T_l[self.c_idx('e'):self.s_mtx:self.n_comp, self.c_idx(i_state)] = 1
+        self.T_l = T_l
+
+    # For increased efficiency, we represent the ODE system in the form
+    # y' = (A@y) * (T_l @ (y^T @ T_r)) + B @ y,
+    # saving every tensor in the module state when possible
+    def forward(self, ts, xs, v):
+        return None

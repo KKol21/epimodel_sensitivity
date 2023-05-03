@@ -8,7 +8,7 @@ class R0Generator(R0GeneratorBase):
     def __init__(self, param: dict, n_age: int = 16):
         self.n_e = param["n_e_states"]
         self.n_i = param["n_i_states"]
-        states = get_n_states(self.n_e, "e") +\
+        states = get_n_states(self.n_e, "e") + \
                  get_n_states(self.n_i, "i")
         super().__init__(param=param, states=states, n_age=n_age)
 

@@ -32,6 +32,7 @@ class SimulationVaccinated:
             self.params.update({"susc": susceptibility})
             r0generator = R0Generator(param=self.params)
             for base_r0 in self.r0_choices:
+                # Calculate base transmission rate
                 beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.contact_matrix,
                                                          susceptibles=self.susceptibles.reshape(1, -1),
                                                          population=self.population)
@@ -39,7 +40,6 @@ class SimulationVaccinated:
                 sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
                              "target_var": self.target_var}
                 param_generator = SamplerVaccinated(sim_state=sim_state, sim_obj=self)
-                sim_state.update({"params": self.data.param_names})
                 param_generator.run_sampling()
 
     # Calculate PRCC values from saved LHS tables, then save the result
