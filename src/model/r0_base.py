@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
 
-import numpy as np
 import torch
 
 
@@ -11,35 +9,31 @@ class R0GeneratorBase(ABC):
         self.n_age = n_age
         self.parameters = param
         self.n_states = len(self.states)
-        self.i = {self.states[index]: index for index in np.arange(0, self.n_states)}
+        self.i = {self.states[index]: index for index in torch.arange(0, self.n_states)}
         self.s_mtx = self.n_age * self.n_states
 
         self.v_inv = None
         self.e = None
-        self.contact_matrix = np.zeros((n_age, n_age))
+        self.contact_matrix = torch.zeros((n_age, n_age))
 
     def _idx(self, state: str) -> bool:
-        return np.arange(self.n_age * self.n_states) % self.n_states == self.i[state]
+        return torch.arange(self.n_age * self.n_states) % self.n_states == self.i[state]
 
-    def get_eig_val(self, susceptibles: np.ndarray, population: np.ndarray,
-                    contact_mtx: np.array = None) -> List[np.float64]:
+    def get_eig_val(self, susceptibles: torch.Tensor, population: torch.Tensor,
+                    contact_mtx: torch.Tensor = None) -> float:
         # contact matrix needed for effective reproduction number: [c_{j,i} * S_i(t) / N_i(t)]
         if contact_mtx is not None:
             self.contact_matrix = contact_mtx
-        contact_matrix = self.contact_matrix / population.reshape((-1, 1))
-        cm_tensor = torch.tile(contact_matrix, (susceptibles.shape[0], 1, 1))
-        susc_tensor = susceptibles.reshape((susceptibles.shape[0], susceptibles.shape[1], 1))
-        contact_matrix_tensor = cm_tensor * susc_tensor
-        eig_val_eff = []
-        for cm in contact_matrix_tensor:
-            f = self._get_f(cm)
-            self._get_v()
-            ngm_large = f @ self.v_inv
-            ngm = self.e @ ngm_large @ self.e.T
-            eig_val = np.sort(list(map(lambda x: np.abs(x), np.linalg.eig(ngm)[0])))
-            eig_val_eff.append(float(eig_val[-1]))
+        cm = self.contact_matrix / population.reshape((-1, 1))
+        cm = cm * susceptibles
+        f = self._get_f(cm)
+        self._get_v()
+        ngm_large = f @ self.v_inv
+        ngm = self.e @ ngm_large @ self.e.T
 
-        return eig_val_eff
+        dom_eig_val = torch.sort(torch.abs(
+                torch.linalg.eigvals(ngm)))[0][-1]
+        return float(dom_eig_val)
 
     @abstractmethod
     def _get_e(self):
@@ -50,5 +44,5 @@ class R0GeneratorBase(ABC):
         pass
 
     @abstractmethod
-    def _get_f(self, contact_matrix: np.ndarray):
+    def _get_f(self, contact_matrix: torch.Tensor):
         pass

@@ -19,7 +19,7 @@ class EquationGenerator:
     @staticmethod
     def get_transition_state_eqns(n_states, param):
         if n_states < 2:
-            return None
+            return []
         eqns = []
         for idx in range(1, n_states):
             eqns.append(get_transition_state_eq(idx, param))

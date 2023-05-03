@@ -26,7 +26,7 @@ class SamplerVaccinated(SamplerBase):
         return table / np.sum(table, axis=1, keepdims=True)
 
     def run_sampling(self):
-        n_samples = 5000
+        n_samples = 500
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(n_samples)
@@ -34,7 +34,7 @@ class SamplerVaccinated(SamplerBase):
         # doesn't exceed the population of that age group
         lhs_table = self.allocate_vaccines(lhs_table).to(self.sim_obj.data.device)
         print("Simulation for", n_samples,
-              "samples (", "-".join(self._get_variable_parameters()), ")")
+              "samples (", self._get_variable_parameters(), ")")
         target_var = self.sim_state["target_var"]
         if target_var == "r0":
             get_output = self.get_r0
@@ -66,7 +66,6 @@ class SamplerVaccinated(SamplerBase):
 
         t = torch.linspace(1, 200, 200).to(self.sim_obj.data.device)
         sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
-        self.sim_obj.model.time_ = 0
         if self.sim_obj.test:
             if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 100:
                 raise Exception("Unexpected change in population size!")
@@ -82,7 +81,7 @@ class SamplerVaccinated(SamplerBase):
         return comp_max
 
     def _get_variable_parameters(self):
-        return f'{self.susc}_{self.base_r0}_{self.sim_obj.target_var}'
+        return f'{self.susc}-{self.base_r0}-{self.sim_obj.target_var}'
 
     def allocate_vaccines(self, lhs_table):
         lhs_table = self.norm_table_rows(lhs_table)

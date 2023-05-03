@@ -1,18 +1,14 @@
 {
     "alpha": {
-        "value": 0.5,
+        "value": 0.4,
         "description": "Reciprocal of expected time spent in exposed states"
     },
     "gamma": {
-        "value":0.5,
+        "value":0.1,
         "description": "Reciprocal of expected time spent in infected states"
     },
-    "rho": {
-        "value": 0.9746794344808963,
-        "description": "Sqrt of efficacy of the vaccine"
-    },
     "psi": {
-        "value": 0.6,
+        "value": 0.03,
         "description": "Ratio of transition between vaccinated states"
     },
     "t_start": {
@@ -24,27 +20,27 @@
         "description": "Duration of the vaccination campaign"
     },
     "n_e_states": {
-        "value": 2,
-        "description": "Number of exposed compartments"
+        "value": 1,
+        "description": "Number of exposed states"
     },
     "n_i_states": {
-        "value": 3,
+        "value": 1,
         "description": "Number of infected states"
     },
     "n_h_states": {
-        "value": 3,
+        "value": 1,
         "description": "Number of hospitalized states"
     },
     "n_ic_states": {
-        "value": 3,
+        "value": 1,
         "description": "Number of intensive care states"
     },
     "n_icr_states": {
-        "value": 3,
+        "value": 1,
         "description": "Number of intensive care recovery states"
     },
     "n_v_states": {
-        "value": 3,
+        "value": 1,
         "description": "Number of vaccinated compartments"
     },
     "total_vaccines": {

@@ -18,12 +18,13 @@ class SimulationVaccinated:
 
         # User-defined param_names
         self.susc_choices = [0.5, 1.0]
-        self.r0_choices = [1.1, 2.5]
+        self.r0_choices = [2.5, 5]
         self.target_var = "d_max"  # i_max, ic_max, d_max
 
         # Define initial configs
         self._get_initial_config()
 
+    # Generate samples and run simulations, then save the result
     def run_sampling(self):
         susceptibility = torch.ones(self.no_ag).to(self.data.device)
         for susc in self.susc_choices:
@@ -33,7 +34,7 @@ class SimulationVaccinated:
             for base_r0 in self.r0_choices:
                 beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.contact_matrix,
                                                          susceptibles=self.susceptibles.reshape(1, -1),
-                                                         population=self.population)[0]
+                                                         population=self.population)
                 self.params.update({"beta": beta})
                 sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
                              "target_var": self.target_var}
@@ -41,6 +42,7 @@ class SimulationVaccinated:
                 sim_state.update({"params": self.data.param_names})
                 param_generator.run_sampling()
 
+    # Calculate PRCC values from saved LHS tables, then save the result
     def calculate_prcc(self):
         os.makedirs(f'../sens_data/prcc', exist_ok=True)
         for susc in self.susc_choices:
@@ -52,6 +54,7 @@ class SimulationVaccinated:
                 prcc = get_prcc_values(np.c_[lhs_table, sim_output.T])
                 np.savetxt(fname=f'../sens_data/prcc/prcc_{filename}.csv', X=prcc)
 
+    # Create and save tornado plots from sensitivity data
     def plot_prcc(self):
         os.makedirs(f'../sens_data//plots', exist_ok=True)
         for susc in self.susc_choices:
@@ -74,5 +77,3 @@ class SimulationVaccinated:
                                                             self.no_ag:(self.model.c_idx["s"] + 1) * self.no_ag]
         self.contact_matrix = self.data.contact_data["home"] + self.data.contact_data["work"] + \
             self.data.contact_data["school"] + self.data.contact_data["other"]
-        self.contact_home = self.data.contact_data["home"]
-        self.upper_tri_indexes = np.triu_indices(self.no_ag)
