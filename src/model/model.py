@@ -55,6 +55,7 @@ class VaccinatedModel(EpidemicModelBase):
         return int(ps["t_start"] < ts < (ps["t_start"] + ps["T"]))
 
     def update_initial_values(self, iv, parameters):
+        iv["e_0"][2] = 1
         e_states = get_n_states(n_classes=parameters["n_e_states"], comp_name="e")
         i_states = get_n_states(n_classes=parameters["n_i_states"], comp_name="i")
         e = torch.stack([iv[state] for state in e_states]).sum(0)

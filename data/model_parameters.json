@@ -1,18 +1,18 @@
 {
     "alpha": {
-        "value": 0.4,
+        "value": 1,
         "description": "Reciprocal of expected time spent in exposed states"
     },
     "gamma": {
-        "value":0.1,
+        "value":1,
         "description": "Reciprocal of expected time spent in infected states"
     },
     "psi": {
-        "value": 0.03,
+        "value": 0.006,
         "description": "Ratio of transition between vaccinated states"
     },
     "t_start": {
-        "value": 30.0,
+        "value": 20.0,
         "description": "Start of vaccination campaign"
     },
     "T": {
@@ -20,11 +20,11 @@
         "description": "Duration of the vaccination campaign"
     },
     "n_e_states": {
-        "value": 1,
+        "value": 2,
         "description": "Number of exposed states"
     },
     "n_i_states": {
-        "value": 1,
+        "value": 3,
         "description": "Number of infected states"
     },
     "n_h_states": {
@@ -46,6 +46,18 @@
     "total_vaccines": {
         "value": 3000000,
         "description": "Number of vaccines given to a specific age group"
+    },
+    "gamma_c": {
+        "value": 0.1,
+        "description": "Reciprocal of time on intensive care until transition to D/Icr"
+    },
+    "gamma_cr": {
+        "value": 0.07142857142857142,
+        "description": "Reciprocal of recovery time from Icr"
+    },
+     "gamma_h": {
+        "value": 0.1,
+        "description": "Reciprocal of hospitalization period"
     },
     "mu": {
         "value": [
@@ -109,17 +121,5 @@
             0.2936
         ],
         "description": "Probability of intensive care (given hospitalization)"
-    },
-    "gamma_c": {
-        "value": 0.05,
-        "description": "Reciprocal of time on intensive care until transition to D/Icr"
-    },
-    "gamma_cr": {
-        "value": 0.07142857142857142,
-        "description": "Reciprocal of recovery time from Icr"
-    },
-     "gamma_h": {
-        "value": 0.1,
-        "description": "Reciprocal of hospitalization period"
     }
 }

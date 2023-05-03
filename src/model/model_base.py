@@ -15,19 +15,10 @@ class EpidemicModelBase(ABC):
 
     def initialize(self):
         iv = {key: torch.zeros(self.n_age).to(self.device) for key in self.compartments}
-        iv.update({"i_0": torch.full(size=(self.n_age,), fill_value=10).to(self.device)})
         return iv
 
     def aggregate_by_age(self, solution, idx, n_states=1):
         return solution[:, idx:idx + n_states * self.n_age].sum(1)
-
-    def get_cumulative(self, solution):
-        idx = self.c_idx["c"]
-        return self.aggregate_by_age(solution, idx)
-
-    def get_deaths(self, solution):
-        idx = self.c_idx["d"]
-        return self.aggregate_by_age(solution, idx)
 
     def get_solution(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
