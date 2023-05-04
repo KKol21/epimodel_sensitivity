@@ -71,7 +71,7 @@ class SamplerVaccinated(SamplerBase):
                 raise Exception("Unexpected change in population size!")
 
         if comp in self.sim_obj.model.n_state_comp:
-            n_states = parameters[f"n_{comp}_states"]
+            n_states = parameters[f"n_{comp}"]
             idx_start = self.sim_obj.model.n_age * (self.sim_obj.model.c_idx[f"{comp}_0"])
         else:
             n_states = 1

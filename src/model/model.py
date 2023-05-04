@@ -36,7 +36,7 @@ class VaccinatedModel(EpidemicModelBase):
     def get_n_compartments(self, params):
         compartments = []
         for comp in self.n_state_comp:
-            compartments.append(get_n_states(comp_name=comp, n_classes=params[f'n_{comp}_states']))
+            compartments.append(get_n_states(comp_name=comp, n_classes=params[f'n_{comp}']))
         return [state for n_comp in compartments for state in n_comp]
 
     def get_n_state_val(self, ps, val):
@@ -44,7 +44,7 @@ class VaccinatedModel(EpidemicModelBase):
         slice_start = 1
         slice_end = 1
         for comp in self.n_state_comp:
-            n_states = ps[f'n_{comp}_states']
+            n_states = ps[f'n_{comp}']
             slice_end += n_states
             n_state_val[comp] = val[slice_start:slice_end]
             slice_start += n_states
@@ -52,8 +52,8 @@ class VaccinatedModel(EpidemicModelBase):
 
     def update_initial_values(self, iv, parameters):
         iv["e_0"][2] = 1
-        e_states = get_n_states(n_classes=parameters["n_e_states"], comp_name="e")
-        i_states = get_n_states(n_classes=parameters["n_i_states"], comp_name="i")
+        e_states = get_n_states(n_classes=parameters["n_e"], comp_name="e")
+        i_states = get_n_states(n_classes=parameters["n_i"], comp_name="i")
         e = torch.stack([iv[state] for state in e_states]).sum(0)
         i = torch.stack([iv[state] for state in i_states]).sum(0)
         iv.update({
@@ -68,6 +68,7 @@ class VaccinatedModel(EpidemicModelBase):
     @staticmethod
     def get_vacc_bool(ts, ps):
         return int(ps["t_start"] < ts < (ps["t_start"] + ps["T"]))
+
 
 class ModelFun(torch.nn.Module):
     """
@@ -85,7 +86,7 @@ class ModelFun(torch.nn.Module):
 
 
 class ModelEq(torch.nn.Module):
-    def __init__(self, model: EpidemicModelBase, ps, cm):
+    def __init__(self, model: VaccinatedModel, ps: dict, cm: torch.Tensor):
         super(ModelEq, self).__init__()
         self.model = model
         self.cm = cm
@@ -96,30 +97,94 @@ class ModelEq(torch.nn.Module):
         self.n_comp = len(model.compartments)
         self.s_mtx = self.n_age * self.n_comp
 
-    def _get_A(self):
-        A = torch.zeros((self.s_mtx, self.s_mtx))
-        transmission = self.ps["beta"] * self.ps["susc"] / self.model.population
-        indices = slice(self.c_idx("s"), self.s_mtx, self.n_comp)
-
-        A[indices, indices] = - transmission
-        A[self.c_idx("e_0"):self.s_mtx:self.n_comp, indices] = transmission
-        self.A = A
-
-    def _get_transmission_right(self):
-        T_r = torch.zeros((self.s_mtx, self.n_age))
-        for i_state in get_n_states(self.ps["n_i_states"], "i"):
-            T_r[self.c_idx(i_state):self.s_mtx:self.n_age, :] = self.cm
-        self.T_r = T_r.T
-
-    def _get_transmission_left(self):
-        T_l = torch.zeros((self.s_mtx, self.n_age * self.ps["n_i_states"]))
-        for i_state in get_n_states(self.ps["n_i_states"], "i"):
-            T_l[self.c_idx('s'):self.s_mtx:self.n_comp, self.c_idx(i_state)] = 1
-            T_l[self.c_idx('e'):self.s_mtx:self.n_comp, self.c_idx(i_state)] = 1
-        self.T_l = T_l
+        self._get_trans_param_dict()
+        self._get_A()
+        self._get_transmission()
+        self._get_B()
 
     # For increased efficiency, we represent the ODE system in the form
-    # y' = (A@y) * (T_l @ (y^T @ T_r)) + B @ y,
-    # saving every tensor in the module state when possible
-    def forward(self, ts, xs, v):
-        return None
+    # y' = (A @ y) * (T @ y) + B @ y,
+    # saving every tensor in the module state
+    def forward(self, t, y: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
+        # Fill in elements in B corresponding to vaccination
+        self.B[self.get_diag_slice('v_0'), self.get_diag_slice('s')] = self.ps["phi"] * v
+        return torch.matmul(self.A @ y, self.T @ y) + self.B @ y
+
+    def _get_A(self):
+        # When multiplied by y, gives back
+        A = torch.zeros((self.s_mtx, self.s_mtx))
+        transmission = self.ps["beta"] * self.ps["susc"] / self.model.population
+        indices = self.get_diag_slice('s')
+
+        A[indices, indices] = - transmission
+        A[self.get_diag_slice('e_0'), indices] = transmission
+        self.A = A
+
+    def _get_transmission(self):
+        n_i = self.ps["n_i"]
+        T_r = torch.zeros((self.n_age * n_i, self.s_mtx))
+        # When multiplied with y gives the 1D tensor, where it's ith element corresponds to the contact
+        # of the (i % n_i)th infected state from every infected age group with age group (i // n_age)
+        for idx, i_state in enumerate(get_n_states(n_i, "i")):
+            T_r[idx:self.n_age * n_i:n_i, ] = self.cm
+
+        T_l = torch.zeros((self.s_mtx, self.n_age * n_i))
+        # When matrix multiplied with T_r @ y, we get a 1D tensor, where it's ith element is
+        # the sum of all contacts of any infecteds with age group (i // n_age)
+        for i_state in get_n_states(n_i, "i"):
+            T_l[self.get_diag_slice('s'), self.c_idx[i_state]] = 1
+            T_l[self.get_diag_slice('e_0'), self.c_idx[i_state]] = 1
+        self.T = T_l @ T_r
+
+    def _get_B(self):
+        from src.model.r0 import generate_transition_block
+        # Tensor representing the first order elements of the ODE system
+        s_mtx = self.s_mtx
+        B = torch.zeros((s_mtx, s_mtx))
+        c_idx = self.c_idx
+        ps = self.ps
+        diag_slice = self.get_diag_slice
+        # We begin by filling in the transition blocks for the erlang distributed parameters
+        for age_group in range(self.n_age):
+            for comp, trans_param in self.trans_param_dict.items():
+                diag_idx = age_group * self.n_comp + c_idx[comp]
+                block_slice = slice(diag_idx, diag_idx + ps[f'n_{comp}'])
+                B[block_slice, block_slice] = generate_transition_block(trans_param, ps[f'n_{comp}'])
+        # Then do the rest of the first order terms, except for the elements dependent on the vaccination parameter
+        c_end = self.get_end_state
+        i_end = c_end('i')
+        h_end = c_end('h')
+        ic_end = c_end('ic')
+        icr_end = c_end('icr')
+        v_end = c_end('v')
+
+        # I   ->  H
+        B[diag_slice('h_0'), diag_slice(i_end)] = (1 - ps["xi"]) * ps["h"] * ps["gamma"]
+        # H   ->  R
+        B[diag_slice('r'), diag_slice(h_end)] = ps['gamma_h']
+        # I   ->  IC
+        B[diag_slice('ic_0'), diag_slice(i_end)] = ps["xi"] * ps["h"] * ps["gamma"]
+        # IC  ->  ICR
+        B[diag_slice('icr_0'), diag_slice(ic_end)] = ps["gamma_c"] * (1 - ps["mu"])
+        # ICR ->  R
+        B[diag_slice('r'), diag_slice(icr_end)] = ps["gamma_cr"]
+        # IC  ->  D
+        B[diag_slice('d'), diag_slice(ic_end)] = ps["gamma_c"] * ps["mu"]
+        # I   ->  R
+        B[diag_slice('r'), diag_slice(i_end)] = (1 - ps['h']) * ps['gamma']
+        # V   ->  S
+        B[diag_slice('s'), diag_slice(v_end)] = ps["phi"]
+
+        self.B = B
+
+    def _get_trans_param_dict(self):
+        ps = self.ps
+        trans_param_list = [ps["alpha"], ps["gamma"], ps["gamma_h"], ps["gamma_c"], ps["gamma_cr"], ps["phi"]]
+        self.trans_param_dict = {key: value for key, value in zip(self.model.n_state_comp, trans_param_list)}
+
+    def get_diag_slice(self, comp: str) -> slice:
+        return slice(self.c_idx[comp], self.s_mtx, self.n_comp)
+
+    def get_end_state(self, comp: str) -> str:
+        n_states = self.ps[f'n_{comp}']
+        return f'i_{n_states - 1}'

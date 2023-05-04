@@ -19,27 +19,27 @@
         "value": 90.0,
         "description": "Duration of the vaccination campaign"
     },
-    "n_e_states": {
+    "n_e": {
         "value": 2,
         "description": "Number of exposed states"
     },
-    "n_i_states": {
+    "n_i": {
         "value": 3,
         "description": "Number of infected states"
     },
-    "n_h_states": {
+    "n_h": {
         "value": 1,
         "description": "Number of hospitalized states"
     },
-    "n_ic_states": {
+    "n_ic": {
         "value": 1,
         "description": "Number of intensive care states"
     },
-    "n_icr_states": {
+    "n_icr": {
         "value": 1,
         "description": "Number of intensive care recovery states"
     },
-    "n_v_states": {
+    "n_v": {
         "value": 1,
         "description": "Number of vaccinated compartments"
     },

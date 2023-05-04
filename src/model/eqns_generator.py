@@ -102,7 +102,7 @@ class EquationGenerator:
 
     def _get_e_eqns(self):
         self.e_eqns = [self.get_e_0_eq()] \
-                      + self.get_transition_state_eqns(self.ps["n_e_states"], self.ps["alpha"])
+                      + self.get_transition_state_eqns(self.ps["n_e"], self.ps["alpha"])
 
     def get_e_0_eq(self):
         return lambda s, e_0, transmission: (self.ps["susc"] * (s / self.actual_population) * transmission
@@ -110,14 +110,14 @@ class EquationGenerator:
 
     def _get_i_eqns(self):
         self.i_eqns = [self.get_i_0_eq()] \
-                      + self.get_transition_state_eqns(self.ps["n_i_states"], self.ps['gamma'])
+                      + self.get_transition_state_eqns(self.ps["n_i"], self.ps['gamma'])
 
     def get_i_0_eq(self):
         return lambda e_end, i_0: self.ps["alpha"] * e_end - self.ps["gamma"] * i_0
 
     def _get_h_eqns(self):
         self.h_eqns = [self.get_h_0_eq()] \
-                      + self.get_transition_state_eqns(self.ps["n_h_states"], self.ps['gamma_h'])
+                      + self.get_transition_state_eqns(self.ps["n_h"], self.ps['gamma_h'])
 
     def get_h_0_eq(self):
         ps = self.ps
@@ -125,7 +125,7 @@ class EquationGenerator:
 
     def _get_ic_eqns(self):
         self.ic_eqns = [self.get_ic_0_eq()] \
-                       + self.get_transition_state_eqns(self.ps["n_ic_states"], self.ps['gamma_c'])
+                       + self.get_transition_state_eqns(self.ps["n_ic"], self.ps['gamma_c'])
 
     def get_ic_0_eq(self):
         ps = self.ps
@@ -133,7 +133,7 @@ class EquationGenerator:
 
     def _get_icr_eqns(self):
         self.icr_eqns = [self.get_icr_0_eq()] \
-                        + self.get_transition_state_eqns(self.ps["n_icr_states"], self.ps['gamma_cr'])
+                        + self.get_transition_state_eqns(self.ps["n_icr"], self.ps['gamma_cr'])
 
     def get_icr_0_eq(self):
         ps = self.ps
@@ -141,7 +141,7 @@ class EquationGenerator:
 
     def _get_v_eqns(self):
         self.v_eqns = [self.get_v_0_eq()] \
-                      + self.get_transition_state_eqns(self.ps["n_v_states"], self.ps['psi'])
+                      + self.get_transition_state_eqns(self.ps["n_v"], self.ps['psi'])
 
     def get_v_0_eq(self):
         ps = self.ps

@@ -4,32 +4,32 @@ from src.model.r0_base import R0GeneratorBase
 from src.model.model import get_n_states
 
 
+def generate_transition_block(transition_param: float, n_states: int) -> torch.Tensor:
+    trans_block = torch.zeros((n_states, n_states))
+    # Outflow from states (diagonal elements)
+    trans_block = trans_block.fill_diagonal_(-transition_param)
+    # Inflow to states (elements under the diagonal)
+    trans_block[1:, :n_states - 1] = trans_block[1:, :n_states - 1].fill_diagonal_(transition_param)
+    return trans_block
+
+
 class R0Generator(R0GeneratorBase):
     def __init__(self, param: dict, n_age: int = 16):
-        self.n_e = param["n_e_states"]
-        self.n_i = param["n_i_states"]
+        self.n_e = param["n_e"]
+        self.n_i = param["n_i"]
         states = get_n_states(self.n_e, "e") + \
                  get_n_states(self.n_i, "i")
         super().__init__(param=param, states=states, n_age=n_age)
 
         self._get_e()
 
-    @staticmethod
-    def generate_transition_block(transition_param: float, n_states: int) -> torch.Tensor:
-        trans_block = torch.zeros((n_states, n_states))
-        # Outflow from states (diagonal elements)
-        trans_block = trans_block.fill_diagonal_(-transition_param)
-        # Inflow to states (elements under the diagonal)
-        trans_block[1:, :n_states - 1] = trans_block[1:, :n_states - 1].fill_diagonal_(transition_param)
-        return trans_block
-
     def _get_v(self) -> None:
         idx = self._idx
         v = torch.zeros((self.n_age * self.n_states, self.n_age * self.n_states))
         params = self.parameters
 
-        e_trans = self.generate_transition_block(params["alpha"], self.n_e)
-        i_trans = self.generate_transition_block(params["gamma"], self.n_i)
+        e_trans = generate_transition_block(params["alpha"], self.n_e)
+        i_trans = generate_transition_block(params["gamma"], self.n_i)
         for age_group in range(self.n_age):
             e_start = age_group * self.n_states
             e_end = e_start + self.n_e
