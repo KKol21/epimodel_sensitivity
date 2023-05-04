@@ -20,11 +20,11 @@
         "description": "Duration of the vaccination campaign"
     },
     "n_e": {
-        "value": 2,
+        "value": 1,
         "description": "Number of exposed states"
     },
     "n_i": {
-        "value": 3,
+        "value": 1,
         "description": "Number of infected states"
     },
     "n_h": {
