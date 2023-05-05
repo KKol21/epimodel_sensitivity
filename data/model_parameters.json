@@ -12,7 +12,7 @@
         "description": "Ratio of transition between vaccinated states"
     },
     "t_start": {
-        "value": 20.0,
+        "value": 5.0,
         "description": "Start of vaccination campaign"
     },
     "T": {
@@ -20,11 +20,11 @@
         "description": "Duration of the vaccination campaign"
     },
     "n_e": {
-        "value": 1,
+        "value": 2,
         "description": "Number of exposed states"
     },
     "n_i": {
-        "value": 1,
+        "value": 2,
         "description": "Number of infected states"
     },
     "n_h": {
@@ -44,7 +44,7 @@
         "description": "Number of vaccinated compartments"
     },
     "total_vaccines": {
-        "value": 300000,
+        "value": 3000000,
         "description": "Number of vaccines given to a specific age group"
     },
     "gamma_c": {

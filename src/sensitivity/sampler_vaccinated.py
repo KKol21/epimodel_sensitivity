@@ -1,5 +1,5 @@
 from functools import partial
-from time import sleep
+from time import sleep, time
 
 import numpy as np
 from smt.sampling_methods import LHS
@@ -65,8 +65,13 @@ class SamplerVaccinated(SamplerBase):
         parameters.update({'v':  params * parameters["total_vaccines"] / parameters["T"]})
 
         t = torch.linspace(1, 300, 300).to(self.sim_obj.data.device)
+
+        start = time()
         sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
+        print(time()-start)
+        start = time()
         sol_ = self.sim_obj.model2.get_solution_torch_test(t=t, param=parameters, cm=self.sim_obj.contact_matrix)
+        print(time() - start)
         if self.sim_obj.test:
             if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 100:
                 raise Exception("Unexpected change in population size!")

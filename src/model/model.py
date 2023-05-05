@@ -11,7 +11,7 @@ def get_n_states(n_classes, comp_name):
 
 class VaccinatedModel(EpidemicModelBase):
     def __init__(self, model_data):
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = model_data.device
         self.n_state_comp = ["e", "i", "h", "ic", "icr", "v"]
         compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
@@ -51,7 +51,7 @@ class VaccinatedModel(EpidemicModelBase):
         return n_state_val
 
     def update_initial_values(self, iv, parameters):
-        iv["e_0"][2] = 1
+        iv["e_0"][0] = 1
         e_states = get_n_states(n_classes=parameters["n_e"], comp_name="e")
         i_states = get_n_states(n_classes=parameters["n_i"], comp_name="i")
         e = torch.stack([iv[state] for state in e_states]).sum(0)
@@ -63,7 +63,7 @@ class VaccinatedModel(EpidemicModelBase):
     def get_solution_torch(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
         model_wrapper = ModelFun(self, parameters, cm).to(self.device)
-        return odeint(model_wrapper.forward, initial_values, t, method='euler')
+        return odeint(model_wrapper, initial_values, t, method='euler')
 
     @staticmethod
     def get_vacc_bool(ts, ps):
@@ -87,10 +87,11 @@ class ModelFun(torch.nn.Module):
 
 class VaccinatedModel2(EpidemicModelBase):
     def __init__(self, model_data):
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = model_data.device
         self.n_state_comp = ["e", "i", "h", "ic", "icr", "v"]
         compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
+        self.n_comp = len(self.compartments)
 
     def update_initial_values(self, iv, parameters):
         pass
@@ -106,14 +107,14 @@ class VaccinatedModel2(EpidemicModelBase):
 
     def get_solution_torch_test(self, t, param, cm):
         initial_values = self.get_initial_values_()
-        model_wrapper = ModelEq(self, param, cm)
-        return odeint(model_wrapper.forward, initial_values, t, method='euler')
+        model_wrapper = ModelEq(self, param, cm).to(self.device)
+        return odeint(model_wrapper, initial_values, t, method='euler')
 
     def get_initial_values_(self):
         size = self.n_age * len(self.compartments)
         iv = torch.zeros(size)
         iv[self.c_idx['e_0']] = 1
-        iv[self.c_idx['s']:size:len(self.compartments)] = self.population
+        iv[self.c_idx['s']:size:self.n_comp] = self.population
         iv[0] -= 1
         return iv
 
@@ -132,37 +133,32 @@ class ModelEq(torch.nn.Module):
         self.s_mtx = self.n_age * self.n_comp
         self.diag_idx = (range(self.n_age), range(self.n_age))
 
-        self.ps["h"] = torch.zeros(16)
-        self.ps["alpha"] = 0
         self._get_trans_param_dict()
         self._get_A()
         self._get_T()
         self._get_B()
+        self._get_V_1()
+        self._get_V_2()
 
     # For increased efficiency, we represent the ODE system in the form
-    # y' = (A @ y) * (T @ y) + B @ y,
+    # y' = (A @ y) * (T @ y) + B @ y + (V_1 * y) / (V_2 @ y),
     # saving every tensor in the module state
     def forward(self, t, y: torch.Tensor) -> torch.Tensor:
-        # Fill in elements in B corresponding to vaccination
+        vacc = torch.zeros(self.s_mtx)
         if self.get_vacc_bool(t):
-            idx = self._idx
-            s = y[idx('s')]
-            r = y[idx('r')]
-            v = self.ps["v"]
-            self.B[idx('v_0'), idx('s')] = v / (s + r)
-            self.B[idx('s'), idx('s')] = - v / (s + r)
-        return self.A @ y * self.T @ y + self.B @ y
+            vacc = torch.div(self.V_1 @ y, self.V_2 @ y)
+        return torch.mul(self.A @ y, self.T @ y) + self.B @ y + vacc
 
     def _get_A(self):
-        # Multiplied with y, the resulting 1D tensor contains the rate of transmission of age group i
-        # at the indices of compartments s^i and e_0^i
-        A = torch.zeros((self.s_mtx, self.s_mtx))
+        # Multiplied with y, the resulting 1D tensor contains the rate of transmission for the susceptibles of
+        # age group i at the indices of compartments s^i and e_0^i
+        A = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
         transmission_rate = self.ps["beta"] * self.ps["susc"] / self.model.population
         idx = self._idx
 
         A[idx('s'), idx('s')] = - transmission_rate
         A[idx('e_0'), idx('s')] = transmission_rate
-        self.A = A.to(self.device)
+        self.A = A
 
     def _get_T(self):
         T = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
@@ -171,7 +167,6 @@ class ModelEq(torch.nn.Module):
         for i_state in get_n_states(self.ps["n_i"], "i"):
             T[self._get_comp_slice('s'), self._get_comp_slice(i_state)] = self.cm
             T[self._get_comp_slice('e_0'), self._get_comp_slice(i_state)] = self.cm
-
         self.T = T
 
     def _get_B(self):
@@ -188,7 +183,7 @@ class ModelEq(torch.nn.Module):
                 diag_idx = age_group * self.n_comp + c_idx[f'{comp}_0']
                 block_slice = slice(diag_idx, diag_idx + n_states)
                 B[block_slice, block_slice] = generate_transition_block(trans_param, n_states)
-        # Then do the rest of the first order terms, except for the elements dependent on the vaccination parameters
+        # Then do the rest of the first order terms
         idx = self._idx
         c_end = self._get_end_state
         e_end = c_end('e')
@@ -196,6 +191,7 @@ class ModelEq(torch.nn.Module):
         h_end = c_end('h')
         ic_end = c_end('ic')
         icr_end = c_end('icr')
+        v_end = c_end('v')
 
         # E   ->  I
         B[idx('i_0'), idx(e_end)] = ps["alpha"]
@@ -213,15 +209,30 @@ class ModelEq(torch.nn.Module):
         B[idx('d'), idx(ic_end)] = ps["gamma_c"] * ps["mu"]
         # I   ->  R
         B[idx('r'), idx(i_end)] = (1 - ps['h']) * ps['gamma']
+        # V   ->  S
+        B[idx("s"), idx(v_end)] = ps["psi"]
         self.B = B
+
+    def _get_V_1(self):
+        V_1 = torch.zeros((self.s_mtx, self.s_mtx))
+        V_1[self._idx('s'), self._idx('s')] = self.ps["v"]
+        V_1[self._idx('v_0'), self._idx('s')] = self.ps["v"]
+        self.V_1 = V_1
+
+    def _get_V_2(self):
+        idx = self._idx
+        V_2 = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
+        V_2[~ (idx('s') + idx('v_0')), 0] = 1
+        V_2[idx('s'), idx('s')] = - 1
+        V_2[idx('s'), idx('r')] = - 1
+        V_2[idx('v_0'), idx('s')] = 1
+        V_2[idx('v_0'), idx('r')] = 1
+        self.V_2 = V_2
 
     def _get_trans_param_dict(self):
         ps = self.ps
         trans_param_list = [ps["alpha"], ps["gamma"], ps["gamma_h"], ps["gamma_c"], ps["gamma_cr"], ps["psi"]]
         self.trans_param_dict = {key: value for key, value in zip(self.model.n_state_comp, trans_param_list)}
-
-    def _idx(self, state: str) -> bool:
-        return torch.arange(self.n_age * self.n_comp) % self.n_comp == self.c_idx[state]
 
     def _get_comp_slice(self, comp: str) -> slice:
         return slice(self.c_idx[comp], self.s_mtx, self.n_comp)
@@ -230,5 +241,8 @@ class ModelEq(torch.nn.Module):
         n_states = self.ps[f'n_{comp}']
         return f'{comp}_{n_states - 1}'
 
-    def get_vacc_bool(self, t) -> bool:
+    def get_vacc_bool(self, t) -> int:
         return self.ps["t_start"] < t < (self.ps["t_start"] + self.ps["T"])
+
+    def _idx(self, state: str) -> bool:
+        return torch.arange(self.n_age * self.n_comp) % self.n_comp == self.c_idx[state]

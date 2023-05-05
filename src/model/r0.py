@@ -25,7 +25,7 @@ class R0Generator(R0GeneratorBase):
 
     def _get_v(self) -> None:
         idx = self._idx
-        v = torch.zeros((self.n_age * self.n_states, self.n_age * self.n_states))
+        v = torch.zeros((self.s_mtx, self.s_mtx))
         params = self.parameters
 
         e_trans = generate_transition_block(params["alpha"], self.n_e)
@@ -49,11 +49,11 @@ class R0Generator(R0GeneratorBase):
         s_mtx = self.s_mtx
         n_states = self.n_states
 
-        f = torch.zeros((self.n_age * n_states, self.n_age * n_states))
+        f = torch.zeros((s_mtx, s_mtx))
         susc_vec = self.parameters["susc"].reshape((-1, 1))
         # Rate of infection for every infected state
         for inf_state in get_n_states(self.n_i, "i"):
-            f[i["e_0"]:s_mtx:n_states, i[inf_state]:s_mtx:n_states] = torch.mul(contact_mtx.T, susc_vec)
+            f[i["e_0"]:s_mtx:n_states, i[inf_state]:s_mtx:n_states] = torch.mul(contact_mtx, susc_vec)
         return f
 
     def _get_e(self):
