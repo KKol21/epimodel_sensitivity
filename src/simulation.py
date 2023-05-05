@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from src.dataloader import DataLoader
-from src.model.model import VaccinatedModel
+from src.model.model import VaccinatedModel, VaccinatedModel2
 from src.sensitivity.prcc import generate_prcc_plot, get_prcc_values
 from src.model.r0 import R0Generator
 from src.sensitivity.sampler_vaccinated import SamplerVaccinated
@@ -71,6 +71,7 @@ class SimulationVaccinated:
         self.params = self.data.model_parameters_data
         self.no_ag = self.data.contact_data["home"].shape[0]
         self.model = VaccinatedModel(model_data=self.data)
+        self.model2 = VaccinatedModel2(model_data=self.data)
         self.population = self.model.population
         self.age_vector = self.population.reshape((-1, 1))
         self.susceptibles = self.model.get_initial_values(parameters=self.params)[self.model.c_idx["s"] *
