@@ -26,11 +26,11 @@ class SimulationVaccinated:
 
     # Generate samples and run simulations, then save the result
     def run_sampling(self):
-        susceptibility = torch.ones(self.no_ag).to(self.data.device)
+        susceptibility = torch.ones(self.n_age).to(self.data.device)
         for susc in self.susc_choices:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})
-            r0generator = R0Generator(param=self.params)
+            r0generator = R0Generator(param=self.params, device=self.data.device, n_age=self.n_age)
             for base_r0 in self.r0_choices:
                 # Calculate base transmission rate
                 beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.contact_matrix,
@@ -69,12 +69,13 @@ class SimulationVaccinated:
 
     def _get_initial_config(self):
         self.params = self.data.model_parameters_data
-        self.no_ag = self.data.contact_data["home"].shape[0]
+        self.n_age = self.data.contact_data["home"].shape[0]
+        self.contact_matrix = self.data.contact_data["home"] + self.data.contact_data["work"] + \
+                              self.data.contact_data["school"] + self.data.contact_data["other"]
         self.model = VaccinatedModel(model_data=self.data)
-        self.model2 = VaccinatedModel2(model_data=self.data)
+        self.model2 = VaccinatedModel2(model_data=self.data, cm=self.contact_matrix)
         self.population = self.model.population
         self.age_vector = self.population.reshape((-1, 1))
         self.susceptibles = self.model.get_initial_values(parameters=self.params)[self.model.c_idx["s"] *
-                                                            self.no_ag:(self.model.c_idx["s"] + 1) * self.no_ag]
-        self.contact_matrix = self.data.contact_data["home"] + self.data.contact_data["work"] + \
-            self.data.contact_data["school"] + self.data.contact_data["other"]
+                                                            self.n_age:(self.model.c_idx["s"] + 1) * self.n_age]
+

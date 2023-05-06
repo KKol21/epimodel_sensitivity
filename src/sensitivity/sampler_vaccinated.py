@@ -14,8 +14,8 @@ class SamplerVaccinated(SamplerBase):
         super().__init__(sim_state, sim_obj)
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
-        self.lhs_boundaries = {"lower": np.zeros(sim_obj.no_ag),    # Ratio of daily vaccines given to each age group
-                               "upper": np.ones(sim_obj.no_ag)
+        self.lhs_boundaries = {"lower": np.zeros(sim_obj.n_age),    # Ratio of daily vaccines given to each age group
+                               "upper": np.ones(sim_obj.n_age)
                                }
         self.lhs_table = None
         self.sim_output = None
@@ -81,11 +81,14 @@ class SamplerVaccinated(SamplerBase):
         if comp in self.sim_obj.model.n_state_comp:
             n_states = parameters[f"n_{comp}"]
             idx_start = self.sim_obj.model.n_age * (self.sim_obj.model.c_idx[f"{comp}_0"])
+            comp_sol = self.sim_obj.model2.aggregate_by_age_n_state(solution=sol_, comp=comp)
         else:
             n_states = 1
             idx_start = self.sim_obj.model.n_age * self.sim_obj.model.c_idx[comp]
+            comp_sol = self.sim_obj.model2.aggregate_by_age_(solution=sol_, comp=comp)
 
         comp_max = torch.max(self.sim_obj.model.aggregate_by_age(solution=sol, idx=idx_start, n_states=n_states))
+        comp_max_ = torch.max(comp_sol)
         return comp_max
 
     def _get_variable_parameters(self):

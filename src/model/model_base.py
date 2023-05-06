@@ -7,6 +7,7 @@ import torch
 
 class EpidemicModelBase(ABC):
     def __init__(self, model_data, compartments):
+        self.ps = model_data.model_parameters_data
         self.population = model_data.age_data.flatten()
         self.compartments = compartments
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}

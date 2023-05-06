@@ -12,7 +12,7 @@
         "description": "Ratio of transition between vaccinated states"
     },
     "t_start": {
-        "value": 5.0,
+        "value": 20.0,
         "description": "Start of vaccination campaign"
     },
     "T": {

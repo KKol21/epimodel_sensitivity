@@ -1,7 +1,7 @@
 import torch
 
-from src.model.r0_base import R0GeneratorBase
 from src.model.model import get_n_states
+from src.model.r0_base import R0GeneratorBase
 
 
 def generate_transition_block(transition_param: float, n_states: int) -> torch.Tensor:
@@ -13,43 +13,44 @@ def generate_transition_block(transition_param: float, n_states: int) -> torch.T
     return trans_block
 
 
+def generate_transition_matrix(trans_param_dict, ps, n_age, n_comp, c_idx):
+    trans_matrix = torch.zeros((n_age * n_comp, n_age * n_comp))
+    for age_group in range(n_age):
+        for comp, trans_param in trans_param_dict.items():
+            n_states = ps[f'n_{comp}']
+            diag_idx = age_group * n_comp + c_idx[f'{comp}_0']
+            block_slice = slice(diag_idx, diag_idx + n_states)
+            trans_matrix[block_slice, block_slice] = generate_transition_block(trans_param, n_states)
+    return trans_matrix
+
+
 class R0Generator(R0GeneratorBase):
-    def __init__(self, param: dict, n_age: int = 16):
+    def __init__(self, param: dict, device, n_age: int):
+        from src.model.model import get_n_states
         self.n_e = param["n_e"]
         self.n_i = param["n_i"]
         states = get_n_states(self.n_e, "e") + \
                  get_n_states(self.n_i, "i")
         super().__init__(param=param, states=states, n_age=n_age)
 
+        self.device = device
         self._get_e()
 
     def _get_v(self) -> None:
         idx = self._idx
-        v = torch.zeros((self.s_mtx, self.s_mtx))
         params = self.parameters
 
-        e_trans = generate_transition_block(params["alpha"], self.n_e)
-        i_trans = generate_transition_block(params["gamma"], self.n_i)
-        for age_group in range(self.n_age):
-            e_start = age_group * self.n_states
-            e_end = e_start + self.n_e
-            # Transition between exposed states
-            v[e_start:e_end, e_start:e_end] = e_trans
-
-            i_start = e_end
-            i_end = i_start + self.n_i
-            # Transition between infected states
-            v[i_start:i_end, i_start:i_end] = i_trans
-        # Transition from last exposed state to first infected to state
-        v[idx('i_0'), idx(f'e_{self.n_e - 1}')] = params["alpha"]
-        self.v_inv = torch.linalg.inv(v)
+        trans_mtx = generate_transition_matrix({"e": self.parameters["alpha"], "i": self.parameters["gamma"]},
+                                               self.parameters, self.n_age, self.n_states, self.i)
+        trans_mtx[idx('i_0'), idx(f'e_{self.n_e - 1}')] = params["alpha"]
+        self.v_inv = torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
         i = self.i
         s_mtx = self.s_mtx
         n_states = self.n_states
 
-        f = torch.zeros((s_mtx, s_mtx))
+        f = torch.zeros((s_mtx, s_mtx)).to(self.device)
         susc_vec = self.parameters["susc"].reshape((-1, 1))
         # Rate of infection for every infected state
         for inf_state in get_n_states(self.n_i, "i"):
@@ -57,7 +58,7 @@ class R0Generator(R0GeneratorBase):
         return f
 
     def _get_e(self):
-        block = torch.zeros(self.n_states, )
+        block = torch.zeros(self.n_states, ).to(self.device)
         block[0] = 1
         self.e = block
         for i in range(1, self.n_age):
