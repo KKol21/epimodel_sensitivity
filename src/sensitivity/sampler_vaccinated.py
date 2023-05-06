@@ -12,6 +12,7 @@ from src.sensitivity.sampler_base import SamplerBase
 class SamplerVaccinated(SamplerBase):
     def __init__(self, sim_state: dict, sim_obj):
         super().__init__(sim_state, sim_obj)
+        self.n_samples = 10000
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
         self.lhs_boundaries = {"lower": np.zeros(sim_obj.n_age),    # Ratio of daily vaccines given to each age group
@@ -26,14 +27,13 @@ class SamplerVaccinated(SamplerBase):
         return table / np.sum(table, axis=1, keepdims=True)
 
     def run_sampling(self):
-        n_samples = 500
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
-        lhs_table = sampling(n_samples)
+        lhs_table = sampling(self.n_samples)
         # Make sure that total vaccines given to an age group
         # doesn't exceed the population of that age group
         lhs_table = self.allocate_vaccines(lhs_table).to(self.sim_obj.data.device)
-        print("Simulation for", n_samples,
+        print("Simulation for", self.n_samples,
               "samples (", self._get_variable_parameters(), ")")
         target_var = self.sim_state["target_var"]
         if target_var == "r0":
@@ -64,16 +64,16 @@ class SamplerVaccinated(SamplerBase):
         parameters = self.sim_obj.params
         parameters.update({'v':  params * parameters["total_vaccines"] / parameters["T"]})
 
-        t = torch.linspace(1, 300, 300).to(self.sim_obj.data.device)
+        t = torch.linspace(1, 150, 150).to(self.sim_obj.data.device)
 
-        start = time()
-        sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
-        print(time()-start)
+       # start = time()
+       # sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
+       # print(time()-start)
         start = time()
         sol_ = self.sim_obj.model2.get_solution_torch_test(t=t, param=parameters, cm=self.sim_obj.contact_matrix)
-        print(time() - start)
+        #print(time() - start)
         if self.sim_obj.test:
-            if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 100:
+            if abs(self.sim_obj.population.sum() - sol_[-1, :].sum()) > 100:
                 raise Exception("Unexpected change in population size!")
             if abs(self.sim_obj.population.sum() - sol_[-1, :].sum()) > 100:
                 raise Exception("Unexpected change in population size!")
@@ -87,9 +87,9 @@ class SamplerVaccinated(SamplerBase):
             idx_start = self.sim_obj.model.n_age * self.sim_obj.model.c_idx[comp]
             comp_sol = self.sim_obj.model2.aggregate_by_age_(solution=sol_, comp=comp)
 
-        comp_max = torch.max(self.sim_obj.model.aggregate_by_age(solution=sol, idx=idx_start, n_states=n_states))
+       # comp_max = torch.max(self.sim_obj.model.aggregate_by_age(solution=sol, idx=idx_start, n_states=n_states))
         comp_max_ = torch.max(comp_sol)
-        return comp_max
+        return comp_max_
 
     def _get_variable_parameters(self):
         return f'{self.susc}-{self.base_r0}-{self.sim_obj.target_var}'

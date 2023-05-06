@@ -29,7 +29,13 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str):
     prcc = np.round(prcc, 3)
     sorted_idx = np.abs(prcc).argsort()[::-1]
     prcc = prcc[sorted_idx]
-    plt.title(f"PRCC of model parameters, target variable: {target_var}", fontsize=15, wrap=True)
+    if target_var == "i_max":
+        target_var = "fertőzöttek száma a csúcson"
+    elif target_var == "ic_max":
+        target_var = "intenzív osztályra kerültek száma a csúcson"
+    elif target_var == "d_max":
+        target_var = "halottak száma"
+    plt.title(f"PRCC értékei a vakcinák elosztásának, célváltozó: {target_var}", fontsize=15, wrap=True)
 
     ys = range(len(params))[::-1]
     # Plot the bars one by one
@@ -43,10 +49,10 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str):
         )
 
         if value != 0:
-            x = (value / 2) if np.abs(value) >= 0.15 else (- np.sign(value) * 0.1)
+            x = (value / 2) if np.abs(value) >= 0.2 else (- np.sign(value) * 0.1)
         else:
             x = -0.1
-        plt.text(x, y, str(value), va='center', ha='center')
+        plt.text(x, y - 0.01, str(value), va='center', ha='center')
 
     plt.axvline(0, color='black')
 
