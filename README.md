@@ -7,13 +7,6 @@ The purpose of this project is the sensitivity analysis of a COVID-19 model (set
 The flow of individuals between the compartments is as follows:
 ```mermaid
 graph TD;
-  A-->B;
-  A-->C;
-  B-->D;
-  C-->D;
-```
-```mermaid
-graph TD:
   S-->V;
   V-->S;
   S-->E;
