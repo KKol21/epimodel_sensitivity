@@ -87,12 +87,13 @@ class ModelFun(torch.nn.Module):
 
 class VaccinatedModel2(EpidemicModelBase):
     def __init__(self, model_data, cm):
-        from src.model.matrix_generator import MatrixGenerator
         self.device = model_data.device
         self.n_state_comp = ["e", "i", "h", "ic", "icr", "v"]
         compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
         self.n_comp = len(self.compartments)
+
+        from src.model.matrix_generator import MatrixGenerator
         self.matrix_generator = MatrixGenerator(model=self, cm=cm, ps=self.ps)
 
     def update_initial_values(self, iv, parameters):

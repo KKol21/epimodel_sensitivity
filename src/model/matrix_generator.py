@@ -2,6 +2,26 @@ import torch
 from src.model.model import VaccinatedModel2, get_n_states
 
 
+def generate_transition_block(transition_param: float, n_states: int) -> torch.Tensor:
+    trans_block = torch.zeros((n_states, n_states))
+    # Outflow from states (diagonal elements)
+    trans_block = trans_block.fill_diagonal_(-transition_param)
+    # Inflow to states (elements under the diagonal)
+    trans_block[1:, :n_states - 1] = trans_block[1:, :n_states - 1].fill_diagonal_(transition_param)
+    return trans_block
+
+
+def generate_transition_matrix(trans_param_dict, ps, n_age, n_comp, c_idx):
+    trans_matrix = torch.zeros((n_age * n_comp, n_age * n_comp))
+    for age_group in range(n_age):
+        for comp, trans_param in trans_param_dict.items():
+            n_states = ps[f'n_{comp}']
+            diag_idx = age_group * n_comp + c_idx[f'{comp}_0']
+            block_slice = slice(diag_idx, diag_idx + n_states)
+            # Create transition block from each transitional state
+            trans_matrix[block_slice, block_slice] = generate_transition_block(trans_param, n_states)
+    return trans_matrix
+
 class MatrixGenerator:
     def __init__(self, model: VaccinatedModel2, cm, ps):
         self.cm = cm
@@ -37,7 +57,6 @@ class MatrixGenerator:
         return T
 
     def get_B(self):
-        from src.model.r0 import generate_transition_matrix
         ps = self.ps
         # B is the tensor representing the first order elements of the ODE system. We begin with filling in
         # the transition blocks of the erlang distributed parameters

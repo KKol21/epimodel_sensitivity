@@ -15,10 +15,11 @@ class SimulationVaccinated:
         # Load data
         self.data = DataLoader()
         self.test = True
+        self.is_erlang = "erlang"
 
         # User-defined param_names
-        self.susc_choices = [0.5, 1.0]
-        self.r0_choices = [2.5, 5]
+        self.susc_choices = [0.5]
+        self.r0_choices = [1.6, 2.4]
         self.target_var = "d_max"  # i_max, ic_max, d_max
 
         # Define initial configs
@@ -47,7 +48,7 @@ class SimulationVaccinated:
         os.makedirs(f'../sens_data/prcc', exist_ok=True)
         for susc in self.susc_choices:
             for base_r0 in self.r0_choices:
-                filename = f'{susc}-{base_r0}-{self.target_var}'
+                filename = f'{susc}-{base_r0}-{self.target_var}-{self.is_erlang}'
                 lhs_table = np.loadtxt(f'../sens_data/lhs/lhs_{filename}.csv', delimiter=';')
                 sim_output = np.loadtxt(f'../sens_data/simulations/simulations_{filename}.csv', delimiter=';')
 
@@ -59,7 +60,7 @@ class SimulationVaccinated:
         os.makedirs(f'../sens_data//plots', exist_ok=True)
         for susc in self.susc_choices:
             for base_r0 in self.r0_choices:
-                filename = f'{susc}-{base_r0}-{self.target_var}'
+                filename = f'{susc}-{base_r0}-{self.target_var}-{self.is_erlang}'
                 prcc = np.loadtxt(fname=f'../sens_data/prcc/prcc_{filename}.csv')
 
                 generate_prcc_plot(params=self.data.param_names,

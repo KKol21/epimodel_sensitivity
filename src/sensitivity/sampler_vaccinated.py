@@ -12,7 +12,7 @@ from src.sensitivity.sampler_base import SamplerBase
 class SamplerVaccinated(SamplerBase):
     def __init__(self, sim_state: dict, sim_obj):
         super().__init__(sim_state, sim_obj)
-        self.n_samples = 10000
+        self.n_samples = 100
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
         self.lhs_boundaries = {"lower": np.zeros(sim_obj.n_age),    # Ratio of daily vaccines given to each age group
@@ -60,11 +60,11 @@ class SamplerVaccinated(SamplerBase):
                                                           population=self.sim_obj.population)[0]
         return r0_lhs
 
-    def get_max(self, params, comp):
+    def get_max(self, vaccination_sample, comp):
         parameters = self.sim_obj.params
-        parameters.update({'v':  params * parameters["total_vaccines"] / parameters["T"]})
+        parameters.update({'v': vaccination_sample * parameters["total_vaccines"] / parameters["T"]})
 
-        t = torch.linspace(1, 150, 150).to(self.sim_obj.data.device)
+        t = torch.linspace(1, 220, 220).to(self.sim_obj.data.device)
 
        # start = time()
        # sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
@@ -73,6 +73,7 @@ class SamplerVaccinated(SamplerBase):
         sol_ = self.sim_obj.model2.get_solution_torch_test(t=t, param=parameters, cm=self.sim_obj.contact_matrix)
         #print(time() - start)
         if self.sim_obj.test:
+            # Check if population size changed
             if abs(self.sim_obj.population.sum() - sol_[-1, :].sum()) > 100:
                 raise Exception("Unexpected change in population size!")
             if abs(self.sim_obj.population.sum() - sol_[-1, :].sum()) > 100:
@@ -92,7 +93,7 @@ class SamplerVaccinated(SamplerBase):
         return comp_max_
 
     def _get_variable_parameters(self):
-        return f'{self.susc}-{self.base_r0}-{self.sim_obj.target_var}'
+        return f'{self.susc}-{self.base_r0}-{self.sim_obj.target_var}-{self.sim_obj.is_erlang}'
 
     def allocate_vaccines(self, lhs_table):
         lhs_table = self.norm_table_rows(lhs_table)
