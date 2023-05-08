@@ -63,7 +63,7 @@ class VaccinatedModel(EpidemicModelBase):
     def get_solution_torch(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
         model_wrapper = ModelFun(self, parameters, cm).to(self.device)
-        return odeint(model_wrapper.forward, initial_values, t, method='euler')
+        return odeint(model_wrapper, initial_values, t, method='euler')
 
     @staticmethod
     def get_vacc_bool(ts, ps):
@@ -102,15 +102,22 @@ class VaccinatedModel2(EpidemicModelBase):
     def get_model(self, ts, xs, ps, cm):
         pass
 
+    def get_constant_matrices(self):
+        mtx_gen = self.matrix_generator
+        self.A = mtx_gen.get_A()
+        self.T = mtx_gen.get_T()
+        self.B = mtx_gen.get_B()
+        self.V_2 = mtx_gen.get_V_2()
+
     def get_n_compartments(self, params):
         compartments = []
         for comp in self.n_state_comp:
             compartments.append(get_n_states(comp_name=comp, n_classes=params[f'n_{comp}']))
         return [state for n_comp in compartments for state in n_comp]
 
-    def get_solution_torch_test(self, t, param, cm):
+    def get_solution_torch_test(self, t, cm, daily_vac):
         initial_values = self.get_initial_values_()
-        model_wrapper = ModelEq(self, param, cm).to(self.device)
+        model_wrapper = ModelEq(self,  cm, daily_vac).to(self.device)
         return odeint(model_wrapper, initial_values, t, method='euler')
 
     def get_initial_values_(self):
@@ -135,15 +142,15 @@ class VaccinatedModel2(EpidemicModelBase):
 
 
 class ModelEq(torch.nn.Module):
-    def __init__(self, model: VaccinatedModel2, ps: dict, cm: torch.Tensor):
+    def __init__(self, model: VaccinatedModel2, cm: torch.Tensor, daily_vac):
         super(ModelEq, self).__init__()
         self.model = model
         self.cm = cm
-        self.ps = ps
+        self.ps = model.ps
         self.device = model.device
 
-        self.matrix_generator = model.matrix_generator
-        self.get_matrices()
+        self.matrix_generator = self.model.matrix_generator
+        self.V_1 = self.matrix_generator.get_V_1(daily_vac)
 
     # For increased efficiency, we represent the ODE system in the form
     # y' = (A @ y) * (T @ y) + B @ y + (V_1 * y) / (V_2 @ y),
@@ -151,23 +158,8 @@ class ModelEq(torch.nn.Module):
     def forward(self, t, y: torch.Tensor) -> torch.Tensor:
         vacc = torch.zeros(self.matrix_generator.s_mtx)
         if self.get_vacc_bool(t):
-            vacc = torch.div(self.V_1 @ y, self.V_2 @ y)
-        return torch.mul(self.A @ y, self.T @ y) + self.B @ y + vacc
-
-    def get_matrices(self):
-        mtx_gen = self.matrix_generator
-        self.A = mtx_gen.get_A()
-        self.T = mtx_gen.get_T()
-        self.B = mtx_gen.get_B()
-        self.V_2 = mtx_gen.get_V_2()
-        self.V_1 = self.get_V_1()
-
-    def get_V_1(self):
-        V_1 = torch.zeros((self.matrix_generator.s_mtx, self.matrix_generator.s_mtx)).to(self.device)
-        idx = self.model.idx
-        V_1[idx('s'), idx('s')] = self.ps["v"]
-        V_1[idx('v_0'), idx('s')] = self.ps["v"]
-        return V_1
+            vacc = torch.div(self.V_1 @ y, self.model.V_2 @ y)
+        return torch.mul(self.model.A @ y, self.model.T @ y) + self.model.B @ y + vacc
 
     def get_vacc_bool(self, t) -> int:
         return self.ps["t_start"] < t < (self.ps["t_start"] + self.ps["T"])

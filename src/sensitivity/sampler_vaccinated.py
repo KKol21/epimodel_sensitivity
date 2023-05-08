@@ -12,7 +12,7 @@ from src.sensitivity.sampler_base import SamplerBase
 class SamplerVaccinated(SamplerBase):
     def __init__(self, sim_state: dict, sim_obj):
         super().__init__(sim_state, sim_obj)
-        self.n_samples = 100
+        self.n_samples = 3000
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
         self.lhs_boundaries = {"lower": np.zeros(sim_obj.n_age),    # Ratio of daily vaccines given to each age group
@@ -40,7 +40,10 @@ class SamplerVaccinated(SamplerBase):
             get_output = self.get_r0
         else:
             get_output = partial(self.get_max, comp=target_var.split('_')[0])
+        start = time()
+        self.sim_obj.model2.get_constant_matrices()
         results = list(tqdm(map(get_output, lhs_table), total=lhs_table.shape[0]))
+        print(time() - start)
         results = torch.tensor(results)
         # Sort tables by R0 values
         sorted_idx = results.argsort()
@@ -69,9 +72,11 @@ class SamplerVaccinated(SamplerBase):
        # start = time()
        # sol = self.sim_obj.model.get_solution_torch(t=t, parameters=parameters, cm=self.sim_obj.contact_matrix)
        # print(time()-start)
-        start = time()
-        sol_ = self.sim_obj.model2.get_solution_torch_test(t=t, param=parameters, cm=self.sim_obj.contact_matrix)
-        #print(time() - start)
+
+        daily_vac = vaccination_sample * parameters["total_vaccines"] / parameters["T"]
+        sol_ = self.sim_obj.model2.get_solution_torch_test(t=t,
+                                                           cm=self.sim_obj.contact_matrix,
+                                                           daily_vac=daily_vac)
         if self.sim_obj.test:
             # Check if population size changed
             if abs(self.sim_obj.population.sum() - sol_[-1, :].sum()) > 100:
@@ -80,7 +85,7 @@ class SamplerVaccinated(SamplerBase):
                 raise Exception("Unexpected change in population size!")
 
         if comp in self.sim_obj.model.n_state_comp:
-            n_states = parameters[f"n_{comp}"]
+            #n_states = parameters[f"n_{comp}"]
             idx_start = self.sim_obj.model.n_age * (self.sim_obj.model.c_idx[f"{comp}_0"])
             comp_sol = self.sim_obj.model2.aggregate_by_age_n_state(solution=sol_, comp=comp)
         else:

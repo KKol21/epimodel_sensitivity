@@ -92,10 +92,10 @@ class MatrixGenerator:
         B[idx("s"), idx(v_end)] = ps["psi"]
         return B
 
-    def get_V_1(self):
+    def get_V_1(self, daily_vac):
         V_1 = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
-        V_1[self.idx('s'), self.idx('s')] = self.ps["v"]
-        V_1[self.idx('v_0'), self.idx('s')] = self.ps["v"]
+        V_1[self.idx('s'), self.idx('s')] = daily_vac
+        V_1[self.idx('v_0'), self.idx('s')] = daily_vac
         return V_1
 
     def get_V_2(self):
