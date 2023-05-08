@@ -61,7 +61,7 @@ class MatrixGenerator:
         ps = self.ps
         # B is the tensor representing the first order elements of the ODE system. We begin with filling in
         # the transition blocks of the erlang distributed parameters
-        B = generate_transition_matrix(self.trans_param_dict, self.ps, self.n_age, self.n_comp, self.c_idx)
+        B = generate_transition_matrix(self.trans_param_dict, self.ps, self.n_age, self.n_comp, self.c_idx).to(self.device)
 
         # Then do the rest of the first order terms
         idx = self.idx

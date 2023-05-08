@@ -15,8 +15,6 @@ class VaccinatedModel(EpidemicModelBase):
         self.n_state_comp = ["e", "i", "h", "ic", "icr", "v"]
         compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
-        self.eq_solver = EquationGenerator(ps=model_data.model_parameters_data,
-                                           actual_population=self.population)
 
     def get_model(self, ts, xs, ps, cm):
 
@@ -126,7 +124,7 @@ class VaccinatedModel2(EpidemicModelBase):
         iv[self.c_idx['e_0']] = 1
         iv[self.c_idx['s']:size:self.n_comp] = self.population
         iv[0] -= 1
-        return iv
+        return iv.to(self.device)
 
     def idx(self, state: str) -> bool:
         return torch.arange(self.n_age * self.n_comp) % self.n_comp == self.c_idx[state]
@@ -156,9 +154,9 @@ class ModelEq(torch.nn.Module):
     # y' = (A @ y) * (T @ y) + B @ y + (V_1 * y) / (V_2 @ y),
     # saving every tensor in the module state
     def forward(self, t, y: torch.Tensor) -> torch.Tensor:
-        vacc = torch.zeros(self.matrix_generator.s_mtx)
+        vacc = torch.zeros(self.matrix_generator.s_mtx).to(self.device)
         if self.get_vacc_bool(t):
-            vacc = torch.div(self.V_1 @ y, self.model.V_2 @ y)
+            vacc = torch.div(self.V_1 @ y, self.model.V_2 @ y)#.to(self.device)
         return torch.mul(self.model.A @ y, self.model.T @ y) + self.model.B @ y + vacc
 
     def get_vacc_bool(self, t) -> int:

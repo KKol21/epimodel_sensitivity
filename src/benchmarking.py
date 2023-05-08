@@ -5,6 +5,7 @@ import torch
 from tqdm import tqdm
 
 from src.model.r0 import R0Generator
+from src.model.eqns_generator import EquationGenerator
 
 
 def benchmark_evaluation(sim_obj):
@@ -18,8 +19,10 @@ def benchmark_evaluation(sim_obj):
                                        population=sim_obj.population)
 
     sim_obj.params.update({"beta": beta})
-    daily_vac = torch.full(size=(16,), fill_value=2000)
+    daily_vac = torch.full(size=(16,), fill_value=2000).to(sim_obj.data.device)
     sim_obj.params.update({"v": daily_vac})
+    sim_obj.model.eq_solver = EquationGenerator(ps=sim_obj.params,
+                                       actual_population=sim_obj.population)
 
     t = torch.linspace(1, 220, 220).to(sim_obj.data.device)
     with cProfile.Profile() as pr:

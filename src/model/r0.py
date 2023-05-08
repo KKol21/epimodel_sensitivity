@@ -22,7 +22,7 @@ class R0Generator(R0GeneratorBase):
         params = self.parameters
 
         trans_mtx = generate_transition_matrix({"e": self.parameters["alpha"], "i": self.parameters["gamma"]},
-                                               self.parameters, self.n_age, self.n_states, self.i)
+                                               self.parameters, self.n_age, self.n_states, self.i).to(self.device)
         trans_mtx[idx('i_0'), idx(f'e_{self.n_e - 1}')] = params["alpha"]
         self.v_inv = torch.linalg.inv(trans_mtx)
 
