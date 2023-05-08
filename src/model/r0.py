@@ -11,7 +11,7 @@ class R0Generator(R0GeneratorBase):
         self.n_e = param["n_e"]
         self.n_i = param["n_i"]
         states = get_n_states(self.n_e, "e") + \
-                 get_n_states(self.n_i, "i")
+            get_n_states(self.n_i, "i")
         super().__init__(param=param, states=states, n_age=n_age)
 
         self.device = device

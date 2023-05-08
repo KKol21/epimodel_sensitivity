@@ -22,6 +22,7 @@ def generate_transition_matrix(trans_param_dict, ps, n_age, n_comp, c_idx):
             trans_matrix[block_slice, block_slice] = generate_transition_block(trans_param, n_states)
     return trans_matrix
 
+
 class MatrixGenerator:
     def __init__(self, model: VaccinatedModel2, cm, ps):
         self.cm = cm

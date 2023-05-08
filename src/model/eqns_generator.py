@@ -32,7 +32,7 @@ class EquationGenerator:
 
         n_state_result = self.get_n_state_result(i_end, ic_end, n_state_val, s, r, transmission, vacc)
         return [self.s_eq(s, r, v_end, transmission, vacc)] + n_state_result \
-               + [self.r_eq(n_state_val, i_end), self.d_eq(ic_end)]
+            + [self.r_eq(n_state_val, i_end), self.d_eq(ic_end)]
 
     def get_n_state_result(self, i_end, ic_end, n_state_val, s, r, transmission, vacc):
         n_state_result = self.eval_e_eqns(n_state_val, s, transmission) + \
