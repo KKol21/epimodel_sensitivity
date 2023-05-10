@@ -1,11 +1,7 @@
 import torch
 from torchdiffeq import odeint
 
-from src.model.model_base import EpidemicModelBase
-
-
-def get_n_states(n_classes, comp_name):
-    return [f"{comp_name}_{i}" for i in range(n_classes)]
+from src.model.model_base import EpidemicModelBase, get_n_states
 
 
 class VaccinatedModel(EpidemicModelBase):
@@ -14,7 +10,6 @@ class VaccinatedModel(EpidemicModelBase):
         self.n_state_comp = ["e", "i", "h", "ic", "icr"]
         compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["v_0", "r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
-        self.n_comp = len(self.compartments)
 
         from src.model.matrix_generator import MatrixGenerator
         self.matrix_generator = MatrixGenerator(model=self, cm=cm, ps=self.ps)
@@ -38,7 +33,7 @@ class VaccinatedModel(EpidemicModelBase):
             compartments.append(get_n_states(comp_name=comp, n_classes=params[f'n_{comp}']))
         return [state for n_comp in compartments for state in n_comp]
 
-    def get_solution_torch_test(self, t, cm, daily_vac):
+    def get_solution_torch(self, t, cm, daily_vac):
         initial_values = self.get_initial_values_()
         model_wrapper = ModelEq(self,  cm, daily_vac).to(self.device)
         return odeint(model_wrapper, initial_values, t, method='euler')
@@ -51,18 +46,6 @@ class VaccinatedModel(EpidemicModelBase):
         iv[self.c_idx['s']:size:self.n_comp] = self.population
         iv[idx + self.c_idx['s']] -= 1
         return iv
-
-    def idx(self, state: str) -> bool:
-        return torch.arange(self.n_age * self.n_comp) % self.n_comp == self.c_idx[state]
-
-    def aggregate_by_age_n_state(self, solution, comp):
-        result = 0
-        for state in get_n_states(self.ps[f'n_{comp}'], comp):
-            result += max(solution[:, self.idx(state)].sum(axis=1))
-        return result
-
-    def aggregate_by_age_(self, solution, comp):
-        return solution[-1, self.idx(comp)].sum()
 
 
 class ModelEq(torch.nn.Module):

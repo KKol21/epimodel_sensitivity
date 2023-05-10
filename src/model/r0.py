@@ -1,6 +1,6 @@
 import torch
 
-from src.model.model import get_n_states
+from src.model.model_base import get_n_states
 from src.model.r0_base import R0GeneratorBase
 from src.model.matrix_generator import generate_transition_matrix
 

@@ -12,7 +12,7 @@ from src.sensitivity.sampler_base import SamplerBase
 class SamplerVaccinated(SamplerBase):
     def __init__(self, sim_state: dict, sim_obj):
         super().__init__(sim_state, sim_obj)
-        self.n_samples = 5000
+        self.n_samples = 10000
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
         self.target_var = sim_state["target_var"]
@@ -70,17 +70,16 @@ class SamplerVaccinated(SamplerBase):
         parameters = self.sim_obj.params
         parameters.update({'v': vaccination_sample * parameters["total_vaccines"] / parameters["T"]})
         r0 = self.sim_state["base_r0"]
+        is_erlang = self.sim_obj.distr == "erlang"
         if r0 == 1.8:
-            len = 420
+            len = 450 if is_erlang else 800
         elif r0 == 2.4:
-            len = 240
+            len = 220 if is_erlang else 350
         elif r0 == 3:
-            len = 160
+            len = 180 if is_erlang else 250
         t = torch.linspace(1, len, len).to(self.sim_obj.data.device)
         daily_vac = vaccination_sample * parameters["total_vaccines"] / parameters["T"]
-        sol = self.sim_obj.model.get_solution_torch_test(t=t,
-                                                         cm=self.sim_obj.contact_matrix,
-                                                         daily_vac=daily_vac)
+        sol = self.sim_obj.model.get_solution_torch(t=t, cm=self.sim_obj.contact_matrix, daily_vac=daily_vac)
         if self.sim_obj.test:
             # Check if population size changed
             if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 100:
@@ -89,7 +88,7 @@ class SamplerVaccinated(SamplerBase):
         if comp in self.sim_obj.model.n_state_comp:
             comp_sol = self.sim_obj.model.aggregate_by_age_n_state(solution=sol, comp=comp)
         else:
-            comp_sol = self.sim_obj.model.aggregate_by_age_(solution=sol, comp=comp)
+            comp_sol = self.sim_obj.model.aggregate_by_age(solution=sol, comp=comp)
         comp_max_ = torch.max(comp_sol)
         if comp_max_ < self.min_target:
             self.min_target = comp_max_

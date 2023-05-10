@@ -10,7 +10,8 @@ class EpidemicModelBase(ABC):
         self.ps = model_data.model_parameters_data
         self.population = model_data.age_data.flatten()
         self.compartments = compartments
-        self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
+        self.n_comp = len(compartments)
+        self.c_idx = {comp: idx for idx, comp in enumerate(compartments)}
         self.n_age = self.population.shape[0]
         self.device = model_data.device
 
@@ -18,8 +19,8 @@ class EpidemicModelBase(ABC):
         iv = {key: torch.zeros(self.n_age).to(self.device) for key in self.compartments}
         return iv
 
-    def aggregate_by_age(self, solution, idx, n_states=1):
-        return solution[:, idx:idx + n_states * self.n_age].sum(1)
+    def aggregate_by_age(self, solution, comp):
+        return solution[-1, self.idx(comp)].sum()
 
     def get_solution(self, t, parameters, cm):
         initial_values = self.get_initial_values(parameters)
@@ -40,3 +41,16 @@ class EpidemicModelBase(ABC):
     @abstractmethod
     def get_model(self, ts, xs, ps, cm):
         pass
+
+    def aggregate_by_age_n_state(self, solution, comp):
+        result = 0
+        for state in get_n_states(self.ps[f'n_{comp}'], comp):
+            result += max(solution[:, self.idx(state)].sum(axis=1))
+        return result
+
+    def idx(self, state: str) -> bool:
+        return torch.arange(self.n_age * self.n_comp) % self.n_comp == self.c_idx[state]
+
+
+def get_n_states(n_classes, comp_name):
+    return [f"{comp_name}_{i}" for i in range(n_classes)]

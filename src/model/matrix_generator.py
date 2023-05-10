@@ -1,5 +1,6 @@
 import torch
-from src.model.model import VaccinatedModel, get_n_states
+from src.model.model import VaccinatedModel
+from src.model.model_base import get_n_states
 
 
 def generate_transition_block(transition_param: float, n_states: int) -> torch.Tensor:

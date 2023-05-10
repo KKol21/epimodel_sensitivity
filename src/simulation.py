@@ -6,9 +6,10 @@ import torch
 
 from src.dataloader import DataLoader
 from src.model.model import VaccinatedModel
-from src.sensitivity.prcc import generate_prcc_plot, get_prcc_values
+from src.sensitivity.prcc import get_prcc_values
 from src.model.r0 import R0Generator
 from src.sensitivity.sampler_vaccinated import SamplerVaccinated
+from src.plotter import generate_prcc_plot
 
 
 class SimulationVaccinated:
@@ -16,11 +17,11 @@ class SimulationVaccinated:
         # Load data
         self.data = DataLoader()
         self.test = True
-        self.distr = "erlang"
+        self.distr = "exp"
 
         # User-defined param_names
         self.susc_choices = [1.0]
-        self.r0_choices = [1.8]
+        self.r0_choices = [1.8, 2.4, 3]
         self.target_var_choices = ["d_max", "i_max", "ic_max"]  # i_max, ic_max, d_max
 
         # Define initial configs
@@ -67,7 +68,8 @@ class SimulationVaccinated:
             generate_prcc_plot(params=self.data.param_names,
                                target_var=target_var,
                                prcc=prcc,
-                               filename=filename)
+                               filename=filename,
+                               r0=base_r0)
 
     def _get_initial_config(self):
         self.params = self.data.model_parameters_data
