@@ -1,5 +1,4 @@
 import torch
-from torchdiffeq import odeint
 
 from src.model.model_base import EpidemicModelBase, get_n_states
 
@@ -14,12 +13,6 @@ class VaccinatedModel(EpidemicModelBase):
         from src.model.matrix_generator import MatrixGenerator
         self.matrix_generator = MatrixGenerator(model=self, cm=cm, ps=self.ps)
 
-    def update_initial_values(self, iv, parameters):
-        pass
-
-    def get_model(self, ts, xs, ps, cm):
-        pass
-
     def get_constant_matrices(self):
         mtx_gen = self.matrix_generator
         self.A = mtx_gen.get_A()
@@ -33,19 +26,19 @@ class VaccinatedModel(EpidemicModelBase):
             compartments.append(get_n_states(comp_name=comp, n_classes=params[f'n_{comp}']))
         return [state for n_comp in compartments for state in n_comp]
 
-    def get_solution_torch(self, t, cm, daily_vac):
-        initial_values = self.get_initial_values_()
-        model_wrapper = ModelEq(self,  cm, daily_vac).to(self.device)
-        return odeint(model_wrapper, initial_values, t, method='euler')
+    def get_model(self, cm, daily_vac):
+        return ModelEq(self, cm, daily_vac).to(self.device)
 
-    def get_initial_values_(self):
-        size = self.n_age * len(self.compartments)
-        iv = torch.zeros(size)
-        idx = 3 * self.n_comp
-        iv[idx + self.c_idx['e_0']] = 1
-        iv[self.c_idx['s']:size:self.n_comp] = self.population
-        iv[idx + self.c_idx['s']] -= 1
-        return iv
+    def aggregate_by_age(self, solution, comp):
+        is_n_state = comp in self.n_state_comp
+        return self._aggregate_by_age_n_state(solution, comp) if is_n_state\
+            else solution[:, self.idx(comp)].sum(axis=1)
+
+    def _aggregate_by_age_n_state(self, solution, comp):
+        result = 0
+        for state in get_n_states(self.ps[f'n_{comp}'], comp):
+            result += solution[:, self.idx(state)].sum(axis=1)
+        return result
 
 
 class ModelEq(torch.nn.Module):
@@ -56,14 +49,15 @@ class ModelEq(torch.nn.Module):
         self.ps = model.ps
         self.device = model.device
 
-        self.matrix_generator = self.model.matrix_generator
-        self.V_1 = self.matrix_generator.get_V_1(daily_vac)
+        self.V_1 = model.matrix_generator.get_V_1(daily_vac)
+        self.s_mtx = model.matrix_generator.s_mtx
 
     # For increased efficiency, we represent the ODE system in the form
-    # y' = (A @ y) * (T @ y) + B @ y + (V_1 * y) / (V_2 @ y),
-    # saving every tensor in the module state
+    # y' = (A @ y) * (T @ y) + B @ y + vacc, where
+    # A, T, B are stored
+    # vacc = (V_1 * y) / (V_2 @ y) in vaccination period, else 0
     def forward(self, t, y: torch.Tensor) -> torch.Tensor:
-        vacc = torch.zeros(self.matrix_generator.s_mtx)
+        vacc = torch.zeros(self.s_mtx)
         if self.get_vacc_bool(t):
             vacc = torch.div(self.V_1 @ y, self.model.V_2 @ y)
         return torch.mul(self.model.A @ y, self.model.T @ y) + self.model.B @ y + vacc

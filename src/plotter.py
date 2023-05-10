@@ -1,17 +1,22 @@
 from matplotlib import pyplot as plt
 import numpy as np
+import torch
+
+
+def get_target(target_var):
+    if target_var == "i_max":
+        return "fertőzöttek száma a csúcson"
+    elif target_var == "ic_max":
+        return "intenzív betegek száma a csúcson"
+    elif target_var == "d_max":
+        return "halottak száma"
 
 
 def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
     prcc = np.round(prcc, 3)
     sorted_idx = np.abs(prcc).argsort()[::-1]
     prcc = prcc[sorted_idx]
-    if target_var == "i_max":
-        target_var = "fertőzöttek száma a csúcson"
-    elif target_var == "ic_max":
-        target_var = "intenzív betegek száma a csúcson"
-    elif target_var == "d_max":
-        target_var = "halottak száma"
+    target_var = get_target(target_var)
     plt.title(f"PRCC értékei a vakcinák elosztásának\n"
               f"Célváltozó: {target_var}\n "
               f"R0={r0}", fontsize=15, wrap=True)
@@ -53,9 +58,50 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
     plt.xlim(-1.1, 1.1)
     plt.ylim(-1, len(params))
     # plt.text()
-    plt.savefig(f'../sens_data/plots/prcc_tornado_plot_{filename}.pdf',
+    plt.savefig(f'../sens_data/prcc_plots/prcc_tornado_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()
 
 
+def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_title=None, compartments=None):
+    from src.model.r0 import R0Generator
 
+    if compartments is None:
+        compartments = sim_obj.target_var_choices
+
+    if plot_title is None:
+        target = get_target(target_var)
+        plot_title = "Járványgörbe korcsoportokra aggregálva \n"\
+                     f"Vakcinálás célváltozója: {target}\n"\
+                     f"R0={r0}"
+
+    colors = ['orange', 'red', 'black']
+
+    model = sim_obj.model
+    sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
+    r0generator = R0Generator(param=sim_obj.params, device=sim_obj.data.device, n_age=sim_obj.n_age)
+    # Calculate base transmission rate
+    beta = r0 / r0generator.get_eig_val(contact_mtx=sim_obj.contact_matrix,
+                                        susceptibles=sim_obj.susceptibles.reshape(1, -1),
+                                        population=sim_obj.population)
+    sim_obj.params["beta"] = beta
+    model.get_constant_matrices()
+    t = torch.linspace(1, 1000, 1000).to(sim_obj.device)
+    sol = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix, daily_vac=torch.tensor(vaccination).float())
+    mask = torch.cat((torch.full((100, ), True),
+                      sol[100:, model.idx('e_0')].sum(axis=1) > 50))
+    sol = sol[mask, :]
+    t = t[mask]
+
+    for idx, comp in enumerate(compartments):
+        comp_sol = model.aggregate_by_age(sol, comp)
+        plt.plot(t, comp_sol, label=comp.upper(), color=colors[idx], linewidth=2)
+
+    plt.legend()
+    plt.gca().set_xlabel('Napok')
+    plt.gca().set_ylabel('Kompartmentek méretei')
+    plt.title(plot_title, y=1.03, fontsize=12)
+    plt.savefig(f'../sens_data/epidemic_plots/epidemic_plot_{filename}.pdf',
+                format="pdf", bbox_inches='tight')
+    plt.show()
+    plt.close()

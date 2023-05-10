@@ -9,7 +9,7 @@ from src.model.model import VaccinatedModel
 from src.sensitivity.prcc import get_prcc_values
 from src.model.r0 import R0Generator
 from src.sensitivity.sampler_vaccinated import SamplerVaccinated
-from src.plotter import generate_prcc_plot
+from src.plotter import generate_prcc_plot, generate_epidemic_plot
 
 
 class SimulationVaccinated:
@@ -17,12 +17,12 @@ class SimulationVaccinated:
         # Load data
         self.data = DataLoader()
         self.test = True
-        self.distr = "exp"
 
-        # User-defined param_names
+        # User-defined parameters
         self.susc_choices = [1.0]
         self.r0_choices = [1.8, 2.4, 3]
         self.target_var_choices = ["d_max", "i_max", "ic_max"]  # i_max, ic_max, d_max
+        self.distr = "erlang"  # Distribution of time spent in exposed/infected state
 
         # Define initial configs
         self._get_initial_config()
@@ -59,7 +59,7 @@ class SimulationVaccinated:
 
     # Create and save tornado plots from sensitivity data
     def plot_prcc(self):
-        os.makedirs(f'../sens_data//plots', exist_ok=True)
+        os.makedirs(f'../sens_data//prcc_plots', exist_ok=True)
         simulations = itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)
         for susc, base_r0, target_var in simulations:
             filename = f'{susc}-{base_r0}-{target_var}-{self.distr}'
@@ -71,6 +71,15 @@ class SimulationVaccinated:
                                filename=filename,
                                r0=base_r0)
 
+    # Create and save epidemic plots corresponding to the most optimal vaccine distributions from LHS sampling
+    def plot_optimal_vaccine_distribution(self):
+        os.makedirs(f'../sens_data//epidemic_plots', exist_ok=True)
+        simulations = itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)
+        for susc, base_r0, target_var in simulations:
+            filename = f'{susc}-{base_r0}-{target_var}-{self.distr}'
+            vaccination = np.loadtxt(fname=f'../sens_data/optimal_vaccination/optimal_vaccination_{filename}.csv')
+            generate_epidemic_plot(self, vaccination, filename, target_var, base_r0, compartments=["i", "ic", "d"])
+
     def _get_initial_config(self):
         self.params = self.data.model_parameters_data
         self.n_age = self.data.contact_data["home"].shape[0]
@@ -79,4 +88,6 @@ class SimulationVaccinated:
         self.model = VaccinatedModel(model_data=self.data, cm=self.contact_matrix)
         self.population = self.model.population
         self.age_vector = self.population.reshape((-1, 1))
-        self.susceptibles = self.model.get_initial_values_()[self.model.idx("s")]
+        self.susceptibles = self.model.get_initial_values()[self.model.idx("s")]
+        self.device = self.data.device
+

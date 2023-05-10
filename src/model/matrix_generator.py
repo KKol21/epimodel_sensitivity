@@ -116,4 +116,4 @@ class MatrixGenerator:
     def _get_trans_param_dict(self):
         ps = self.ps
         trans_param_list = [ps["alpha"], ps["gamma"], ps["gamma_h"], ps["gamma_c"], ps["gamma_cr"]]
-        return {key: value for key, value in zip(self.n_state_comp, trans_param_list)}
+        return {state: trans_param for state, trans_param in zip(self.n_state_comp, trans_param_list)}

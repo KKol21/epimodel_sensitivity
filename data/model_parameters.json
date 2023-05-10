@@ -16,11 +16,11 @@
         "description": "Duration of the vaccination campaign"
     },
     "n_e": {
-        "value": 1,
+        "value": 3,
         "description": "Number of exposed states"
     },
     "n_i": {
-        "value": 1,
+        "value": 5,
         "description": "Number of infected states"
     },
     "n_h": {
@@ -34,10 +34,6 @@
     "n_icr": {
         "value": 1,
         "description": "Number of intensive care recovery states"
-    },
-    "n_v": {
-        "value": 1,
-        "description": "Number of vaccinated compartments"
     },
     "total_vaccines": {
         "value": 3000000,

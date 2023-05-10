@@ -22,7 +22,7 @@ class SamplerVaccinated(SamplerBase):
         self.lhs_table = None
         self.sim_output = None
         self.param_names = self.sim_obj.data.param_names
-        self.min_target = 1E15
+        self.min_target = 1E10
         self.optimal_vacc = None
 
     @staticmethod
@@ -68,7 +68,6 @@ class SamplerVaccinated(SamplerBase):
 
     def get_max(self, vaccination_sample, comp):
         parameters = self.sim_obj.params
-        parameters.update({'v': vaccination_sample * parameters["total_vaccines"] / parameters["T"]})
         r0 = self.sim_state["base_r0"]
         is_erlang = self.sim_obj.distr == "erlang"
         if r0 == 1.8:
@@ -79,7 +78,7 @@ class SamplerVaccinated(SamplerBase):
             len = 180 if is_erlang else 250
         t = torch.linspace(1, len, len).to(self.sim_obj.data.device)
         daily_vac = vaccination_sample * parameters["total_vaccines"] / parameters["T"]
-        sol = self.sim_obj.model.get_solution_torch(t=t, cm=self.sim_obj.contact_matrix, daily_vac=daily_vac)
+        sol = self.sim_obj.model.get_solution(t=t, cm=self.sim_obj.contact_matrix, daily_vac=daily_vac)
         if self.sim_obj.test:
             # Check if population size changed
             if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 100:
