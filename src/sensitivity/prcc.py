@@ -64,13 +64,18 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str):
     axes.xaxis.set_ticks_position('top')
 
     # Make the y-axis display the params
-    plt.yticks(ys, params[sorted_idx])
+    labels = list(map(get_age_group, params[sorted_idx]))
+    plt.yticks(ys, labels)
 
     # Set the portion of the x- and y-axes to show
     plt.xlim(-1.1, 1.1)
     plt.ylim(-1, len(params))
-
     # plt.text()
     plt.savefig(f'../sens_data/plots/prcc_tornado_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()
+
+
+def get_age_group(param):
+    age_start = int(param.split('_')[2]) * 5
+    return f'{age_start}-{age_start + 5} ' if age_start != 75 else '75+ '

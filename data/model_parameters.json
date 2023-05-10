@@ -1,18 +1,14 @@
 {
     "alpha": {
-        "value": 0.5,
+        "value": 1,
         "description": "Reciprocal of expected time spent in exposed states"
     },
     "gamma": {
-        "value":0.333333,
+        "value": 1,
         "description": "Reciprocal of expected time spent in infected states"
     },
-    "psi": {
-        "value": 0.006,
-        "description": "Ratio of transition between vaccinated states"
-    },
     "t_start": {
-        "value": 20.0,
+        "value": 0,
         "description": "Start of vaccination campaign"
     },
     "T": {
@@ -20,11 +16,11 @@
         "description": "Duration of the vaccination campaign"
     },
     "n_e": {
-        "value": 1,
+        "value": 3,
         "description": "Number of exposed states"
     },
     "n_i": {
-        "value": 1,
+        "value": 5,
         "description": "Number of infected states"
     },
     "n_h": {

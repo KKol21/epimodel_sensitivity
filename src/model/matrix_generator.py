@@ -1,5 +1,5 @@
 import torch
-from src.model.model import VaccinatedModel2, get_n_states
+from src.model.model import VaccinatedModel, get_n_states
 
 
 def generate_transition_block(transition_param: float, n_states: int) -> torch.Tensor:
@@ -24,7 +24,7 @@ def generate_transition_matrix(trans_param_dict, ps, n_age, n_comp, c_idx):
 
 
 class MatrixGenerator:
-    def __init__(self, model: VaccinatedModel2, cm, ps):
+    def __init__(self, model: VaccinatedModel, cm, ps):
         self.cm = cm
         self.ps = ps
         self.s_mtx = model.n_age * model.n_comp
@@ -35,7 +35,6 @@ class MatrixGenerator:
         self.device = model.device
         self.idx = model.idx
         self.c_idx = model.c_idx
-        self._get_trans_param_dict()
 
     def get_A(self):
         # Multiplied with y, the resulting 1D tensor contains the rate of transmission for the susceptibles of
@@ -61,7 +60,7 @@ class MatrixGenerator:
         ps = self.ps
         # B is the tensor representing the first order elements of the ODE system. We begin with filling in
         # the transition blocks of the erlang distributed parameters
-        B = generate_transition_matrix(self.trans_param_dict, self.ps, self.n_age, self.n_comp, self.c_idx)
+        B = generate_transition_matrix(self._get_trans_param_dict(), self.ps, self.n_age, self.n_comp, self.c_idx)
 
         # Then do the rest of the first order terms
         idx = self.idx
@@ -71,7 +70,6 @@ class MatrixGenerator:
         h_end = c_end('h')
         ic_end = c_end('ic')
         icr_end = c_end('icr')
-        v_end = c_end('v')
 
         # E   ->  I
         B[idx('i_0'), idx(e_end)] = ps["alpha"]
@@ -89,8 +87,6 @@ class MatrixGenerator:
         B[idx('d'), idx(ic_end)] = ps["gamma_c"] * ps["mu"]
         # I   ->  R
         B[idx('r'), idx(i_end)] = (1 - ps['h']) * ps['gamma']
-        # V   ->  S
-        B[idx("s"), idx(v_end)] = ps["psi"]
         return B
 
     def get_V_1(self, daily_vac):
@@ -118,5 +114,5 @@ class MatrixGenerator:
 
     def _get_trans_param_dict(self):
         ps = self.ps
-        trans_param_list = [ps["alpha"], ps["gamma"], ps["gamma_h"], ps["gamma_c"], ps["gamma_cr"], ps["psi"]]
-        self.trans_param_dict = {key: value for key, value in zip(self.n_state_comp, trans_param_list)}
+        trans_param_list = [ps["alpha"], ps["gamma"], ps["gamma_h"], ps["gamma_c"], ps["gamma_cr"]]
+        return {key: value for key, value in zip(self.n_state_comp, trans_param_list)}

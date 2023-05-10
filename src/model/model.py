@@ -1,7 +1,6 @@
 import torch
 from torchdiffeq import odeint
 
-from src.model.eqns_generator import EquationGenerator
 from src.model.model_base import EpidemicModelBase
 
 
@@ -10,86 +9,10 @@ def get_n_states(n_classes, comp_name):
 
 
 class VaccinatedModel(EpidemicModelBase):
-    def __init__(self, model_data):
-        self.device = model_data.device
-        self.n_state_comp = ["e", "i", "h", "ic", "icr", "v"]
-        compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
-        super().__init__(model_data=model_data, compartments=compartments)
-        self.eq_solver = EquationGenerator(ps=model_data.model_parameters_data,
-                                           actual_population=self.population)
-
-    def get_model(self, ts, xs, ps, cm):
-
-        val = xs.reshape(-1, self.n_age)
-        n_state_val = self.get_n_state_val(ps, val)
-        # the same order as in self.compartments!
-        s = val[0]
-        r = val[-2]
-        i = torch.stack([i_state for i_state in n_state_val["i"]]).sum(0)
-        transmission = ps["beta"] * i.matmul(cm)
-        vacc = self.get_vacc_bool(ts, ps)
-
-        model_eq = self.eq_solver.evaluate_eqns(n_state_val=n_state_val, s=s, r=r,
-                                                transmission=transmission, vacc=vacc)
-        return torch.cat(tuple(model_eq))
-
-    def get_n_compartments(self, params):
-        compartments = []
-        for comp in self.n_state_comp:
-            compartments.append(get_n_states(comp_name=comp, n_classes=params[f'n_{comp}']))
-        return [state for n_comp in compartments for state in n_comp]
-
-    def get_n_state_val(self, ps, val):
-        n_state_val = dict()
-        slice_start = 1
-        slice_end = 1
-        for comp in self.n_state_comp:
-            n_states = ps[f'n_{comp}']
-            slice_end += n_states
-            n_state_val[comp] = val[slice_start:slice_end]
-            slice_start += n_states
-        return n_state_val
-
-    def update_initial_values(self, iv, parameters):
-        iv["e_0"][0] = 1
-        e_states = get_n_states(n_classes=parameters["n_e"], comp_name="e")
-        i_states = get_n_states(n_classes=parameters["n_i"], comp_name="i")
-        e = torch.stack([iv[state] for state in e_states]).sum(0)
-        i = torch.stack([iv[state] for state in i_states]).sum(0)
-        iv.update({
-            "s": self.population - (e + i)
-        })
-
-    def get_solution_torch(self, t, parameters, cm):
-        initial_values = self.get_initial_values(parameters)
-        model_wrapper = ModelFun(self, parameters, cm).to(self.device)
-        return odeint(model_wrapper, initial_values, t, method='euler')
-
-    @staticmethod
-    def get_vacc_bool(ts, ps):
-        return int(ps["t_start"] < ts < (ps["t_start"] + ps["T"]))
-
-
-class ModelFun(torch.nn.Module):
-    """
-    Wrapper class for VaccinatedModel.get_model. Inherits from torch.nn.Module, enabling
-    the use of a GPU for evaluation through the library torchdiffeq.
-    """
-    def __init__(self, model, ps, cm):
-        super(ModelFun, self).__init__()
-        self.model = model
-        self.ps = ps
-        self.cm = cm
-
-    def forward(self, ts, xs):
-        return self.model.get_model(ts, xs, self.ps, self.cm)
-
-
-class VaccinatedModel2(EpidemicModelBase):
     def __init__(self, model_data, cm):
         self.device = model_data.device
-        self.n_state_comp = ["e", "i", "h", "ic", "icr", "v"]
-        compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["r", "d"]
+        self.n_state_comp = ["e", "i", "h", "ic", "icr"]
+        compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["v_0", "r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
         self.n_comp = len(self.compartments)
 
@@ -123,9 +46,10 @@ class VaccinatedModel2(EpidemicModelBase):
     def get_initial_values_(self):
         size = self.n_age * len(self.compartments)
         iv = torch.zeros(size)
-        iv[self.c_idx['e_0']] = 1
+        idx = 3 * self.n_comp
+        iv[idx + self.c_idx['e_0']] = 1
         iv[self.c_idx['s']:size:self.n_comp] = self.population
-        iv[0] -= 1
+        iv[idx + self.c_idx['s']] -= 1
         return iv
 
     def idx(self, state: str) -> bool:
@@ -133,8 +57,8 @@ class VaccinatedModel2(EpidemicModelBase):
 
     def aggregate_by_age_n_state(self, solution, comp):
         result = 0
-        for state in get_n_states(self.ps[comp], comp):
-            result += solution[-1, self.idx(state)].sum()
+        for state in get_n_states(self.ps[f'n_{comp}'], comp):
+            result += max(solution[:, self.idx(state)].sum(axis=1))
         return result
 
     def aggregate_by_age_(self, solution, comp):
@@ -142,7 +66,7 @@ class VaccinatedModel2(EpidemicModelBase):
 
 
 class ModelEq(torch.nn.Module):
-    def __init__(self, model: VaccinatedModel2, cm: torch.Tensor, daily_vac):
+    def __init__(self, model: VaccinatedModel, cm: torch.Tensor, daily_vac):
         super(ModelEq, self).__init__()
         self.model = model
         self.cm = cm
