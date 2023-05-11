@@ -1,5 +1,5 @@
 from functools import partial
-from time import sleep, time
+from time import sleep
 
 import numpy as np
 from smt.sampling_methods import LHS
@@ -42,10 +42,8 @@ class SamplerVaccinated(SamplerBase):
             get_output = self.get_r0
         else:
             get_output = partial(self.get_max, comp=self.target_var.split('_')[0])
-        start = time()
         self.sim_obj.model.get_constant_matrices()
         results = list(tqdm(map(get_output, lhs_table), total=lhs_table.shape[0]))
-        print(time() - start)
         results = torch.tensor(results)
         # Sort tables by R0 values
         sorted_idx = results.argsort()
@@ -71,11 +69,11 @@ class SamplerVaccinated(SamplerBase):
         r0 = self.sim_state["base_r0"]
         is_erlang = self.sim_obj.distr == "erlang"
         if r0 == 1.8:
-            len = 450 if is_erlang else 800
+            len = 1200 if is_erlang else 1000
         elif r0 == 2.4:
-            len = 220 if is_erlang else 350
+            len = 800 if is_erlang else 350
         elif r0 == 3:
-            len = 180 if is_erlang else 250
+            len = 500 if is_erlang else 250
         t = torch.linspace(1, len, len).to(self.sim_obj.data.device)
         daily_vac = vaccination_sample * parameters["total_vaccines"] / parameters["T"]
         sol = self.sim_obj.model.get_solution(t=t, cm=self.sim_obj.contact_matrix, daily_vac=daily_vac)
@@ -84,14 +82,12 @@ class SamplerVaccinated(SamplerBase):
             if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 100:
                 raise Exception("Unexpected change in population size!")
 
-        if comp in self.sim_obj.model.n_state_comp:
-            comp_sol = self.sim_obj.model.aggregate_by_age_n_state(solution=sol, comp=comp)
-        else:
-            comp_sol = self.sim_obj.model.aggregate_by_age(solution=sol, comp=comp)
+        comp_sol = self.sim_obj.model.aggregate_by_age(solution=sol, comp=comp)
         comp_max_ = torch.max(comp_sol)
         if comp_max_ < self.min_target:
             self.min_target = comp_max_
             self.optimal_vacc = daily_vac
+            self.sim_obj.model.aggregate_by_age(sol, 'd').max()
         return comp_max_
 
     def _get_variable_parameters(self):

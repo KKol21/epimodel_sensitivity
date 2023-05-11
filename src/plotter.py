@@ -14,12 +14,10 @@ def get_target(target_var):
 
 def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
     prcc = np.round(prcc, 3)
-    sorted_idx = np.abs(prcc).argsort()[::-1]
-    prcc = prcc[sorted_idx]
     target_var = get_target(target_var)
     plt.title(f"PRCC értékei a vakcinák elosztásának\n"
               f"Célváltozó: {target_var}\n "
-              f"R0={r0}", fontsize=15, wrap=True)
+              r"$\mathcal{R}_0=$" + str(r0), fontsize=15, wrap=True)
 
     ys = range(len(params))[::-1]
     # Plot the bars one by one
@@ -51,7 +49,7 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
     def get_age_group(param):
         age_start = int(param.split('_')[2]) * 5
         return f'{age_start}-{age_start + 5} ' if age_start != 75 else '75+ '
-    labels = list(map(get_age_group, params[sorted_idx]))
+    labels = list(map(get_age_group, params))
     plt.yticks(ys, labels)
 
     # Set the portion of the x- and y-axes to show
@@ -86,10 +84,10 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
                                         population=sim_obj.population)
     sim_obj.params["beta"] = beta
     model.get_constant_matrices()
-    t = torch.linspace(1, 1000, 1000).to(sim_obj.device)
+    t = torch.linspace(1, 1200, 1200).to(sim_obj.device)
     sol = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix, daily_vac=torch.tensor(vaccination).float())
     mask = torch.cat((torch.full((100, ), True),
-                      sol[100:, model.idx('e_0')].sum(axis=1) > 50))
+                      sol[100:, model.idx('ic_0')].sum(axis=1) > 1))
     sol = sol[mask, :]
     t = t[mask]
 
@@ -105,3 +103,55 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
                 format="pdf", bbox_inches='tight')
     plt.show()
     plt.close()
+
+
+def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, target_var, r0, r0_bad, plot_title=None, compartments=None):
+    from src.model.r0 import R0Generator
+
+    if compartments is None:
+        compartments = sim_obj.target_var_choices
+
+    if plot_title is None:
+        target = get_target(target_var)
+        plot_title = "Járványgörbe korcsoportokra aggregálva \n"\
+                     f"Vakcinálás célváltozója: {target}\n"\
+                     r"$\mathcal{R}_0=$" + str(r0)
+
+    comp = 'ic'
+    colors = ['orange', 'red']
+
+    model = sim_obj.model
+    sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
+
+    r0generator = R0Generator(param=sim_obj.params, device=sim_obj.data.device, n_age=sim_obj.n_age)
+    ngm_ev = r0generator.get_eig_val(contact_mtx=sim_obj.contact_matrix,
+                                        susceptibles=sim_obj.susceptibles.reshape(1, -1),
+                                        population=sim_obj.population)
+    # Calculate base transmission rate
+    beta = r0 / ngm_ev
+    sim_obj.params["beta"] = beta
+    model.get_constant_matrices()
+    t = torch.linspace(1, 1000, 1000).to(sim_obj.device)
+    sol_real = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix,
+                                          daily_vac=torch.tensor(vaccination_opt).float())
+    sol_bad = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix,
+                                         daily_vac=torch.tensor(vaccination).float())
+
+    comp_sol = model.aggregate_by_age(sol_real, comp)
+    plt.plot(t, comp_sol, label=comp.upper(), color=colors[0], linewidth=2)
+    comp_sol_bad = model.aggregate_by_age(sol_bad, comp)
+    plt.plot(t, comp_sol_bad, label=f'{comp.upper()}*', color=colors[1], linewidth=2)
+
+    plt.legend([r'$\mathcal{R}_0 = 1.8$ esetén optimális vakcinálás',
+                r'$\mathcal{R}_0 = 3$ esetén optimális vakcinálás'], fontsize=8)
+    plt.gca().set_xlabel('Napok')
+    plt.gca().set_ylabel('Intenzív betegek száma')
+    plt.title(plot_title, y=1.03, fontsize=12)
+    plt.savefig(f'../sens_data/epidemic_plots_/epidemic_plot_{filename}_{r0}.pdf',
+                format="pdf", bbox_inches='tight')
+    plt.show()
+    plt.close()
+
+
+def get_age_groups():
+    return [f'{5 * age_start}-{5 * age_start + 5}' if 5 * age_start != 75 else '75+' for age_start in range(16)]

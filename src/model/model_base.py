@@ -13,7 +13,7 @@ class EpidemicModelBase(ABC):
         self.c_idx = {comp: idx for idx, comp in enumerate(compartments)}
         self.n_age = self.population.shape[0]
         self.device = model_data.device
-        self.size = self.n_age * len(self.compartments)
+        self.size = self.n_age * self.n_comp
 
     def get_initial_values(self):
         iv = torch.zeros(self.size)

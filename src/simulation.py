@@ -9,7 +9,7 @@ from src.model.model import VaccinatedModel
 from src.sensitivity.prcc import get_prcc_values
 from src.model.r0 import R0Generator
 from src.sensitivity.sampler_vaccinated import SamplerVaccinated
-from src.plotter import generate_prcc_plot, generate_epidemic_plot
+from src.plotter import generate_prcc_plot, generate_epidemic_plot, generate_epidemic_plot_
 
 
 class SimulationVaccinated:
@@ -72,13 +72,31 @@ class SimulationVaccinated:
                                r0=base_r0)
 
     # Create and save epidemic plots corresponding to the most optimal vaccine distributions from LHS sampling
-    def plot_optimal_vaccine_distribution(self):
+    def plot_optimal_vaccine_distributions(self):
         os.makedirs(f'../sens_data//epidemic_plots', exist_ok=True)
         simulations = itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)
         for susc, base_r0, target_var in simulations:
             filename = f'{susc}-{base_r0}-{target_var}-{self.distr}'
             vaccination = np.loadtxt(fname=f'../sens_data/optimal_vaccination/optimal_vaccination_{filename}.csv')
-            generate_epidemic_plot(self, vaccination, filename, target_var, base_r0, compartments=["i", "ic", "d"])
+            generate_epidemic_plot(self, vaccination, filename, target_var, base_r0, compartments=["ic", "d"])
+
+    def plot_subopt(self):
+        os.makedirs('../sens_data//epidemic_plots_', exist_ok=True)
+        target_var = 'ic_max'
+        r0 = 1.8
+        r0_bad = 3
+        filename = f'1.0-{r0_bad}-{target_var}-{self.distr}'
+        filename_opt = f'1.0-{r0}-{target_var}-{self.distr}'
+        vaccination = np.loadtxt(fname=f'../sens_data/optimal_vaccination/optimal_vaccination_{filename}.csv')
+        vaccination_opt = np.loadtxt(fname=f'../sens_data/optimal_vaccination/optimal_vaccination_{filename_opt}.csv')
+        generate_epidemic_plot_(sim_obj=self,
+                                vaccination=vaccination,
+                                vaccination_opt=vaccination_opt,
+                                filename=filename,
+                                target_var=target_var,
+                                r0=r0,
+                                r0_bad=r0_bad,
+                                compartments=['ic'])
 
     def _get_initial_config(self):
         self.params = self.data.model_parameters_data

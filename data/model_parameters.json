@@ -1,10 +1,10 @@
 {
     "alpha": {
-        "value": 0.33333333,
+        "value": 1,
         "description": "Reciprocal of expected time spent in exposed states"
     },
     "gamma": {
-        "value": 0.2,
+        "value": 1,
         "description": "Reciprocal of expected time spent in infected states"
     },
     "t_start": {
