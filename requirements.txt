@@ -1,5 +1,5 @@
 matplotlib==3.3.2
-numpy==1.19.4
+numpy==1.20.3
 scipy==1.5.4
 smt~=1.3.0
 tqdm==4.51.0

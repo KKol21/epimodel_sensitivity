@@ -83,7 +83,7 @@ class SimulationVaccinated:
     def plot_subopt(self):
         os.makedirs('../sens_data//epidemic_plots_', exist_ok=True)
         target_var = 'ic_max'
-        r0 = 1.8
+        r0 = 3
         r0_bad = 3
         filename = f'1.0-{r0_bad}-{target_var}-{self.distr}'
         filename_opt = f'1.0-{r0}-{target_var}-{self.distr}'

@@ -1,6 +1,8 @@
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
+import seaborn
+import pandas as pd
 
 
 def get_target(target_var):
@@ -48,7 +50,7 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
     # Display age groups next to y axis
     def get_age_group(param):
         age_start = int(param.split('_')[2]) * 5
-        return f'{age_start}-{age_start + 5} ' if age_start != 75 else '75+ '
+        return f'{age_start}-{age_start + 4} ' if age_start != 75 else '75+ '
     labels = list(map(get_age_group, params))
     plt.yticks(ys, labels)
 
@@ -115,7 +117,7 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
         target = get_target(target_var)
         plot_title = "Járványgörbe korcsoportokra aggregálva \n"\
                      f"Vakcinálás célváltozója: {target}\n"\
-                     r"$\mathcal{R}_0=$" + str(r0)
+                     r"Szimuláció $\mathcal{R}_0=$" + str(r0)
 
     comp = 'ic'
     colors = ['orange', 'red']
@@ -138,12 +140,12 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
                                          daily_vac=torch.tensor(vaccination).float())
 
     comp_sol = model.aggregate_by_age(sol_real, comp)
-    plt.plot(t, comp_sol, label=comp.upper(), color=colors[0], linewidth=2)
     comp_sol_bad = model.aggregate_by_age(sol_bad, comp)
-    plt.plot(t, comp_sol_bad, label=f'{comp.upper()}*', color=colors[1], linewidth=2)
+    plt.plot(t, comp_sol_bad, color=colors[1], linewidth=2)
+    plt.plot(t, comp_sol, '--', color=colors[0], linewidth=2)
 
-    plt.legend([r'$\mathcal{R}_0 = 1.8$ esetén optimális vakcinálás',
-                r'$\mathcal{R}_0 = 3$ esetén optimális vakcinálás'], fontsize=8)
+    plt.legend([r'Optimális vakcinálás $\mathcal{R}_0 = 1.8$ esetén',
+                r'Optimális vakcinálás $\mathcal{R}_0 = 3$ esetén'], fontsize=8)
     plt.gca().set_xlabel('Napok')
     plt.gca().set_ylabel('Intenzív betegek száma')
     plt.title(plot_title, y=1.03, fontsize=12)
@@ -155,3 +157,13 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
 
 def get_age_groups():
     return [f'{5 * age_start}-{5 * age_start + 5}' if 5 * age_start != 75 else '75+' for age_start in range(16)]
+
+
+def get_hmap(cm):
+    labels = get_age_groups()
+    cm = pd.DataFrame(cm).loc[:, ::-1].T
+    cmap = seaborn.color_palette("flare", as_cmap=True)
+    hmap = seaborn.heatmap(cm, xticklabels=labels, yticklabels=labels[::-1], cmap=cmap)
+    hmap = hmap.get_figure()
+    hmap.suptitle('Kontakt mátrix hőtérképe')
+    hmap.savefig('../cont_mtx_hmap.pdf', dpi=400)
