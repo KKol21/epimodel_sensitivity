@@ -10,7 +10,7 @@ PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 class DataLoader:
     def __init__(self):
-        self.device = 'cpu'#'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cpu'   # 'cuda' if torch.cuda.is_available() else 'cpu'
         self._model_parameters_data_file = os.path.join(PROJECT_PATH, "../data", "model_parameters.json")
         self._contact_data_file = os.path.join(PROJECT_PATH, "../data", "contact_matrices.xls")
         self._age_data_file = os.path.join(PROJECT_PATH, "../data", "age_distribution.xls")
@@ -52,6 +52,24 @@ class DataLoader:
         self.contact_data = contact_matrices
 
     def transform_matrix(self, matrix: torch.Tensor):
+        """
+        Perform symmetrization of contact matrix, by averaging it's elements with the elements of
+        it's transpose, then dividing each row with the size of the age group corresponding to the given row.
+
+        After this, the C[i, j] element represents the average number of interactions a member of age
+        group i has with members of age group j, while C[j, i] represents the average number of
+        interactions a member of age group j has with members of age group j in a day.
+
+        For example, in the case that the population of age group i is the double of age group j:
+
+                                     C[j, i] = 2 * C[i, j]
+
+        Args:
+            matrix (torch.Tensor): The contact matrix.
+
+        Returns:
+            torch.Tensor: The transformed contact matrix.
+        """
         # Get age vector as a column vector
         age_distribution = self.age_data.reshape((-1, 1))
         # Get matrix of total number of contacts

@@ -1,12 +1,16 @@
-from matplotlib import pyplot as plt
 import numpy as np
 
 
 def get_prcc_values(lhs_output_table):
     """
-    Creates the PRCC values of last column of an ndarray depending on the columns before.
-    :param lhs_output_table: ndarray
-    :return: ndarray
+    Calculates the Partial Rank Correlation Coefficient (PRCC) values
+    for the last column of an ndarray based on the preceding columns.
+
+    Args:
+        lhs_output_table (ndarray): Input ndarray containing the LHS samples and simulation results.
+
+    Returns:
+        ndarray: PRCC values for the last column.
     """
     ranked = (lhs_output_table.argsort(0)).argsort(0)
     corr_mtx = np.corrcoef(ranked.T)

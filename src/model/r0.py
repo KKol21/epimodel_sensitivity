@@ -7,6 +7,18 @@ from src.model.matrix_generator import generate_transition_matrix
 
 class R0Generator(R0GeneratorBase):
     def __init__(self, param: dict, device, n_age: int):
+        """
+        Initialises R0Generator class instance, for the calculation of the effective reproduction number
+        (R0) for the specified model and parameters. It is used for computing the base transmission rate,
+        by factoring it out from the NGM (next-generation matrix), and dividing a given R0 by the
+        spectral radius (largest eigenvalue) of the NGM.
+
+        Args:
+            param (dict): A dictionary containing the parameters required for R0 calculation.
+            device: The device (CPU or GPU) on which the calculations will be performed.
+            n_age (int): The number of age groups in the model.
+
+        """
         from src.model.model import get_n_states
         self.n_e = param["n_e"]
         self.n_i = param["n_i"]
@@ -18,6 +30,12 @@ class R0Generator(R0GeneratorBase):
         self._get_e()
 
     def _get_v(self) -> None:
+        """
+        Compute and store the inverse of the transition matrix.
+
+        Returns:
+            None
+        """
         idx = self._idx
         params = self.parameters
 
@@ -27,6 +45,15 @@ class R0Generator(R0GeneratorBase):
         self.v_inv = torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
+        """
+       Compute the matrix representing the rate of infection.
+
+       Args:
+           contact_mtx (torch.Tensor): The contact matrix.
+
+       Returns:
+           torch.Tensor: The matrix representing the rate of infection.
+       """
         i = self.i
         s_mtx = self.s_mtx
         n_states = self.n_states

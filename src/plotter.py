@@ -15,6 +15,19 @@ def get_target(target_var):
 
 
 def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
+    """
+    Generate a tornado plot to visualize the Partial Rank Correlation Coefficient (PRCC) values.
+
+    Args:
+        params (list): The list of parameter names.
+        target_var (str): The target variable.
+        prcc (np.ndarray): The PRCC values.
+        filename (str): The filename for saving the plot.
+        r0: The value of R0.
+
+    Returns:
+        None
+    """
     prcc = np.round(prcc, 3)
     target_var = get_target(target_var)
     plt.title(f"PRCC értékei a vakcinák elosztásának\n"
@@ -85,7 +98,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
                                         susceptibles=sim_obj.susceptibles.reshape(1, -1),
                                         population=sim_obj.population)
     sim_obj.params["beta"] = beta
-    model.get_constant_matrices()
+    model._get_constant_matrices()
     t = torch.linspace(1, 1200, 1200).to(sim_obj.device)
     sol = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix, daily_vac=torch.tensor(vaccination).float())
     mask = torch.cat((torch.full((100, ), True),
@@ -132,7 +145,7 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
     # Calculate base transmission rate
     beta = r0 / ngm_ev
     sim_obj.params["beta"] = beta
-    model.get_constant_matrices()
+    model._get_constant_matrices()
     t = torch.linspace(1, 1000, 1000).to(sim_obj.device)
     sol_real = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix,
                                           daily_vac=torch.tensor(vaccination_opt).float())
