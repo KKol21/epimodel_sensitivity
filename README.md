@@ -43,7 +43,7 @@ The pipeline is fully compatible with CUDA and provides an efficient representat
 Although the evaluation of the model has not been parallelized yet due to time constraints, the project can
 serve as an excellent starting point for evaluating compartmental epidemic models on the GPU in Python.
 
-The following flowchart represents the pipeline established in this project: ![flowchart](/images/flowchart.jpg)
+The following flowchart represents the pipeline established in this project: ![Flowchart](/images/flowchart.jpg)
 
 By running the methods contained in `simulation.py`, the folder `sens_data` is created, containing the LHS tables, 
 the value of the target variables in corresponding order to the samples, the PRCC values calculated, the tornado 
