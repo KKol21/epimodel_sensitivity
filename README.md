@@ -1,7 +1,7 @@
 # Sensitivity analysis of age-specific vaccination in epidemic modelling
-This repository was created during the making of the Bsc thesis "Sensitivity analysis of
-age-specific vaccination in epidemic modelling" by K. Kovács and Zs. Vizi. It serves as a
-starting point for the sensitivity analysis of age-specific vaccination strategies. 
+This repository was created during the making of the Bsc thesis ["Sensitivity analysis of
+age-specific vaccination in epidemic modelling"](https://drive.google.com/file/d/1ICZ_JTFdJ_zOCKJDFukfIcOrxkguWCFT/view?usp=sharing)(Hungarian) by K. Kovács, Zs. Vizi and B. Péter. It serves as a
+starting point for the sensitivity analysis of age-specific vaccination strategies.
 
 ## Introduction
 The purpose of this project is the sensitivity analysis of a COVID-19 model (or any compartmental model), based on
@@ -45,7 +45,7 @@ serve as an excellent starting point for evaluating compartmental epidemic model
 
 The following flowchart represents the pipeline established in this project:
 
-
+![flowchart](flowchart.pdf)
 By running the methods contained in `simulation.py`, the folder `sens_data` is created, containing the LHS tables, 
 the value of the target variables in corresponding order to the samples, the PRCC values calculated, the tornado 
 plots, and the plots of the epidemic in the subfolders `lhs`, `simulations`, `prcc`, 
