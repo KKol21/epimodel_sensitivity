@@ -43,7 +43,7 @@ class SimulationVaccinated:
 
         # User-defined parameters
         self.susc_choices = [1.0]
-        self.r0_choices = [1.8, 2.4, 3]
+        self.r0_choices = [1.8]
         self.target_var_choices = ["d_max", "i_max", "ic_max"]  # i_max, ic_max, d_max
 
         # Define initial configs
@@ -65,15 +65,21 @@ class SimulationVaccinated:
         for susc, base_r0, target_var in simulations:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})
-            r0generator = R0Generator(param=self.params, device=self.data.device, n_age=self.n_age)
+            r0generator = R0Generator(param=self.params,
+                                      device=self.data.device,
+                                      n_age=self.n_age)
             # Calculate base transmission rate
             beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.contact_matrix,
                                                      susceptibles=self.susceptibles.reshape(1, -1),
                                                      population=self.population)
             self.params.update({"beta": beta})
-            sim_state = {"base_r0": base_r0, "susc": susc, "r0generator": r0generator,
+            sim_state = {"base_r0": base_r0,
+                         "susc": susc,
+                         "r0generator": r0generator,
                          "target_var": target_var}
-            param_generator = SamplerVaccinated(sim_state=sim_state, sim_obj=self)
+            param_generator = SamplerVaccinated(sim_state=sim_state,
+                                                sim_obj=self,
+                                                n_samples=self.n_samples)
             param_generator.run_sampling()
 
     def calculate_prcc(self):
@@ -180,4 +186,5 @@ class SimulationVaccinated:
         self.age_vector = self.population.reshape((-1, 1))
         self.susceptibles = self.model.get_initial_values()[self.model.idx("s")]
         self.device = self.data.device
+        self.n_samples = 10000
 

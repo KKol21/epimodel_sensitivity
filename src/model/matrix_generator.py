@@ -93,7 +93,7 @@ class MatrixGenerator:
         """
         self.cm = cm
         self.ps = ps
-        self.s_mtx = model.n_age * model.n_comp
+        self.s_mtx = model.s_mtx
         self.n_state_comp = model.n_state_comp
         self.n_age = model.n_age
         self.n_comp = model.n_comp

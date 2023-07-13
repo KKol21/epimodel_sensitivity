@@ -10,9 +10,9 @@ from src.sensitivity.sampler_base import SamplerBase
 
 
 class SamplerVaccinated(SamplerBase):
-    def __init__(self, sim_state: dict, sim_obj):
+    def __init__(self, sim_state: dict, sim_obj, n_samples):
         super().__init__(sim_state, sim_obj)
-        self.n_samples = 100
+        self.n_samples = n_samples
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
         self.target_var = sim_state["target_var"]
@@ -53,6 +53,7 @@ class SamplerVaccinated(SamplerBase):
         get_output = partial(self.get_max, comp=self.target_var.split('_')[0])
         # Generate matrices used in model representation
         self.sim_obj.model._get_constant_matrices()
+        self.sim_obj.model.get_vacc_tensors(lhs_table)
         # Calculate values of target variable for each sample
         results = list(tqdm(map(get_output, lhs_table), total=lhs_table.shape[0]))
         results = torch.tensor(results)
@@ -88,7 +89,7 @@ class SamplerVaccinated(SamplerBase):
             Exception: If there is an unexpected change in the population size during testing.
         """
         parameters = self.sim_obj.params
-        days = 1000
+        days = 1200
         t = torch.linspace(1, days, days).to(self.sim_obj.data.device)
         daily_vac = vaccination_sample * parameters["total_vaccines"] / parameters["T"]
         sol = self.sim_obj.model.get_solution(t=t, cm=self.sim_obj.contact_matrix, daily_vac=daily_vac)

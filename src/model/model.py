@@ -1,4 +1,5 @@
 import torch
+import torchode as to
 
 from src.model.model_base import EpidemicModelBase, get_n_states
 from src.dataloader import DataLoader
@@ -23,6 +24,7 @@ class VaccinatedModel(EpidemicModelBase):
         self.n_state_comp = ["e", "i", "h", "ic", "icr"]
         compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["v_0", "r", "d"]
         super().__init__(model_data=model_data, compartments=compartments)
+        self.s_mtx = self.n_age * self.n_comp
 
         from src.model.matrix_generator import MatrixGenerator
         self.matrix_generator = MatrixGenerator(model=self, cm=cm, ps=self.ps)
@@ -109,6 +111,30 @@ class VaccinatedModel(EpidemicModelBase):
             result += solution[:, self.idx(state)].sum(axis=1)
         return result
 
+    def get_vacc_tensors(self, lhs_table):
+        n_samples = lhs_table.shape[0]
+        s_mtx = self.s_mtx
+        self.V = torch.zeros((n_samples * s_mtx, s_mtx)).to(self.device)
+        for idx, r in zip(range(n_samples), lhs_table):
+            self.V[idx * s_mtx:(idx + 1) * s_mtx, :] = self.matrix_generator.get_V_1(r)
+
+    def get_torchode_sol(self, t, y0, vacc):
+        self.get_vacc_tensors(vacc)
+        def odefun(t, y):
+            vacc = torch.zeros(y.shape[0], self.s_mtx)
+            if self.ps["t_start"] < t[0] < (self.ps["t_start"] + self.ps["T"]):
+                vacc = torch.div(self.V @ y,
+                                 self.V_2 @ y)
+            return torch.mul(self.A @ y, self.T @ y) + self.B @ y + vacc
+
+        # t = torch.stack([torch.linspace(0, 5, n_steps)] * n_samples)
+
+        term = to.ODETerm(odefun, with_args=True)
+        # step_method = to.Tsit5(term=term)
+        # step_size_controller = to.IntegralController(atol=1e-6, rtol=1e-3, term=term)
+        # solver = to.AutoDiffAdjoint(step_method, step_size_controller)
+        # problem = to.InitialValueProblem(y0=y0, t_eval=t_eval)
+
 
 class ModelEq(torch.nn.Module):
     def __init__(self, model: VaccinatedModel, cm: torch.Tensor, daily_vac):
@@ -142,7 +168,7 @@ class ModelEq(torch.nn.Module):
         y' = (A @ y) * (T @ y) + B @ y + vacc,
 
         where A, T, B are matrices stored and previously calculated, and vacc represents vaccination,
-        given by (V_1 * y) / (V_2 @ y) when t is in the vaccination period, else 0.
+        given by (V_1 @ y) / (V_2 @ y) when t is in the vaccination period, else 0.
 
         Args:
             t : Time parameter.
