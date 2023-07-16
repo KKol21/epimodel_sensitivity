@@ -19,8 +19,8 @@ class SamplerVaccinated(SamplerBase):
         self.lhs_boundaries = {"lower": np.zeros(sim_obj.n_age),    # Ratio of daily vaccines given to each age group
                                "upper": np.ones(sim_obj.n_age)
                                }
-        self.min_target = 1E10
         self.optimal_vacc = None
+        self.batch_size = 5000
 
     def run_sampling(self):
         """
@@ -47,11 +47,11 @@ class SamplerVaccinated(SamplerBase):
         lhs_table = self.allocate_vaccines(lhs_table).to(self.sim_obj.data.device)
 
         print("Simulation for", self.n_samples,
-              "samples (", self._get_variable_parameters(), ")")
+              "samples (", self._get_variable_parameters(), ") \n"
+              "Batch size: ", self.batch_size, "\n")
 
-        get_output = partial(self.get_max_to, comp=self.target_var.split('_')[0])
         # Calculate values of target variable for each sample
-        results = get_output(lhs_table)
+        results = self.get_batched_output(lhs_table)
         # Sort tables by target values
         sorted_idx = results.argsort()
         results = results[sorted_idx]
@@ -64,74 +64,52 @@ class SamplerVaccinated(SamplerBase):
         self._save_output(output=sim_output, folder_name='simulations')
         self._save_output(output=self.optimal_vacc, folder_name='optimal_vaccination')
 
-    def get_max_to(self, lhs_table, comp: str):
+    def get_batched_output(self, lhs_table):
+        batch_size = self.batch_size
+        n_batches = self.n_samples // batch_size
+        batches = []
+
+        for i in tqdm(range(n_batches), desc="Batches completed", leave=False):
+            indices = slice(i * batch_size, (i + 1) * batch_size) if i < n_batches - 1 \
+                else slice(i * batch_size, -1)
+
+            solutions = self.get_sol_from_lhs(lhs_table[indices])
+            comp_maxes = self.get_max(sol=solutions, comp=self.target_var.split('_')[0])
+            batches.append(comp_maxes)
+
+        result = torch.concat(batches)
+        self.optimal_vacc = lhs_table[result.argmin()]
+        return result
+
+    def get_sol_from_lhs(self, lhs_table):
         # Generate matrices used in model representation
         self.sim_obj.model.get_constant_matrices()
-        start_t = time()
 
+        # Initialize timesteps and initial values
         t_eval = torch.stack(
-            [torch.linspace(1, 1200, 1200)] * self.n_samples
-                             ).to(self.sim_obj.data.device)
+            [torch.linspace(1, 1100, 1100)] * lhs_table.shape[0]
+        ).to(self.sim_obj.data.device)
+
         y0 = torch.stack(
-            [self.sim_obj.model.get_initial_values()] * self.n_samples
-                         ).to(self.sim_obj.data.device)
+            [self.sim_obj.model.get_initial_values()] * lhs_table.shape[0]
+        ).to(self.sim_obj.data.device)
+
         sol = self.sim_obj.model.get_solution(t_eval=t_eval,
                                               y0=y0,
                                               lhs_table=lhs_table
-                                                  ).ys
+                                              ).ys
         if self.sim_obj.test:
             # Check if population size changed
-            if any([abs(self.sim_obj.population.sum() - sol[i, -1, :].sum()) > 50 for i in range(self.n_samples)]):
+            if any([abs(self.sim_obj.population.sum() - sol[i, -1, :].sum()) > 50 for i in range(sol.shape[0])]):
                 raise Exception("Unexpected change in population size!")
+        return sol
 
+    def get_max(self, sol, comp: str):
         comp_max = []
-        for i in range(self.n_samples):
+        for i in range(sol.shape[0]):
             comp_sol = self.sim_obj.model.aggregate_by_age(solution=sol[i, :, :], comp=comp)
             comp_max.append(torch.max(comp_sol))
-            if comp_max[i] < self.min_target:
-                self.min_target = torch.clone(comp_max[i])
-                self.optimal_vacc = torch.clone(lhs_table[i])
-        elapsed = time() - start_t
-        print("Elapsed time: ", elapsed,
-              "\n Average iterations/second: ", round(self.n_samples / elapsed, 3),
-              "\n")
         return torch.tensor(comp_max)
-
-    def get_max(self, vaccination_sample: torch.Tensor, comp: str):
-        """
-        Returns the maximum value of a specified compartment (comp) in the simulation model,
-        considering different scenarios based on the base reproduction number (r0) and
-        a given vaccination sample.
-
-        Args:
-            vaccination_sample (torch.Tensor): The vaccination sample representing the distribution
-                of available vaccines between the age groups of the population.
-            comp (str): The compartment for which the maximum value is to be determined.
-                This should be a valid compartment name recognized by the simulation model.
-
-        Returns:
-            float: The maximum value of the specified compartment (comp) in the simulation model.
-
-        Raises:
-            Exception: If there is an unexpected change in the population size during testing.
-        """
-        parameters = self.sim_obj.params
-        days = 1200
-        t = torch.linspace(1, days, days).to(self.sim_obj.data.device)
-        daily_vac = vaccination_sample * parameters["total_vaccines"] / parameters["T"]
-        sol = self.sim_obj.model.get_solution(t=t, cm=self.sim_obj.contact_matrix, daily_vac=daily_vac)
-        if self.sim_obj.test:
-            # Check if population size changed
-            if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 50:
-                raise Exception("Unexpected change in population size!")
-        self.sol = sol
-        comp_sol = self.sim_obj.model.aggregate_by_age(solution=sol, comp=comp)
-        comp_max = torch.max(comp_sol)
-        if comp_max < self.min_target:
-            self.min_target = comp_max
-            self.optimal_vacc = daily_vac
-            self.sim_obj.model.aggregate_by_age(sol, 'd').max()
-        return comp_max
 
     def _get_variable_parameters(self):
         """
