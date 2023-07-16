@@ -44,7 +44,7 @@ class SimulationVaccinated:
         # User-defined parameters
         self.susc_choices = [1.0]
         self.r0_choices = [1.8]
-        self.target_var_choices = ["d_max", "i_max", "ic_max"]  # i_max, ic_max, d_max
+        self.target_var_choices = ["d_max", "i_max"]#, "ic_max"]  # i_max, ic_max, d_max
 
         # Define initial configs
         self._get_initial_config()
@@ -186,5 +186,4 @@ class SimulationVaccinated:
         self.age_vector = self.population.reshape((-1, 1))
         self.susceptibles = self.model.get_initial_values()[self.model.idx("s")]
         self.device = self.data.device
-        self.n_samples = 10000
-
+        self.n_samples = 100

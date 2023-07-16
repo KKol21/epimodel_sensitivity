@@ -103,14 +103,14 @@ class MatrixGenerator:
         self.c_idx = model.c_idx
 
     def get_A(self) -> torch.Tensor:
-        # Multiplied with y, the resulting 1D tensor contains the rate of transmission for the susceptibles of
+        # Multiplied with y, the resulting tensor contains the rate of transmission for the susceptibles of
         # age group i at the indices of compartments s^i and e_0^i
         A = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
         transmission_rate = self.ps["beta"] * self.ps["susc"] / self.population
         idx = self.idx
 
         A[idx('s'), idx('s')] = - transmission_rate
-        A[idx('e_0'), idx('s')] = transmission_rate
+        A[idx('s'), idx('e_0')] = transmission_rate
         return A
 
     def get_T(self) -> torch.Tensor:
@@ -118,8 +118,8 @@ class MatrixGenerator:
         # Multiplied with y, the resulting 1D tensor contains the sum of all contacts with infecteds of
         # age group i at indices of compartments s_i and e_i^0
         for i_state in get_n_states(self.ps["n_i"], "i"):
-            T[self._get_comp_slice('s'), self._get_comp_slice(i_state)] = self.cm.T
-            T[self._get_comp_slice('e_0'), self._get_comp_slice(i_state)] = self.cm.T
+            T[self._get_comp_slice(i_state), self._get_comp_slice('s')] = self.cm.T
+            T[self._get_comp_slice(i_state), self._get_comp_slice('e_0')] = self.cm.T
         return T
 
     def get_B(self) -> torch.Tensor:
@@ -176,12 +176,12 @@ class MatrixGenerator:
         idx = self.idx
         V_2 = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
         # Make sure to avoid division by zero
-        V_2[~ (idx('s') + idx('v_0')), 0] = 1
+        V_2[0, ~(idx('s') + idx('v_0'))] = 1
         # Fill in all the terms such that we will divide the terms at the indices of s^i and v^i by (s^i + r^i)
-        V_2[idx('s'), idx('s')] = - 1
-        V_2[idx('s'), idx('r')] = - 1
-        V_2[idx('v_0'), idx('s')] = 1
-        V_2[idx('v_0'), idx('r')] = 1
+        V_2[idx('s'), idx('s')] = -1
+        V_2[idx('r'), idx('s')] = -1
+        V_2[idx('s'), idx('v_0')] = 1
+        V_2[idx('r'), idx('v_0')] = 1
         return V_2
 
     def _get_comp_slice(self, comp: str) -> slice:

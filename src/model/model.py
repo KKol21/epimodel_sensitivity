@@ -29,7 +29,7 @@ class VaccinatedModel(EpidemicModelBase):
         from src.model.matrix_generator import MatrixGenerator
         self.matrix_generator = MatrixGenerator(model=self, cm=cm, ps=self.ps)
 
-    def _get_constant_matrices(self) -> None:
+    def get_constant_matrices(self) -> None:
         """
         Calculates and stores the constant matrices required for evaluation of the model, using
         the matrix generator to calculate and store the constant matrices: A, T, B, and V_2.
@@ -113,27 +113,31 @@ class VaccinatedModel(EpidemicModelBase):
 
     def get_vacc_tensors(self, lhs_table):
         n_samples = lhs_table.shape[0]
+        daily_vac = lhs_table * self.ps['total_vaccines'] / self.ps["T"]
         s_mtx = self.s_mtx
-        self.V = torch.zeros((n_samples * s_mtx, s_mtx)).to(self.device)
-        for idx, r in zip(range(n_samples), lhs_table):
-            self.V[idx * s_mtx:(idx + 1) * s_mtx, :] = self.matrix_generator.get_V_1(r)
+        V = torch.zeros((n_samples, s_mtx, s_mtx)).to(self.device)
+        for idx, r in zip(range(n_samples), daily_vac):
+            V[idx, :, :] = self.matrix_generator.get_V_1(r).T
+        return V
 
-    def get_torchode_sol(self, t, y0, vacc):
-        self.get_vacc_tensors(vacc)
-        def odefun(t, y):
-            vacc = torch.zeros(y.shape[0], self.s_mtx)
+    def get_solution(self, t_eval, y0, lhs_table):
+        V = self.get_vacc_tensors(lhs_table)
+        n_samples = y0.shape[0]
+        def odefun(t, y, V):
             if self.ps["t_start"] < t[0] < (self.ps["t_start"] + self.ps["T"]):
-                vacc = torch.div(self.V @ y,
-                                 self.V_2 @ y)
-            return torch.mul(self.A @ y, self.T @ y) + self.B @ y + vacc
-
-        # t = torch.stack([torch.linspace(0, 5, n_steps)] * n_samples)
+                vacc = torch.div(torch.einsum('ij,ijk->ik', y, V),
+                                 y @ self.V_2)
+                return torch.mul(y @ self.A, y @ self.T) + y @ self.B.T + vacc
+            return torch.mul(y @ self.A, y @ self.T) + y @ self.B.T
 
         term = to.ODETerm(odefun, with_args=True)
-        # step_method = to.Tsit5(term=term)
-        # step_size_controller = to.IntegralController(atol=1e-6, rtol=1e-3, term=term)
-        # solver = to.AutoDiffAdjoint(step_method, step_size_controller)
-        # problem = to.InitialValueProblem(y0=y0, t_eval=t_eval)
+        step_method = to.Euler(term=term)
+        step_size_controller = to.FixedStepController()
+        solver = to.AutoDiffAdjoint(step_method, step_size_controller)
+        problem = to.InitialValueProblem(y0=y0, t_eval=t_eval)
+        dt0 = torch.full((n_samples,), 1)
+
+        return solver.solve(problem, args=V, dt0=dt0)
 
 
 class ModelEq(torch.nn.Module):

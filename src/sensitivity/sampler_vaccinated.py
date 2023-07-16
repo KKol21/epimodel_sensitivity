@@ -1,5 +1,5 @@
 from functools import partial
-from time import sleep
+from time import sleep, time
 
 import numpy as np
 from smt.sampling_methods import LHS
@@ -42,7 +42,6 @@ class SamplerVaccinated(SamplerBase):
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(self.n_samples)
-
         # Make sure that total vaccines given to an age group
         # doesn't exceed the population of that age group
         lhs_table = self.allocate_vaccines(lhs_table).to(self.sim_obj.data.device)
@@ -50,14 +49,9 @@ class SamplerVaccinated(SamplerBase):
         print("Simulation for", self.n_samples,
               "samples (", self._get_variable_parameters(), ")")
 
-        get_output = partial(self.get_max, comp=self.target_var.split('_')[0])
-        # Generate matrices used in model representation
-        self.sim_obj.model._get_constant_matrices()
-        self.sim_obj.model.get_vacc_tensors(lhs_table)
+        get_output = partial(self.get_max_to, comp=self.target_var.split('_')[0])
         # Calculate values of target variable for each sample
-        results = list(tqdm(map(get_output, lhs_table), total=lhs_table.shape[0]))
-        results = torch.tensor(results)
-
+        results = get_output(lhs_table)
         # Sort tables by target values
         sorted_idx = results.argsort()
         results = results[sorted_idx]
@@ -69,6 +63,39 @@ class SamplerVaccinated(SamplerBase):
         self._save_output(output=lhs_table, folder_name='lhs')
         self._save_output(output=sim_output, folder_name='simulations')
         self._save_output(output=self.optimal_vacc, folder_name='optimal_vaccination')
+
+    def get_max_to(self, lhs_table, comp: str):
+        # Generate matrices used in model representation
+        self.sim_obj.model.get_constant_matrices()
+        start_t = time()
+
+        t_eval = torch.stack(
+            [torch.linspace(1, 1200, 1200)] * self.n_samples
+                             ).to(self.sim_obj.data.device)
+        y0 = torch.stack(
+            [self.sim_obj.model.get_initial_values()] * self.n_samples
+                         ).to(self.sim_obj.data.device)
+        sol = self.sim_obj.model.get_solution(t_eval=t_eval,
+                                              y0=y0,
+                                              lhs_table=lhs_table
+                                                  ).ys
+        if self.sim_obj.test:
+            # Check if population size changed
+            if any([abs(self.sim_obj.population.sum() - sol[i, -1, :].sum()) > 50 for i in range(self.n_samples)]):
+                raise Exception("Unexpected change in population size!")
+
+        comp_max = []
+        for i in range(self.n_samples):
+            comp_sol = self.sim_obj.model.aggregate_by_age(solution=sol[i, :, :], comp=comp)
+            comp_max.append(torch.max(comp_sol))
+            if comp_max[i] < self.min_target:
+                self.min_target = torch.clone(comp_max[i])
+                self.optimal_vacc = torch.clone(lhs_table[i])
+        elapsed = time() - start_t
+        print("Elapsed time: ", elapsed,
+              "\n Average iterations/second: ", round(self.n_samples / elapsed, 3),
+              "\n")
+        return torch.tensor(comp_max)
 
     def get_max(self, vaccination_sample: torch.Tensor, comp: str):
         """
@@ -97,7 +124,7 @@ class SamplerVaccinated(SamplerBase):
             # Check if population size changed
             if abs(self.sim_obj.population.sum() - sol[-1, :].sum()) > 50:
                 raise Exception("Unexpected change in population size!")
-
+        self.sol = sol
         comp_sol = self.sim_obj.model.aggregate_by_age(solution=sol, comp=comp)
         comp_max = torch.max(comp_sol)
         if comp_max < self.min_target:
@@ -108,26 +135,13 @@ class SamplerVaccinated(SamplerBase):
 
     def _get_variable_parameters(self):
         """
-        Returns a string representation of the variable parameters used in the simulation.
-
         Returns:
             str: A string representing the variable parameters in the format: susc-base_r0-target_var
-
         """
         return f'{self.susc}-{self.base_r0}-{self.target_var}'
 
     @staticmethod
     def norm_table_rows(table: np.ndarray):
-        """
-        Normalize the rows of a table by dividing each row by the sum of its elements.
-
-        Args:
-            table (np.ndarray): The input table as a NumPy array.
-
-        Returns:
-            np.ndarray: The normalized table where each row sums to 1.
-
-        """
         return table / np.sum(table, axis=1, keepdims=True)
 
     def allocate_vaccines(self, lhs_table: np.ndarray):

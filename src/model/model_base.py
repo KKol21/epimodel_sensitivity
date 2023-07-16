@@ -45,25 +45,6 @@ class EpidemicModelBase(ABC):
         iv[self.idx('s')] = self.population
         iv[age_group + self.c_idx['s']] -= 1
         return iv
-
-    def get_solution(self, t, cm, daily_vac):
-        """
-        Retrieves the model solution for the given parameters.
-
-        This method retrieves the solution for the model given the time points (t), contact matrix (cm),
-        and daily vaccine distribution (daily_vac).
-
-        Args:
-            t (torch.Tensor): Time points.
-            cm (torch.Tensor): Contact matrix.
-            daily_vac (torch.Tensor): Daily vaccine distribution.
-
-        Returns:
-            torch.Tensor: Model solution.
-        """
-        initial_values = self.get_initial_values()
-        return odeint(func=self.get_model(cm, daily_vac), y0=initial_values, t=t, method='euler')
-
     @abstractmethod
     def get_model(self, cm, daily_vac):
         pass

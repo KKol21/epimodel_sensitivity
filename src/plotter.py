@@ -98,13 +98,16 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
                                         susceptibles=sim_obj.susceptibles.reshape(1, -1),
                                         population=sim_obj.population)
     sim_obj.params["beta"] = beta
-    model._get_constant_matrices()
-    t = torch.linspace(1, 1200, 1200).to(sim_obj.device)
-    sol = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix, daily_vac=torch.tensor(vaccination).float())
+    model.get_constant_matrices()
+
+    t_eval = torch.linspace(1, 1200, 1200).to(sim_obj.device)
+    sol = sim_obj.model.get_solution(t_eval=t_eval[None, :],
+                                     y0=sim_obj.model.get_initial_values()[None, :],
+                                     lhs_table=torch.tensor(vaccination[None, :]).float()).ys[0, :, :]
     mask = torch.cat((torch.full((100, ), True),
                       sol[100:, model.idx('ic_0')].sum(axis=1) > 1))
     sol = sol[mask, :]
-    t = t[mask]
+    t = t_eval[mask]
 
     for idx, comp in enumerate(compartments):
         comp_sol = model.aggregate_by_age(sol, comp)
@@ -145,7 +148,8 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
     # Calculate base transmission rate
     beta = r0 / ngm_ev
     sim_obj.params["beta"] = beta
-    model._get_constant_matrices()
+    model.get_constant_matrices()
+
     t = torch.linspace(1, 1000, 1000).to(sim_obj.device)
     sol_real = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix,
                                           daily_vac=torch.tensor(vaccination_opt).float())
