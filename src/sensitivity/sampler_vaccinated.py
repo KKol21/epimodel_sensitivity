@@ -1,5 +1,4 @@
-from functools import partial
-from time import sleep, time
+import time
 
 import numpy as np
 from smt.sampling_methods import LHS
@@ -20,7 +19,7 @@ class SamplerVaccinated(SamplerBase):
                                "upper": np.ones(sim_obj.n_age)
                                }
         self.optimal_vacc = None
-        self.batch_size = 5000
+        self.batch_size = 200
 
     def run_sampling(self):
         """
@@ -46,9 +45,8 @@ class SamplerVaccinated(SamplerBase):
         # doesn't exceed the population of that age group
         lhs_table = self.allocate_vaccines(lhs_table).to(self.sim_obj.data.device)
 
-        print("Simulation for", self.n_samples,
-              "samples (", self._get_variable_parameters(), ") \n"
-              "Batch size: ", self.batch_size, "\n")
+        print(f"\n Simulation for {self.n_samples} samples ({self._get_variable_parameters()})")
+        print(f"Batch size: {self.batch_size}\n")
 
         # Calculate values of target variable for each sample
         results = self.get_batched_output(lhs_table)
@@ -56,8 +54,9 @@ class SamplerVaccinated(SamplerBase):
         sorted_idx = results.argsort()
         results = results[sorted_idx]
         lhs_table = lhs_table[sorted_idx]
+        self.optimal_vacc = lhs_table[0]
         sim_output = results
-        sleep(0.3)
+        time.sleep(0.3)
 
         # Save samples, target values, and the most optimal vaccination strategy found with sampling
         self._save_output(output=lhs_table, folder_name='lhs')
@@ -65,21 +64,18 @@ class SamplerVaccinated(SamplerBase):
         self._save_output(output=self.optimal_vacc, folder_name='optimal_vaccination')
 
     def get_batched_output(self, lhs_table):
-        batch_size = self.batch_size
-        n_batches = self.n_samples // batch_size
         batches = []
+        batch_size = self.batch_size
 
-        for i in tqdm(range(n_batches), desc="Batches completed", leave=False):
-            indices = slice(i * batch_size, (i + 1) * batch_size) if i < n_batches - 1 \
-                else slice(i * batch_size, -1)
-
-            solutions = self.get_sol_from_lhs(lhs_table[indices])
+        t_start = time.time()
+        for batch_idx in tqdm(range(0, self.n_samples, batch_size),
+                              desc="Batches completed"):
+            solutions = self.get_sol_from_lhs(lhs_table[batch_idx: batch_idx + batch_size])
             comp_maxes = self.get_max(sol=solutions, comp=self.target_var.split('_')[0])
             batches.append(comp_maxes)
-
-        result = torch.concat(batches)
-        self.optimal_vacc = lhs_table[result.argmin()]
-        return result
+        elapsed = time.time() - t_start
+        print(f"\n Average speed = {round(self.n_samples / elapsed, 3)} iterations/second \n")
+        return torch.concat(batches)
 
     def get_sol_from_lhs(self, lhs_table):
         # Generate matrices used in model representation
@@ -112,10 +108,6 @@ class SamplerVaccinated(SamplerBase):
         return torch.tensor(comp_max)
 
     def _get_variable_parameters(self):
-        """
-        Returns:
-            str: A string representing the variable parameters in the format: susc-base_r0-target_var
-        """
         return f'{self.susc}-{self.base_r0}-{self.target_var}'
 
     @staticmethod

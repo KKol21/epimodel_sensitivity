@@ -40,7 +40,7 @@ class VaccinatedModel(EpidemicModelBase):
         mtx_gen = self.matrix_generator
         self.A = mtx_gen.get_A()
         self.T = mtx_gen.get_T()
-        self.B = mtx_gen.get_B()
+        self.B = mtx_gen.get_B().T
         self.V_2 = mtx_gen.get_V_2()
 
     def get_n_compartments(self, params):
@@ -61,22 +61,6 @@ class VaccinatedModel(EpidemicModelBase):
         for comp in self.n_state_comp:
             compartments.append(get_n_states(comp_name=comp, n_classes=params[f'n_{comp}']))
         return [state for n_comp in compartments for state in n_comp]
-
-    def get_model(self, cm: torch.Tensor, daily_vac: torch.Tensor) -> torch.nn.Module:
-        """
-        Returns the ModelEq instance for the model.
-
-        This method returns an instance of the ModelEq class, which represents
-        the system of differential equations describing the model.
-
-        Args:
-            cm (torch.Tensor): Contact matrix.
-            daily_vac (torch.Tensor): Daily vaccine distribution.
-
-        Returns:
-            ModelEq (torch.nn.Module): Instance of the ModelEq class.
-        """
-        return ModelEq(self, cm, daily_vac).to(self.device)
 
     def aggregate_by_age(self, solution, comp):
         """
@@ -124,11 +108,12 @@ class VaccinatedModel(EpidemicModelBase):
         V = self.get_vacc_tensors(lhs_table)
         n_samples = y0.shape[0]
         def odefun(t, y, V):
+            base_result = torch.mul(y @ self.A, y @ self.T) + y @ self.B
             if self.ps["t_start"] < t[0] < (self.ps["t_start"] + self.ps["T"]):
                 vacc = torch.div(torch.einsum('ij,ijk->ik', y, V),
                                  y @ self.V_2)
-                return torch.mul(y @ self.A, y @ self.T) + y @ self.B.T + vacc
-            return torch.mul(y @ self.A, y @ self.T) + y @ self.B.T
+                return base_result + vacc
+            return base_result
 
         term = to.ODETerm(odefun, with_args=True)
         step_method = to.Euler(term=term)
@@ -138,62 +123,3 @@ class VaccinatedModel(EpidemicModelBase):
         dt0 = torch.full((n_samples,), 1)
 
         return solver.solve(problem, args=V, dt0=dt0)
-
-
-class ModelEq(torch.nn.Module):
-    def __init__(self, model: VaccinatedModel, cm: torch.Tensor, daily_vac):
-        """
-        This method initializes the ModelEq class by setting the model, contact matrix, parameter settings, and device.
-        It also calculates and stores the V_1 matrix for representing the vaccination part of the population.
-
-        Args:
-            model (VaccinatedModel): VaccinatedModel instance.
-            cm (torch.Tensor): Contact matrix.
-            daily_vac (torch.Tensor): Daily vaccine distribution.
-
-        Returns:
-            None
-        """
-        super(ModelEq, self).__init__()
-        self.model = model
-        self.cm = cm
-        self.ps = model.ps
-        self.device = model.device
-
-        self.V_1 = model.matrix_generator.get_V_1(daily_vac)
-        self.s_mtx = model.matrix_generator.s_mtx
-
-    def forward(self, t, y: torch.Tensor) -> torch.Tensor:
-        """
-        Defines the forward pass of the model.
-
-        This method defines the forward pass of the model, representing the ODE system in the form:
-
-        y' = (A @ y) * (T @ y) + B @ y + vacc,
-
-        where A, T, B are matrices stored and previously calculated, and vacc represents vaccination,
-        given by (V_1 @ y) / (V_2 @ y) when t is in the vaccination period, else 0.
-
-        Args:
-            t : Time parameter.
-            y (torch.Tensor): Model state tensor. (Population of each compartment)
-
-        Returns:
-            torch.Tensor: Output of the forward pass.
-        """
-        vacc = torch.zeros(self.s_mtx)
-        if self.get_vacc_bool(t):
-            vacc = torch.div(self.V_1 @ y, self.model.V_2 @ y)
-        return torch.mul(self.model.A @ y, self.model.T @ y) + self.model.B @ y + vacc
-
-    def get_vacc_bool(self, t) -> int:
-        """
-        Activation function for vaccination. Checks whether the time parameter given is inside the vaccination period.
-
-        Args:
-            t: Time parameter.
-
-        Returns:
-            int: 1 if vaccination is active, 0 otherwise.
-        """
-        return self.ps["t_start"] < t < (self.ps["t_start"] + self.ps["T"])

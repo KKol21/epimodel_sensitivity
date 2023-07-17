@@ -1,7 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 import torch
-from torchdiffeq import odeint
 from src.dataloader import DataLoader
 
 
@@ -45,9 +44,6 @@ class EpidemicModelBase(ABC):
         iv[self.idx('s')] = self.population
         iv[age_group + self.c_idx['s']] -= 1
         return iv
-    @abstractmethod
-    def get_model(self, cm, daily_vac):
-        pass
 
     def idx(self, state: str) -> bool:
         return torch.arange(self.size) % self.n_comp == self.c_idx[state]

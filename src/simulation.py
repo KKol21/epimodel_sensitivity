@@ -4,6 +4,8 @@ import os
 import numpy as np
 import torch
 
+import scipy.stats as ss
+
 from src.dataloader import DataLoader
 from src.model.model import VaccinatedModel
 from src.sensitivity.prcc import get_prcc_values
@@ -28,6 +30,7 @@ class SimulationVaccinated:
         _get_initial_config(): Retrieves initial configurations for the simulation.
 
     """
+
     def __init__(self):
         """
         Initializes the SimulationVaccinated class.
@@ -43,7 +46,7 @@ class SimulationVaccinated:
 
         # User-defined parameters
         self.susc_choices = [1.0]
-        self.r0_choices = [1.8]
+        self.r0_choices = [3]
         self.target_var_choices = ["d_max", "i_max", "ic_max"]  # i_max, ic_max, d_max
 
         # Define initial configs
@@ -126,6 +129,25 @@ class SimulationVaccinated:
                                filename=filename,
                                r0=base_r0)
 
+    def calculate_p_values(self, significance=0.05):
+        os.makedirs(f'../sens_data//p_values', exist_ok=True)
+        simulations = itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)
+        for susc, base_r0, target_var in simulations:
+            filename = f'{susc}-{base_r0}-{target_var}'
+            prcc = np.loadtxt(fname=f'../sens_data/prcc/prcc_{filename}.csv')
+            t = prcc * np.sqrt((self.n_samples - 2 - self.n_age) / (1 - prcc ** 2))
+            # p-value for 2-sided test
+            dof = self.n_samples - 2 - self.n_age
+            p_values = 2 * (1 - ss.t.cdf(x=abs(t), df=dof))
+            np.savetxt(fname=f'../sens_data/p_values/p_values_{filename}.csv', X=p_values)
+            is_first = True
+            for idx, p_val in enumerate(p_values):
+                if p_val > significance:
+                    if is_first:
+                        print("\nInsignificant p-values in ", filename, " case: \n")
+                        is_first = False
+                    print("  age group: ", idx, " p-val: ", p_val)
+
     def plot_optimal_vaccine_distributions(self):
         """
         Generates epidemic plots based on the most optimal vaccine distributions found by LHS sampling.
@@ -180,10 +202,10 @@ class SimulationVaccinated:
         self.params = self.data.model_parameters_data
         self.n_age = self.data.contact_data["home"].shape[0]
         self.contact_matrix = self.data.contact_data["home"] + self.data.contact_data["work"] + \
-            self.data.contact_data["school"] + self.data.contact_data["other"]
+                              self.data.contact_data["school"] + self.data.contact_data["other"]
         self.model = VaccinatedModel(model_data=self.data, cm=self.contact_matrix)
         self.population = self.model.population
         self.age_vector = self.population.reshape((-1, 1))
         self.susceptibles = self.model.get_initial_values()[self.model.idx("s")]
         self.device = self.data.device
-        self.n_samples = 50000
+        self.n_samples = 1000
