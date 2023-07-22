@@ -1,19 +1,17 @@
 import json
-import os
 
 import torch
 import numpy as np
 import xlrd
 
-PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
-
 
 class DataLoader:
     def __init__(self):
-        self.device = 'cpu'#'cuda' if torch.cuda.is_available() else 'cpu'
-        self._model_parameters_data_file = os.path.join(PROJECT_PATH, "../data", "model_parameters.json")
-        self._contact_data_file = os.path.join(PROJECT_PATH, "../data", "contact_matrices.xls")
-        self._age_data_file = os.path.join(PROJECT_PATH, "../data", "age_distribution.xls")
+        self.device = 'cpu'  # 'cuda' if torch.cuda.is_available() else 'cpu'
+        self._model_parameters_data_file = "../data/model_parameters.json"
+        self._contact_data_file = "../data/contact_matrices.xls"
+        self._age_data_file = "../data/age_distribution.xls"
+        self._model_structure_file = "../model_struct.json"
 
         self._get_age_data()
         self._get_model_parameters_data()
@@ -79,3 +77,10 @@ class DataLoader:
         # Get contact matrix
         output /= age_distribution
         return output
+
+    def _load_model_structure(self):
+        with open(self._model_structure_file) as f:
+            model_structure = json.load(f)
+
+        self.state_data = model_structure["states"]
+        self.transition_data = model_structure["transitions"]

@@ -19,7 +19,7 @@ class SamplerVaccinated(SamplerBase):
                                "upper": np.ones(sim_obj.n_age)
                                }
         self.optimal_vacc = None
-        self.batch_size = 200
+        self.batch_size = 100
 
     def run_sampling(self):
         """

@@ -78,23 +78,6 @@ class VaccinatedModel(EpidemicModelBase):
         return self._aggregate_by_age_n_state(solution, comp) if is_n_state\
             else solution[:, self.idx(comp)].sum(axis=1)
 
-    def _aggregate_by_age_n_state(self, solution, comp):
-        """
-        This method aggregates the solution by age for a compartment with substates by summing the solution
-        values of individual states within the compartment.
-
-        Args:
-            solution (torch.Tensor): Model solution tensor.
-            comp (str): Compartment name.
-
-        Returns:
-            torch.Tensor: Aggregated solution by age.
-        """
-        result = 0
-        for state in get_n_states(self.ps[f'n_{comp}'], comp):
-            result += solution[:, self.idx(state)].sum(axis=1)
-        return result
-
     def get_vacc_tensors(self, lhs_table):
         n_samples = lhs_table.shape[0]
         daily_vac = lhs_table * self.ps['total_vaccines'] / self.ps["T"]
@@ -123,3 +106,7 @@ class VaccinatedModel(EpidemicModelBase):
         dt0 = torch.full((n_samples,), 1)
 
         return solver.solve(problem, args=V, dt0=dt0)
+
+
+class TestModel(EpidemicModelBase):
+    pass

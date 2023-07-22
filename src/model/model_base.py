@@ -48,6 +48,23 @@ class EpidemicModelBase(ABC):
     def idx(self, state: str) -> bool:
         return torch.arange(self.size) % self.n_comp == self.c_idx[state]
 
+    def _aggregate_by_age_n_state(self, solution, comp):
+        """
+        This method aggregates the solution by age for a compartment with substates by summing the solution
+        values of individual states within the compartment.
+
+        Args:
+            solution (torch.Tensor): Model solution tensor.
+            comp (str): Compartment name.
+
+        Returns:
+            torch.Tensor: Aggregated solution by age.
+        """
+        result = 0
+        for state in get_n_states(self.ps[f'n_{comp}'], comp):
+            result += solution[:, self.idx(state)].sum(axis=1)
+        return result
+
 
 def get_n_states(n_classes, comp_name):
     """

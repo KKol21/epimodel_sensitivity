@@ -1,0 +1,25 @@
+{
+  "states": {
+    "s": {
+      "type": "neutral",
+      "n_substates": 1},
+    "i": {
+      "type": "infectious",
+      "n_substates": 3},
+    "r": {
+      "type": "neutral",
+      "n_substates": 1}
+    },
+  "transitions": {
+    "trans_0": {
+      "from": "s",
+      "to": "i",
+      "param": ["alpha"]
+    },
+    "trans_1": {
+      "from": "i",
+      "to": "r",
+      "param": ["gamma"]
+    }
+  }
+}
