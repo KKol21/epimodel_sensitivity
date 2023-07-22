@@ -41,7 +41,7 @@ class R0Generator(R0GeneratorBase):
 
         trans_mtx = generate_transition_matrix({"e": self.parameters["alpha"], "i": self.parameters["gamma"]},
                                                self.parameters, self.n_age, self.n_states, self.i).to(self.device)
-        trans_mtx[idx('i_0'), idx(f'e_{self.n_e - 1}')] = params["alpha"]
+        trans_mtx[idx(f'e_{self.n_e - 1}'), idx('i_0')] = params["alpha"]
         self.v_inv = torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
@@ -62,7 +62,7 @@ class R0Generator(R0GeneratorBase):
         susc_vec = self.parameters["susc"].reshape((-1, 1))
         # Rate of infection for every infected state
         for inf_state in get_n_states(self.n_i, "i"):
-            f[i["e_0"]:s_mtx:n_states, i[inf_state]:s_mtx:n_states] = torch.mul(contact_mtx.T, susc_vec)
+            f[i[inf_state]:s_mtx:n_states, i["e_0"]:s_mtx:n_states] = torch.mul(susc_vec, contact_mtx.T)
         return f
 
     def _get_e(self):

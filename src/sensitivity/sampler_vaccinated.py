@@ -80,7 +80,6 @@ class SamplerVaccinated(SamplerBase):
     def get_sol_from_lhs(self, lhs_table):
         # Generate matrices used in model representation
         self.sim_obj.model.get_constant_matrices()
-
         # Initialize timesteps and initial values
         t_eval = torch.stack(
             [torch.linspace(1, 1100, 1100)] * lhs_table.shape[0]
@@ -116,6 +115,7 @@ class SamplerVaccinated(SamplerBase):
 
     def allocate_vaccines(self, lhs_table: np.ndarray):
         """
+
         Allocates vaccines to ensure that the number of allocated vaccines does not exceed
         the population size of any given age group.
 

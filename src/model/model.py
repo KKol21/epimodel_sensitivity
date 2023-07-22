@@ -40,7 +40,7 @@ class VaccinatedModel(EpidemicModelBase):
         mtx_gen = self.matrix_generator
         self.A = mtx_gen.get_A()
         self.T = mtx_gen.get_T()
-        self.B = mtx_gen.get_B().T
+        self.B = mtx_gen.get_B()
         self.V_2 = mtx_gen.get_V_2()
 
     def get_n_compartments(self, params):

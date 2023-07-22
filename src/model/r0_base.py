@@ -28,7 +28,7 @@ class R0GeneratorBase(ABC):
         cm = cm * susceptibles
         f = self._get_f(cm)
         self._get_v()
-        ngm_large = f @ self.v_inv
+        ngm_large = self.v_inv @ f
         ngm = self.e @ ngm_large @ self.e.T
 
         dom_eig_val = torch.sort(torch.abs(

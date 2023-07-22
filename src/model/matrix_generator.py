@@ -19,7 +19,7 @@ def generate_transition_block(transition_param: float, n_states: int) -> torch.T
     # Outflow from states (diagonal elements)
     trans_block = trans_block.fill_diagonal_(-transition_param)
     # Inflow to states (elements under the diagonal)
-    trans_block[1:, :n_states - 1] = trans_block[1:, :n_states - 1].fill_diagonal_(transition_param)
+    trans_block[:n_states - 1, 1:] = trans_block[:n_states - 1, 1:].fill_diagonal_(transition_param)
     return trans_block
 
 
@@ -103,8 +103,11 @@ class MatrixGenerator:
         self.c_idx = model.c_idx
 
     def get_A(self) -> torch.Tensor:
-        # Multiplied with y, the resulting tensor contains the rate of transmission for the susceptibles of
-        # age group i at the indices of compartments s^i and e_0^i
+        """
+        Returns:
+            Torch.Tensor: When multiplied with y, the resulting tensor contains the rate of transmission for
+            the susceptibles of age group i at the indices of compartments s^i and e_0^i
+        """
         A = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
         transmission_rate = self.ps["beta"] * self.ps["susc"] / self.population
         idx = self.idx
@@ -124,11 +127,11 @@ class MatrixGenerator:
 
     def get_B(self) -> torch.Tensor:
         ps = self.ps
-        # B is the tensor representing the first order elements of the ODE system. We begin by
+        # B is the tensor representing the first-order elements of the ODE system. We begin by
         # filling in the transition blocks of the erlang distributed parameters
         B = generate_transition_matrix(self._get_trans_param_dict(), self.ps, self.n_age, self.n_comp, self.c_idx)
 
-        # Then fill in the rest of the first order terms
+        # Then fill in the rest of the first-order terms
         idx = self.idx
         c_end = self._get_end_state
         e_end = c_end('e')
@@ -138,21 +141,21 @@ class MatrixGenerator:
         icr_end = c_end('icr')
 
         # E   ->  I
-        B[idx('i_0'), idx(e_end)] = ps["alpha"]
+        B[idx(e_end), idx('i_0')] = ps["alpha"]
         # I   ->  H
-        B[idx('h_0'), idx(i_end)] = (1 - ps["xi"]) * ps["h"] * ps["gamma"]
+        B[idx(i_end), idx('h_0')] = (1 - ps["xi"]) * ps["h"] * ps["gamma"]
         # H   ->  R
-        B[idx('r'), idx(h_end)] = ps['gamma_h']
+        B[idx(h_end), idx('r')] = ps['gamma_h']
         # I   ->  IC
-        B[idx('ic_0'), idx(i_end)] = ps["xi"] * ps["h"] * ps["gamma"]
+        B[idx(i_end), idx('ic_0')] = ps["xi"] * ps["h"] * ps["gamma"]
         # IC  ->  ICR
-        B[idx('icr_0'), idx(ic_end)] = ps["gamma_c"] * (1 - ps["mu"])
+        B[idx(ic_end), idx('icr_0')] = ps["gamma_c"] * (1 - ps["mu"])
         # ICR ->  R
-        B[idx('r'), idx(icr_end)] = ps["gamma_cr"]
+        B[idx(icr_end), idx('r')] = ps["gamma_cr"]
         # IC  ->  D
-        B[idx('d'), idx(ic_end)] = ps["gamma_c"] * ps["mu"]
+        B[idx(ic_end), idx('d')] = ps["gamma_c"] * ps["mu"]
         # I   ->  R
-        B[idx('r'), idx(i_end)] = (1 - ps['h']) * ps['gamma']
+        B[idx(i_end), idx('r')] = (1 - ps['h']) * ps['gamma']
         return B
 
     def get_V_1(self, daily_vac) -> torch.Tensor:
