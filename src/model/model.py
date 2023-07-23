@@ -141,8 +141,10 @@ class TestModel(EpidemicModelBase):
             array(y @ self.A)
             array(y @ self.T)
             array(y @ self.B)
+            array(torch.ones(self.s_mtx) @ self.B)
             array(torch.mul(y @ self.A, y @ self.T))
             array(base_result)
+            base_result[0, :].sum()
             return base_result
 
         term = to.ODETerm(odefun, with_args=False)
