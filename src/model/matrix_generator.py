@@ -119,7 +119,7 @@ class MatrixGenerator:
         self.idx = model.idx
         self.c_idx = model.c_idx
         self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data.values()
-                                if trans["type"] == "infection"][0]
+                                 if trans["type"] == "infection"][0]
         self.infectious_states = get_infectious_states(self.state_data)
 
     def get_A(self) -> torch.Tensor:
@@ -150,8 +150,11 @@ class MatrixGenerator:
         state_data = self.state_data
         trans_data = self.trans_data
         # B is the tensor representing the first-order elements of the ODE system. We begin by
-        # filling in the transition blocks of the erlang distributed parameters
-        erlang_states = {state: data for state, data in state_data.items() if data["n_substates"] > 1}
+        # filling in the transition blocks of the intermediate states
+        erlang_states = {state: data for state, data in state_data.items()
+                         if data["type"] not in ["susceptible",
+                                                 "recovered",
+                                                 "dead"]}
         B = generate_transition_matrix(erlang_states, trans_data, self.ps,
                                        self.n_age, self.n_comp, self.c_idx)
 
@@ -168,35 +171,18 @@ class MatrixGenerator:
                 distr = trans["distr"]
                 if distr is not None:
                     # Multiply the transition parameter by the distribution(s) given
-                    trans_param *= math.prod([ps[distr_param] for distr_param in distr])
-                    # Take distribution into consideration for other transitions
-                    B = self.equalize_transition(B=B, distr=distr, source=source, target=target)
+                    trans_param *= self.mul_distr(distr)
                 B[idx(source), idx(target)] = trans_param
         return B
 
-    def equalize_transition(self, B, distr, source, target):
-        """
-        Corrects the outflow of source state, since if
-
-        Args:
-            B: Linear transition matrix
-            distr: Distribution of transition into target state
-            source: Source state of transition
-            target: Target state of transition
-
-        Returns:
-            B, with the
-        """
-        idx = self.idx
-        for trans in self.trans_data.values():
-            target_other = f'{trans["target"]}_0'
-            source_other = self.get_end_state(trans["source"])
-            for distr_param in distr:
-                if source_other == source and\
-                   target_other != target and \
-                        (trans["distr"] is None or distr_param not in trans["distr"]):
-                    B[idx(source), idx(target_other)] *= 1 - self.ps[distr_param]
-        return B
+    def mul_distr(self, distr):
+        result = 1
+        for distr_param in distr:
+            if distr_param[-1] == "_":
+                result *= 1 - self.ps[distr_param[:-1]]
+            else:
+                result *= self.ps[distr_param]
+        return result
 
     def get_V_1(self, daily_vac) -> torch.Tensor:
         """

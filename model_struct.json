@@ -29,21 +29,21 @@
       "source": "i",
       "target": "r",
       "param": "gamma",
-      "distr": null,
+      "distr": ["h_"],
       "type": "basic"
     },
     "trans_2": {
       "source": "ic",
       "target": "r",
       "param": "gamma_c",
-      "distr": null,
+      "distr": ["mu_"],
       "type": "basic"
     },
     "trans_3": {
       "source": "i",
       "target": "ic",
       "param": "gamma",
-      "distr": ["xi"],
+      "distr": ["h"],
       "type": "basic"
     },
     "trans_4": {
