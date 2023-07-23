@@ -92,21 +92,21 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
 
     model = sim_obj.model
     sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
-    r0generator = R0Generator(param=sim_obj.params, device=sim_obj.data.device, n_age=sim_obj.n_age)
+    r0generator = R0Generator(sim_obj.data, device=sim_obj.data.device, n_age=sim_obj.n_age)
     # Calculate base transmission rate
     beta = r0 / r0generator.get_eig_val(contact_mtx=sim_obj.contact_matrix,
                                         susceptibles=sim_obj.susceptibles.reshape(1, -1),
                                         population=sim_obj.population)
     sim_obj.params["beta"] = beta
-    model.get_constant_matrices()
+    model._get_constant_matrices()
 
     t_eval = torch.linspace(1, 1200, 1200).to(sim_obj.device)
     sol = sim_obj.model.get_solution(t_eval=t_eval[None, :],
-                                     y0=sim_obj.model.get_initial_values()[None, :],
-                                     lhs_table=torch.tensor(vaccination[None, :]).float()).ys[0, :, :]
+                                     y0=sim_obj.model.get_initial_values()[None, :]).ys
+                                     #lhs_table=torch.tensor(vaccination[None, :]).float()).ys[0, :, :]
     mask = torch.cat((torch.full((100, ), True),
-                      sol[100:, model.idx('ic_0')].sum(axis=1) > 1))
-    sol = sol[mask, :]
+                      sol[0, 100:, model.idx('ic_0')].sum(axis=1) > 1))
+    sol = sol[0, mask, :]
     t = t_eval[mask]
 
     for idx, comp in enumerate(compartments):
@@ -141,14 +141,14 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
     model = sim_obj.model
     sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
 
-    r0generator = R0Generator(param=sim_obj.params, device=sim_obj.data.device, n_age=sim_obj.n_age)
+    r0generator = R0Generator(sim_obj.data, device=sim_obj.data.device, n_age=sim_obj.n_age)
     ngm_ev = r0generator.get_eig_val(contact_mtx=sim_obj.contact_matrix,
                                         susceptibles=sim_obj.susceptibles.reshape(1, -1),
                                         population=sim_obj.population)
     # Calculate base transmission rate
     beta = r0 / ngm_ev
     sim_obj.params["beta"] = beta
-    model.get_constant_matrices()
+    model._get_constant_matrices()
 
     t = torch.linspace(1, 1000, 1000).to(sim_obj.device)
     sol_real = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix,

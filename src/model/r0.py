@@ -1,12 +1,11 @@
 import torch
 
-from src.model.model_base import get_n_states
 from src.model.r0_base import R0GeneratorBase
-from src.model.matrix_generator import generate_transition_matrix
+from src.model.matrix_generator import generate_transition_matrix, get_infectious_states
 
 
 class R0Generator(R0GeneratorBase):
-    def __init__(self, param: dict, device, n_age: int):
+    def __init__(self, data, device, n_age: int):
         """
         Initialises R0Generator class instance, for the calculation of the effective reproduction number
         (R0) for the specified model and parameters. It is used for computing the base transmission rate,
@@ -14,17 +13,13 @@ class R0Generator(R0GeneratorBase):
         spectral radius (largest eigenvalue) of the NGM.
 
         Args:
-            param (dict): A dictionary containing the parameters required for R0 calculation.
+            data:
             device: The device (CPU or GPU) on which the calculations will be performed.
             n_age (int): The number of age groups in the model.
 
         """
-        from src.model.model import get_n_states
-        self.n_e = param["n_e"]
-        self.n_i = param["n_i"]
-        states = get_n_states(self.n_e, "e") + \
-            get_n_states(self.n_i, "i")
-        super().__init__(param=param, states=states, n_age=n_age)
+        self.data = data
+        super().__init__(data=data, n_age=n_age)
 
         self.device = device
         self._get_e()
@@ -37,11 +32,9 @@ class R0Generator(R0GeneratorBase):
             None
         """
         idx = self._idx
-        params = self.parameters
-
-        trans_mtx = generate_transition_matrix({"e": self.parameters["alpha"], "i": self.parameters["gamma"]},
-                                               self.parameters, self.n_age, self.n_states, self.i).to(self.device)
-        trans_mtx[idx(f'e_{self.n_e - 1}'), idx('i_0')] = params["alpha"]
+        trans_mtx = generate_transition_matrix(self.inf_state_dict, self.data.trans_data, self.data.model_parameters,
+                                               self.n_age, self.n_states, self.i).to(self.device)
+        #trans_mtx[idx(f'e_{self.n_e - 1}'), idx('i_0')] = params["alpha"]
         self.v_inv = torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
@@ -58,11 +51,13 @@ class R0Generator(R0GeneratorBase):
         s_mtx = self.s_mtx
         n_states = self.n_states
 
+        infectious_states = get_infectious_states(state_data=self.data.state_data)
+
         f = torch.zeros((s_mtx, s_mtx)).to(self.device)
         susc_vec = self.parameters["susc"].reshape((-1, 1))
-        # Rate of infection for every infected state
-        for inf_state in get_n_states(self.n_i, "i"):
-            f[i[inf_state]:s_mtx:n_states, i["e_0"]:s_mtx:n_states] = torch.mul(susc_vec, contact_mtx.T)
+        # Rate of infection for every infectious state
+        for inf_state in infectious_states:
+            f[i[inf_state]:s_mtx:n_states, i["i_0"]:s_mtx:n_states] = torch.mul(susc_vec, contact_mtx.T)
         return f
 
     def _get_e(self):

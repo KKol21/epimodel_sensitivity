@@ -1,6 +1,6 @@
 import torch
-from src.model.model import VaccinatedModel
-from src.model.model_base import get_n_states
+from src.model.model_base import get_substates, EpidemicModelBase
+import math
 
 
 def generate_transition_block(transition_param: float, n_states: int) -> torch.Tensor:
@@ -23,30 +23,44 @@ def generate_transition_block(transition_param: float, n_states: int) -> torch.T
     return trans_block
 
 
-def generate_transition_matrix(trans_param_dict, ps, n_age, n_comp, c_idx):
+def get_trans_param(state, trans_data):
+    for data in trans_data.values():
+        if data["source"] == state:
+            return data["param"]
+    raise Exception(f"No transition parameter was provided for state {state}")
+
+
+def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: dict,
+                               n_age: int, n_comp: int, c_idx: dict) -> torch.Tensor:
     """
     Generate the transition matrix for the model.
 
     Args:
-        trans_param_dict: A dictionary containing the transition parameters for different compartments.
-        ps: A dictionary containing model parameters.
+        trans_data:
+        parameters: A dictionary containing model parameters.
         n_age: The number of age groups.
         n_comp: The number of compartments.
         c_idx: A dictionary containing the indices of different compartments.
 
-    Returns:
-        torch.Tensor: The transition matrix.
-
     """
     trans_matrix = torch.zeros((n_age * n_comp, n_age * n_comp))
     for age_group in range(n_age):
-        for comp, trans_param in trans_param_dict.items():
-            n_states = ps[f'n_{comp}']
-            diag_idx = age_group * n_comp + c_idx[f'{comp}_0']
+        for state, data in states_dict.items():
+            n_states = data["n_substates"]
+            trans_param = parameters[get_trans_param(state, trans_data)]
+            diag_idx = age_group * n_comp + c_idx[f'{state}_0']
             block_slice = slice(diag_idx, diag_idx + n_states)
             # Fill in transition block of each transitional state
             trans_matrix[block_slice, block_slice] = generate_transition_block(trans_param, n_states)
     return trans_matrix
+
+
+def get_infectious_states(state_data):
+    infectious_states = []
+    for state, data in state_data.items():
+        if data["type"] == "infectious":
+            infectious_states += get_substates(data["n_substates"], state)
+    return infectious_states
 
 
 class MatrixGenerator:
@@ -54,7 +68,7 @@ class MatrixGenerator:
     Class responsible for generating the matrices used in the model.
 
     Args:
-        model (VaccinatedModel): An instance of the VaccinatedModel class.
+        model (EpidemicModelBase): An instance of the EpidemicModelBase class.
         cm: The contact matrix.
         ps: A dictionary containing model parameters.
 
@@ -81,26 +95,32 @@ class MatrixGenerator:
         _get_trans_param_dict(): Get a dictionary of transition parameters for different compartments.
     """
 
-    def __init__(self, model: VaccinatedModel, cm, ps):
+    def __init__(self, model: EpidemicModelBase, cm, ps):
         """
         Initialize the MatrixGenerator instance.
 
         Args:
-            model (VaccinatedModel): An instance of the VaccinatedModel class.
+            model (EpidemicModelBase: An instance of the EpidemicModelBase class.
             cm: The contact matrix.
             ps: A dictionary containing model parameters.
 
         """
         self.cm = cm
         self.ps = ps
+        self.data = model.data
+        self.state_data = model.data.state_data
+        self.trans_data = model.data.trans_data
         self.s_mtx = model.s_mtx
-        self.n_state_comp = model.n_state_comp
+        self.n_state_comp = 3
         self.n_age = model.n_age
         self.n_comp = model.n_comp
         self.population = model.population
         self.device = model.device
         self.idx = model.idx
         self.c_idx = model.c_idx
+        self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data.values()
+                                if trans["type"] == "infection"][0]
+        self.infectious_states = get_infectious_states(self.state_data)
 
     def get_A(self) -> torch.Tensor:
         """
@@ -112,50 +132,70 @@ class MatrixGenerator:
         transmission_rate = self.ps["beta"] * self.ps["susc"] / self.population
         idx = self.idx
 
-        A[idx('s'), idx('s')] = - transmission_rate
-        A[idx('s'), idx('e_0')] = transmission_rate
+        A[idx('s_0'), idx('s_0')] = - transmission_rate
+        A[idx('s_0'), idx(self.inf_inflow_state)] = transmission_rate
         return A
 
     def get_T(self) -> torch.Tensor:
         T = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
         # Multiplied with y, the resulting 1D tensor contains the sum of all contacts with infecteds of
         # age group i at indices of compartments s_i and e_i^0
-        for i_state in get_n_states(self.ps["n_i"], "i"):
-            T[self._get_comp_slice(i_state), self._get_comp_slice('s')] = self.cm.T
-            T[self._get_comp_slice(i_state), self._get_comp_slice('e_0')] = self.cm.T
+        for i_state in self.infectious_states:
+            T[self._get_comp_slice(i_state), self._get_comp_slice('s_0')] = self.cm.T
+            T[self._get_comp_slice(i_state), self._get_comp_slice(self.inf_inflow_state)] = self.cm.T
         return T
 
     def get_B(self) -> torch.Tensor:
         ps = self.ps
+        state_data = self.state_data
+        trans_data = self.trans_data
         # B is the tensor representing the first-order elements of the ODE system. We begin by
         # filling in the transition blocks of the erlang distributed parameters
-        B = generate_transition_matrix(self._get_trans_param_dict(), self.ps, self.n_age, self.n_comp, self.c_idx)
+        erlang_states = {state: data for state, data in state_data.items() if data["n_substates"] > 1}
+        B = generate_transition_matrix(erlang_states, trans_data, self.ps,
+                                       self.n_age, self.n_comp, self.c_idx)
 
         # Then fill in the rest of the first-order terms
         idx = self.idx
-        c_end = self._get_end_state
-        e_end = c_end('e')
-        i_end = c_end('i')
-        h_end = c_end('h')
-        ic_end = c_end('ic')
-        icr_end = c_end('icr')
+        end_state = {state: f"{state}_{data['n_substates'] - 1}" for state, data in state_data.items()}
 
-        # E   ->  I
-        B[idx(e_end), idx('i_0')] = ps["alpha"]
-        # I   ->  H
-        B[idx(i_end), idx('h_0')] = (1 - ps["xi"]) * ps["h"] * ps["gamma"]
-        # H   ->  R
-        B[idx(h_end), idx('r')] = ps['gamma_h']
-        # I   ->  IC
-        B[idx(i_end), idx('ic_0')] = ps["xi"] * ps["h"] * ps["gamma"]
-        # IC  ->  ICR
-        B[idx(ic_end), idx('icr_0')] = ps["gamma_c"] * (1 - ps["mu"])
-        # ICR ->  R
-        B[idx(icr_end), idx('r')] = ps["gamma_cr"]
-        # IC  ->  D
-        B[idx(ic_end), idx('d')] = ps["gamma_c"] * ps["mu"]
-        # I   ->  R
-        B[idx(i_end), idx('r')] = (1 - ps['h']) * ps['gamma']
+        for trans in trans_data.values():
+            # Iterate over the linear transitions
+            if trans["type"] == "basic":
+                source = end_state[trans["source"]]
+                target = f"{trans['target']}_0"
+                trans_param = ps[trans["param"]]
+                distr = trans["distr"]
+                if distr is not None:
+                    # Multiply the transition parameter by the distribution(s) given
+                    trans_param *= math.prod([ps[distr_param] for distr_param in distr])
+                    # Take distribution into consideration for other transitions
+                    B = self.equalize_transition(B=B, distr=distr, source=source, target=target)
+                B[idx(source), idx(target)] = trans_param
+        return B
+
+    def equalize_transition(self, B, distr, source, target):
+        """
+        Corrects the outflow of source state, since if
+
+        Args:
+            B: Linear transition matrix
+            distr: Distribution of transition into target state
+            source: Source state of transition
+            target: Target state of transition
+
+        Returns:
+            B, with the
+        """
+        idx = self.idx
+        for trans in self.trans_data.values():
+            target_other = f'{trans["target"]}_0'
+            source_other = self.get_end_state(trans["source"])
+            for distr_param in distr:
+                if source_other == source and\
+                   target_other != target and \
+                        (trans["distr"] is None or distr_param not in trans["distr"]):
+                    B[idx(source), idx(target_other)] *= 1 - self.ps[distr_param]
         return B
 
     def get_V_1(self, daily_vac) -> torch.Tensor:
@@ -171,19 +211,19 @@ class MatrixGenerator:
         """
         V_1 = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
         # Tensor responsible for the nominators of the vaccination formula
-        V_1[self.idx('s'), self.idx('s')] = daily_vac
-        V_1[self.idx('v_0'), self.idx('s')] = daily_vac
+        V_1[self.idx('s_0'), self.idx('s_0')] = daily_vac
+        V_1[self.idx('v_0'), self.idx('s_0')] = daily_vac
         return V_1
 
     def get_V_2(self) -> torch.Tensor:
         idx = self.idx
         V_2 = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
         # Make sure to avoid division by zero
-        V_2[0, ~(idx('s') + idx('v_0'))] = 1
+        V_2[0, ~(idx('s_0') + idx('v_0'))] = 1
         # Fill in all the terms such that we will divide the terms at the indices of s^i and v^i by (s^i + r^i)
-        V_2[idx('s'), idx('s')] = -1
-        V_2[idx('r'), idx('s')] = -1
-        V_2[idx('s'), idx('v_0')] = 1
+        V_2[idx('s_0'), idx('s_0')] = -1
+        V_2[idx('r'), idx('s_0')] = -1
+        V_2[idx('s_0'), idx('v_0')] = 1
         V_2[idx('r'), idx('v_0')] = 1
         return V_2
 
@@ -200,28 +240,5 @@ class MatrixGenerator:
         """
         return slice(self.c_idx[comp], self.s_mtx, self.n_comp)
 
-    def _get_end_state(self, comp: str) -> str:
-        """
-        Get the string representing the last state of a given compartment.
-
-        Args:
-            comp (str): The compartment name.
-
-        Returns:
-            str: The string representing the last state of the compartment.
-
-        """
-        n_states = self.ps[f'n_{comp}']
-        return f'{comp}_{n_states - 1}'
-
-    def _get_trans_param_dict(self):
-        """
-        Get a dictionary of transition parameters for classes with substates.
-
-        Returns:
-            dict: A dictionary of transition parameters.
-
-        """
-        ps = self.ps
-        trans_param_list = [ps["alpha"], ps["gamma"], ps["gamma_h"], ps["gamma_c"], ps["gamma_cr"]]
-        return {state: trans_param for state, trans_param in zip(self.n_state_comp, trans_param_list)}
+    def get_end_state(self, comp: str) -> str:
+        return f"{comp}_{self.state_data[comp]['n_substates'] - 1}"

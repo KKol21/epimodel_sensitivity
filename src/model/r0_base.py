@@ -4,10 +4,11 @@ import torch
 
 
 class R0GeneratorBase(ABC):
-    def __init__(self, param: dict, states: list, n_age: int):
-        self.states = states
+    def __init__(self, data, n_age: int):
+        self.data = data
+        self.states = self.get_infected_states()
         self.n_age = n_age
-        self.parameters = param
+        self.parameters = data.model_parameters
         self.n_states = len(self.states)
         self.i = {self.states[index]: index for index in torch.arange(0, self.n_states)}
         self.s_mtx = self.n_age * self.n_states
@@ -15,6 +16,16 @@ class R0GeneratorBase(ABC):
         self.v_inv = None
         self.e = None
         self.contact_matrix = torch.zeros((n_age, n_age))
+        self.inf_state_dict = {state: data for state, data in self.data.state_data.items()
+                               if data["type"] in ["infected", "infectious"]}
+
+    def get_infected_states(self):
+        from src.model.model import get_substates
+        states = []
+        for state, data in self.data.state_data.items():
+            if data["type"] in ["infected", "infectious"]:
+                states += get_substates(data["n_substates"], state)
+        return states
 
     def _idx(self, state: str) -> bool:
         return torch.arange(self.n_age * self.n_states) % self.n_states == self.i[state]

@@ -16,6 +16,7 @@ class DataLoader:
         self._get_age_data()
         self._get_model_parameters_data()
         self._get_contact_mtx()
+        self._load_model_structure()
         self.param_names = np.array([f'daily_vac_{i}' for i in range(self.contact_data["home"].shape[0])])
 
     def _get_age_data(self):
@@ -29,13 +30,13 @@ class DataLoader:
         # Load model param_names
         with open(self._model_parameters_data_file) as f:
             parameters = json.load(f)
-        self.model_parameters_data = dict()
+        self.model_parameters = dict()
         for param in parameters.keys():
             param_value = parameters[param]["value"]
             if isinstance(param_value, list):
-                self.model_parameters_data.update({param: torch.Tensor(param_value).to(self.device)})
+                self.model_parameters.update({param: torch.Tensor(param_value).to(self.device)})
             else:
-                self.model_parameters_data.update({param: param_value})
+                self.model_parameters.update({param: param_value})
 
     def _get_contact_mtx(self):
         wb = xlrd.open_workbook(self._contact_data_file)
@@ -83,4 +84,4 @@ class DataLoader:
             model_structure = json.load(f)
 
         self.state_data = model_structure["states"]
-        self.transition_data = model_structure["transitions"]
+        self.trans_data = model_structure["transitions"]

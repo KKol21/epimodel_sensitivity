@@ -1,25 +1,57 @@
 {
   "states": {
     "s": {
-      "type": "neutral",
+      "type": "susceptible",
       "n_substates": 1},
     "i": {
       "type": "infectious",
       "n_substates": 3},
+    "ic": {
+      "type": "recovering",
+      "n_substates": 2
+    },
     "r": {
-      "type": "neutral",
+      "type": "recovered",
+      "n_substates": 1},
+    "d": {
+      "type": "dead",
       "n_substates": 1}
     },
   "transitions": {
     "trans_0": {
-      "from": "s",
-      "to": "i",
-      "param": ["alpha"]
+      "source": "s",
+      "target": "i",
+      "param": "alpha",
+      "distr": null,
+      "type": "infection"
     },
     "trans_1": {
-      "from": "i",
-      "to": "r",
-      "param": ["gamma"]
+      "source": "i",
+      "target": "r",
+      "param": "gamma",
+      "distr": null,
+      "type": "basic"
+    },
+    "trans_2": {
+      "source": "ic",
+      "target": "r",
+      "param": "gamma_c",
+      "distr": null,
+      "type": "basic"
+    },
+    "trans_3": {
+      "source": "i",
+      "target": "ic",
+      "param": "gamma",
+      "distr": ["xi"],
+      "type": "basic"
+    },
+    "trans_4": {
+      "source": "ic",
+      "target": "d",
+      "param": "gamma_c",
+      "distr": ["mu"],
+      "type": "basic"
     }
   }
 }

@@ -19,7 +19,7 @@ class SamplerVaccinated(SamplerBase):
                                "upper": np.ones(sim_obj.n_age)
                                }
         self.optimal_vacc = None
-        self.batch_size = 100
+        self.batch_size = 500
 
     def run_sampling(self):
         """
@@ -79,7 +79,7 @@ class SamplerVaccinated(SamplerBase):
 
     def get_sol_from_lhs(self, lhs_table):
         # Generate matrices used in model representation
-        self.sim_obj.model.get_constant_matrices()
+        self.sim_obj.model._get_constant_matrices()
         # Initialize timesteps and initial values
         t_eval = torch.stack(
             [torch.linspace(1, 1100, 1100)] * lhs_table.shape[0]
@@ -91,7 +91,6 @@ class SamplerVaccinated(SamplerBase):
 
         sol = self.sim_obj.model.get_solution(t_eval=t_eval,
                                               y0=y0,
-                                              lhs_table=lhs_table
                                               ).ys
         if self.sim_obj.test:
             # Check if population size changed

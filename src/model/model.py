@@ -1,7 +1,7 @@
 import torch
 import torchode as to
 
-from src.model.model_base import EpidemicModelBase, get_n_states
+from src.model.model_base import EpidemicModelBase, get_substates
 from src.dataloader import DataLoader
 
 
@@ -22,14 +22,13 @@ class VaccinatedModel(EpidemicModelBase):
             None
         """
         self.n_state_comp = ["e", "i", "h", "ic", "icr"]
-        compartments = ["s"] + self.get_n_compartments(model_data.model_parameters_data) + ["v_0", "r", "d"]
-        super().__init__(model_data=model_data, compartments=compartments)
-        self.s_mtx = self.n_age * self.n_comp
+        compartments = ["s"] + self.get_n_compartments(model_data.model_parameters) + ["v_0", "r", "d"]
+        super().__init__(model_data=model_data)
 
         from src.model.matrix_generator import MatrixGenerator
         self.matrix_generator = MatrixGenerator(model=self, cm=cm, ps=self.ps)
 
-    def get_constant_matrices(self) -> None:
+    def _get_constant_matrices(self) -> None:
         """
         Calculates and stores the constant matrices required for evaluation of the model, using
         the matrix generator to calculate and store the constant matrices: A, T, B, and V_2.
@@ -59,7 +58,7 @@ class VaccinatedModel(EpidemicModelBase):
         """
         compartments = []
         for comp in self.n_state_comp:
-            compartments.append(get_n_states(comp_name=comp, n_classes=params[f'n_{comp}']))
+            compartments.append(get_substates(n_substates=params[f'n_{comp}'], comp_name=comp))
         return [state for n_comp in compartments for state in n_comp]
 
     def aggregate_by_age(self, solution, comp):
@@ -75,7 +74,7 @@ class VaccinatedModel(EpidemicModelBase):
             torch.Tensor: Aggregated solution by age.
         """
         is_n_state = comp in self.n_state_comp
-        return self._aggregate_by_age_n_state(solution, comp) if is_n_state\
+        return self.aggregate_by_age(solution, comp) if is_n_state\
             else solution[:, self.idx(comp)].sum(axis=1)
 
     def get_vacc_tensors(self, lhs_table):
@@ -109,4 +108,48 @@ class VaccinatedModel(EpidemicModelBase):
 
 
 class TestModel(EpidemicModelBase):
-    pass
+    def __init__(self, model_data: DataLoader, cm: torch.Tensor):
+        """
+        Initializes the VaccinatedModel class.
+
+        This method initializes the VaccinatedModel class by setting the device, defining the compartments
+        with multiple substates, and calling the parent class (EpidemicModelBase) constructor. It also
+        initializes the matrix generator.
+
+        Args:
+            model_data (DataLoader): DataLoader object containing model data
+            cm (torch.Tensor): Contact matrix.
+
+        """
+        super().__init__(model_data=model_data)
+        self.s_mtx = self.n_age * self.n_comp
+
+        from src.model.matrix_generator import MatrixGenerator
+        self.matrix_generator = MatrixGenerator(model=self, cm=cm, ps=self.ps)
+
+    def _get_constant_matrices(self):
+        mtx_gen = self.matrix_generator
+        self.A = mtx_gen.get_A()
+        self.T = mtx_gen.get_T()
+        self.B = mtx_gen.get_B()
+
+    def get_solution(self, t_eval, y0):
+        n_samples = y0.shape[0]
+        from numpy import array
+        def odefun(t, y):
+            base_result = torch.mul(y @ self.A, y @ self.T) + y @ self.B
+            array(y @ self.A)
+            array(y @ self.T)
+            array(y @ self.B)
+            array(torch.mul(y @ self.A, y @ self.T))
+            array(base_result)
+            return base_result
+
+        term = to.ODETerm(odefun, with_args=False)
+        step_method = to.Euler(term=term)
+        step_size_controller = to.FixedStepController()
+        solver = to.AutoDiffAdjoint(step_method, step_size_controller)
+        problem = to.InitialValueProblem(y0=y0, t_eval=t_eval)
+        dt0 = torch.full((n_samples,), 1)
+
+        return solver.solve(problem, dt0=dt0)
