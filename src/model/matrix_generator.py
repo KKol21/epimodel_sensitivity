@@ -1,6 +1,8 @@
+from typing import List
+
 import torch
+
 from src.model.model_base import get_substates, EpidemicModelBase
-import math
 
 
 def generate_transition_block(transition_param: float, n_states: int) -> torch.Tensor:
@@ -23,7 +25,7 @@ def generate_transition_block(transition_param: float, n_states: int) -> torch.T
     return trans_block
 
 
-def get_trans_param(state, trans_data):
+def get_trans_param(state: str, trans_data: dict):
     for data in trans_data.values():
         if data["source"] == state:
             return data["param"]
@@ -36,6 +38,7 @@ def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: 
     Generate the transition matrix for the model.
 
     Args:
+        states_dict:
         trans_data:
         parameters: A dictionary containing model parameters.
         n_age: The number of age groups.
@@ -76,7 +79,6 @@ class MatrixGenerator:
         cm: The contact matrix.
         ps: A dictionary containing model parameters.
         s_mtx: The total number of compartments in the model.
-        n_state_comp: The classes with substates in the model.
         n_age: The number of age groups.
         n_comp: The number of states.
         population: The total population.
@@ -111,13 +113,13 @@ class MatrixGenerator:
         self.state_data = model.data.state_data
         self.trans_data = model.data.trans_data
         self.s_mtx = model.s_mtx
-        self.n_state_comp = 3
         self.n_age = model.n_age
         self.n_comp = model.n_comp
         self.population = model.population
         self.device = model.device
         self.idx = model.idx
         self.c_idx = model.c_idx
+        # First
         self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data.values()
                                  if trans["type"] == "infection"][0]
         self.infectious_states = get_infectious_states(self.state_data)
@@ -151,11 +153,11 @@ class MatrixGenerator:
         trans_data = self.trans_data
         # B is the tensor representing the first-order elements of the ODE system. We begin by
         # filling in the transition blocks of the intermediate states
-        erlang_states = {state: data for state, data in state_data.items()
-                         if data["type"] not in ["susceptible",
-                                                 "recovered",
-                                                 "dead"]}
-        B = generate_transition_matrix(erlang_states, trans_data, self.ps,
+        intermediate_states = {state: data for state, data in state_data.items()
+                               if data["type"] not in ["susceptible",
+                                                       "recovered",
+                                                       "dead"]}
+        B = generate_transition_matrix(intermediate_states, trans_data, self.ps,
                                        self.n_age, self.n_comp, self.c_idx)
 
         # Fill in the rest of the first-order terms
@@ -174,12 +176,14 @@ class MatrixGenerator:
                 B[idx(source), idx(target)] = trans_param
         return B
 
-    def mul_distr(self, distr):
+    def mul_distr(self, distr: List[str]):
         result = 1
         for distr_param in distr:
             if distr_param[-1] == "_":
+                # Multiply by 1 - distribution
                 result *= 1 - self.ps[distr_param[:-1]]
             else:
+                # Multiply by distribution
                 result *= self.ps[distr_param]
         return result
 
@@ -207,14 +211,13 @@ class MatrixGenerator:
         V_2[0, ~(idx('s_0') + idx('v_0'))] = 1
         # Fill in all the terms such that we will divide the terms at the indices of s^i and v^i by (s^i + r^i)
         V_2[idx('s_0'), idx('s_0')] = -1
-        V_2[idx('r'), idx('s_0')] = -1
+        V_2[idx('r_0'), idx('s_0')] = -1
         V_2[idx('s_0'), idx('v_0')] = 1
-        V_2[idx('r'), idx('v_0')] = 1
+        V_2[idx('r_0'), idx('v_0')] = 1
         return V_2
 
     def _get_comp_slice(self, comp: str) -> slice:
         """
-        Get a slice representing the indices of a given compartment.
 
         Args:
             comp (str): The compartment name.

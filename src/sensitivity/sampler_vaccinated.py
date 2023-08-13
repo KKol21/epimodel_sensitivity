@@ -19,7 +19,7 @@ class SamplerVaccinated(SamplerBase):
                                "upper": np.ones(sim_obj.n_age)
                                }
         self.optimal_vacc = None
-        self.batch_size = 500
+        self.batch_size = 5000
 
     def run_sampling(self):
         """
@@ -91,6 +91,7 @@ class SamplerVaccinated(SamplerBase):
 
         sol = self.sim_obj.model.get_solution(t_eval=t_eval,
                                               y0=y0,
+                                              daily_vac=lhs_table
                                               ).ys
         if self.sim_obj.test:
             # Check if population size changed

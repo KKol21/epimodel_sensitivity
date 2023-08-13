@@ -15,13 +15,16 @@
       "n_substates": 1},
     "d": {
       "type": "dead",
+      "n_substates": 1},
+    "v": {
+      "type": "recovered",
       "n_substates": 1}
     },
   "transitions": {
     "trans_0": {
       "source": "s",
       "target": "i",
-      "param": "alpha",
+      "param": "beta_0",
       "distr": null,
       "type": "infection"
     },
@@ -52,6 +55,13 @@
       "param": "gamma_c",
       "distr": ["mu"],
       "type": "basic"
+    },
+    "trans_5": {
+      "source": "s",
+      "target": "v",
+      "param": null,
+      "distr": null,
+      "type": "vaccination"
     }
   }
 }

@@ -31,7 +31,6 @@ class R0Generator(R0GeneratorBase):
         Returns:
             None
         """
-        idx = self._idx
         trans_mtx = generate_transition_matrix(self.inf_state_dict, self.data.trans_data, self.data.model_parameters,
                                                self.n_age, self.n_states, self.i).to(self.device)
         #trans_mtx[idx(f'e_{self.n_e - 1}'), idx('i_0')] = params["alpha"]

@@ -3,15 +3,20 @@ import json
 import torch
 import numpy as np
 import xlrd
+import os
+
+
+PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 class DataLoader:
     def __init__(self):
-        self.device = 'cpu'  # 'cuda' if torch.cuda.is_available() else 'cpu'
-        self._model_parameters_data_file = "../data/model_parameters.json"
-        self._contact_data_file = "../data/contact_matrices.xls"
-        self._age_data_file = "../data/age_distribution.xls"
-        self._model_structure_file = "../model_struct.json"
+        self.device = 'cpu'#'cuda' if torch.cuda.is_available() else 'cpu'
+        self._model_parameters_data_file = os.path.join(PROJECT_PATH, "../data", "model_parameters.json")
+        self._contact_data_file = os.path.join(PROJECT_PATH, "../data", "contact_matrices.xls")
+        self._age_data_file = os.path.join(PROJECT_PATH, "../data", "age_distribution.xls")
+        self._model_structure_file = os.path.join(PROJECT_PATH, "../data", "model_struct.json")
+
 
         self._get_age_data()
         self._get_model_parameters_data()
@@ -50,9 +55,9 @@ class DataLoader:
             contact_matrices.update({cm_type: datalist})
         self.contact_data = contact_matrices
 
-    def transform_matrix(self, matrix: torch.Tensor):
+    def transform_matrix(self, matrix: torch.Tensor) -> torch.Tensor:
         """
-        Perform symmetrization of contact matrix, by averaging it's elements with the elements of
+        Perform symmetrization of contact matrix, by averaging its elements with the elements of
         it's transpose, then dividing each row with the size of the age group corresponding to the given row.
 
         After this, the C[i, j] element represents the average number of interactions a member of age
@@ -69,13 +74,13 @@ class DataLoader:
         Returns:
             torch.Tensor: The transformed contact matrix.
         """
-        # Get age vector as a column vector
+        # Age vector as a column vector
         age_distribution = self.age_data.reshape((-1, 1))
-        # Get matrix of total number of contacts
-        matrix_1 = matrix * age_distribution
-        # Get symmetrized matrix
-        output = (matrix_1 + matrix_1.T) / 2
-        # Get contact matrix
+        # Matrix containing total number of contacts
+        total_contact = matrix * age_distribution
+        # Symmetrize matrix
+        output = (total_contact + total_contact.T) / 2
+        # Divide by age group sizes
         output /= age_distribution
         return output
 
