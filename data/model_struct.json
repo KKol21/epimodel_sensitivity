@@ -3,12 +3,24 @@
     "s": {
       "type": "susceptible",
       "n_substates": 1},
+    "e": {
+      "type": "infected",
+      "n_substates": 3
+    },
     "i": {
       "type": "infectious",
-      "n_substates": 3},
+      "n_substates": 5},
     "ic": {
       "type": "recovering",
-      "n_substates": 2
+      "n_substates": 1
+    },
+    "icr": {
+      "type": "recovering",
+      "n_substates": 1
+    },
+    "h": {
+      "type": "recovering",
+      "n_substates": 1
     },
     "r": {
       "type": "recovered",
@@ -23,10 +35,11 @@
   "transitions": {
     "trans_0": {
       "source": "s",
-      "target": "i",
+      "target": "e",
       "param": "beta_0",
       "distr": null,
-      "type": "infection"
+      "type": "infection",
+      "actor": "i"
     },
     "trans_1": {
       "source": "i",
@@ -36,17 +49,17 @@
       "type": "basic"
     },
     "trans_2": {
-      "source": "ic",
+      "source": "icr",
       "target": "r",
-      "param": "gamma_c",
-      "distr": ["mu_"],
+      "param": "gamma_cr",
+      "distr": null,
       "type": "basic"
     },
     "trans_3": {
       "source": "i",
       "target": "ic",
       "param": "gamma",
-      "distr": ["h"],
+      "distr": ["h", "xi"],
       "type": "basic"
     },
     "trans_4": {
@@ -62,6 +75,34 @@
       "param": null,
       "distr": null,
       "type": "vaccination"
+    },
+    "trans_6": {
+      "source": "i",
+      "target": "h",
+      "param": "gamma",
+      "distr": ["h", "xi_"],
+      "type": "basic"
+    },
+    "trans_7": {
+      "source": "h",
+      "target": "r",
+      "param": "gamma_h",
+      "distr": null,
+      "type": "basic"
+    },
+    "trans_8": {
+      "source": "ic",
+      "target": "icr",
+      "param": "gamma_c",
+      "distr": ["mu_"],
+      "type": "basic"
+    },
+    "trans_9": {
+      "source": "e",
+      "target": "i",
+      "param": "alpha",
+      "distr": null,
+      "type": "basic"
     }
   }
 }

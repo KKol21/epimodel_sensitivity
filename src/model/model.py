@@ -44,15 +44,16 @@ class VaccinatedModel(EpidemicModelBase):
         n_samples = y0.shape[0]
         V = self.get_vacc_tensors(daily_vac)
         from numpy import array
+        # array(y @ self.A)
+        # array(y @ self.T)
+        # array(y @ self.B)
+        # array(torch.ones(self.s_mtx) @ self.B)
+        # array(torch.mul(y @ self.A, y @ self.T))
+        # array(base_result)
+        # base_result[0, :].sum()
+
         def odefun(t, y, V):
             base_result = torch.mul(y @ self.A, y @ self.T) + y @ self.B
-            array(y @ self.A)
-            array(y @ self.T)
-            array(y @ self.B)
-            array(torch.ones(self.s_mtx) @ self.B)
-            array(torch.mul(y @ self.A, y @ self.T))
-            array(base_result)
-            base_result[0, :].sum()
             if self.ps["t_start"] < t[0] < (self.ps["t_start"] + self.ps["T"]):
                 vacc = torch.div(torch.einsum('ij,ijk->ik', y, V),
                                  y @ self.V_2)

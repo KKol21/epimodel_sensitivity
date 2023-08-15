@@ -6,11 +6,14 @@ import torch
 class R0GeneratorBase(ABC):
     def __init__(self, data, n_age: int):
         self.data = data
-        self.states = self.get_infected_states()
+        self.state_data = data.state_data
+        self.trans_data = data.trans_data
+        self.inf_states = self.get_infected_states()
+        self.n_comp = len(self.inf_states)
         self.n_age = n_age
         self.parameters = data.model_parameters
-        self.n_states = len(self.states)
-        self.i = {self.states[index]: index for index in torch.arange(0, self.n_states)}
+        self.n_states = len(self.inf_states)
+        self.i = {self.inf_states[index]: index for index in torch.arange(0, self.n_states)}
         self.s_mtx = self.n_age * self.n_states
 
         self.v_inv = None

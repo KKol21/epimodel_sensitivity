@@ -23,6 +23,8 @@ class R0Generator(R0GeneratorBase):
 
         self.device = device
         self._get_e()
+        self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data.values()
+                                 if trans["type"] == "infection"][0]
 
     def _get_v(self) -> None:
         """
@@ -31,9 +33,21 @@ class R0Generator(R0GeneratorBase):
         Returns:
             None
         """
+
+        def isinf_state(state):
+            return self.state_data[state]['type'] in ['infected', 'infectious']
+
         trans_mtx = generate_transition_matrix(self.inf_state_dict, self.data.trans_data, self.data.model_parameters,
                                                self.n_age, self.n_states, self.i).to(self.device)
-        #trans_mtx[idx(f'e_{self.n_e - 1}'), idx('i_0')] = params["alpha"]
+        end_state = {state: f"{state}_{data['n_substates'] - 1}" for state, data in self.data.state_data.items()}
+        basic_trans_dict = {trans: data for trans, data in self.data.trans_data.items()
+                            if data['type'] == 'basic'
+                            and isinf_state(data['source'])
+                            and isinf_state(data['target'])}
+
+        for trans, data in basic_trans_dict.items():
+            param = self.data.model_parameters[data['param']]
+            trans_mtx[self._idx(end_state[data['source']]), self._idx(f"{data['target']}_0")] = param
         self.v_inv = torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
@@ -56,7 +70,7 @@ class R0Generator(R0GeneratorBase):
         susc_vec = self.parameters["susc"].reshape((-1, 1))
         # Rate of infection for every infectious state
         for inf_state in infectious_states:
-            f[i[inf_state]:s_mtx:n_states, i["i_0"]:s_mtx:n_states] = torch.mul(susc_vec, contact_mtx.T)
+            f[i[inf_state]:s_mtx:n_states, i[self.inf_inflow_state]:s_mtx:n_states] = torch.mul(susc_vec, contact_mtx.T)
         return f
 
     def _get_e(self):
