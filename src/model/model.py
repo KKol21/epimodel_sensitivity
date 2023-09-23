@@ -43,7 +43,7 @@ class VaccinatedModel(EpidemicModelBase):
     def get_solution(self, t_eval, y0, daily_vac):
         n_samples = y0.shape[0]
         V = self.get_vacc_tensors(daily_vac)
-        from numpy import array
+        # from numpy import array
         # array(y @ self.A)
         # array(y @ self.T)
         # array(y @ self.B)

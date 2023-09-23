@@ -2,9 +2,8 @@ import itertools
 import os
 
 import numpy as np
-import torch
-
 import scipy.stats as ss
+import torch
 
 from src.dataloader import DataLoader
 from src.model.model import VaccinatedModel
@@ -48,7 +47,7 @@ class SimulationVaccinated:
         self.susc_choices = [1.0]
         self.r0_choices = [1.8]
         self.target_var_choices = ["i_max", "ic_max", "d_max"]  # i_max, ic_max, d_max
-        self.n_samples = 5000
+        self.n_samples = 10000
 
         # Define initial configs
         self._get_initial_config()
@@ -164,7 +163,8 @@ class SimulationVaccinated:
         for susc, base_r0, target_var in simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             vaccination = np.loadtxt(fname=f'../sens_data/optimal_vaccination/optimal_vaccination_{filename}.csv')
-            generate_epidemic_plot(self, vaccination, filename, target_var, base_r0, compartments=["ic", "d"])
+            generate_epidemic_plot(self, vaccination, filename, target_var, base_r0,
+                                   compartments=["ic", "d"])
 
     def plot_subopt(self):
         """

@@ -41,15 +41,14 @@ class EpidemicModelBase(ABC):
 
     def get_initial_values(self):
         """
-        Retrieves the initial values for the model.
-
-        This method retrieves the initial values for the model. It sets the initial value for the exposed (e_0)
-        compartment to 1 and subtracts 1 from the susceptible (s) compartment for the appropriate age group.
+        This method retrieves the initial values for the model. It sets the initial value for the infected (e_0^3)
+        compartment of the 3rd age group to 1 and subtracts 1 from the susceptible (s) compartment for the appropriate
+        age group.
 
         Returns:
             torch.Tensor: Initial values of the model.
         """
-        iv = torch.zeros(self.size)
+        iv = torch.zeros(self.size).to(self.device)
         age_group = 3 * self.n_comp
         iv[age_group + self.c_idx['i_0']] = 1
         iv[self.idx('s_0')] = self.population
@@ -61,7 +60,7 @@ class EpidemicModelBase(ABC):
 
     def aggregate_by_age(self, solution, comp):
         """
-        This method aggregates the solution by age for a compartment with substates by summing the solution
+        This method aggregates the solution by age for a compartment by summing the solution
         values of individual substates.
 
         Args:

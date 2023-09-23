@@ -30,8 +30,6 @@ class R0Generator(R0GeneratorBase):
         """
         Compute and store the inverse of the transition matrix.
 
-        Returns:
-            None
         """
 
         def isinf_state(state):

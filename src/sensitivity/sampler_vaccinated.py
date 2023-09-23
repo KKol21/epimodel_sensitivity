@@ -19,7 +19,7 @@ class SamplerVaccinated(SamplerBase):
                                "upper": np.ones(sim_obj.n_age)
                                }
         self.optimal_vacc = None
-        self.batch_size = 5000
+        self.batch_size = 10000
 
     def run_sampling(self):
         """
@@ -70,7 +70,8 @@ class SamplerVaccinated(SamplerBase):
         t_start = time.time()
         for batch_idx in tqdm(range(0, self.n_samples, batch_size),
                               desc="Batches completed"):
-            solutions = self.get_sol_from_lhs(lhs_table[batch_idx: batch_idx + batch_size])
+            batch = lhs_table[batch_idx: batch_idx + batch_size]
+            solutions = self.get_sol_from_lhs(batch)
             comp_maxes = self.get_max(sol=solutions, comp=self.target_var.split('_')[0])
             batches.append(comp_maxes)
         elapsed = time.time() - t_start
