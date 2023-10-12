@@ -52,6 +52,10 @@ class SimulationVaccinated:
         # Define initial configs
         self._get_initial_config()
 
+        # Initalize model
+        self.model = VaccinatedModel(sim_obj=self)
+        self.susceptibles = self.model.get_initial_values()[self.model.idx("s_0")]
+
     def run_sampling(self):
         """
         Runs the sampling-based simulation with different parameter combinations.
@@ -64,16 +68,20 @@ class SimulationVaccinated:
             None
         """
         susceptibility = torch.ones(self.n_age).to(self.data.device)
-        simulations = itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)
+        simulations = itertools.product(self.susc_choices,
+                                        self.r0_choices,
+                                        self.target_var_choices)
         for susc, base_r0, target_var in simulations:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})
             r0generator = R0Generator(self.data, device=self.data.device, n_age=self.n_age)
             # Calculate base transmission rate
-            beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.contact_matrix,
+            beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.cm,
                                                      susceptibles=self.susceptibles.reshape(1, -1),
                                                      population=self.population)
             self.params.update({"beta": beta})
+            # Generate matrices used in model representation
+            self.model.initialize_constant_matrices()
             sim_state = {"base_r0": base_r0,
                          "susc": susc,
                          "r0generator": r0generator,
@@ -200,10 +208,8 @@ class SimulationVaccinated:
     def _get_initial_config(self):
         self.params = self.data.model_parameters
         self.n_age = self.data.contact_data["home"].shape[0]
-        self.contact_matrix = self.data.contact_data["home"] + self.data.contact_data["work"] + \
-                          self.data.contact_data["school"] + self.data.contact_data["other"]
-        self.model = VaccinatedModel(model_data=self.data, cm=self.contact_matrix)
-        self.population = self.model.population
-        self.age_vector = self.population.reshape((-1, 1))
-        self.susceptibles = self.model.get_initial_values()[self.model.idx("s_0")]
+        self.cm = self.data.contact_data["home"] + self.data.contact_data["work"] + \
+                  self.data.contact_data["school"] + self.data.contact_data["other"]
         self.device = self.data.device
+        self.population = self.data.age_data.flatten()
+        self.age_vector = self.population.reshape((-1, 1))

@@ -6,7 +6,7 @@ from src.dataloader import DataLoader
 
 
 class VaccinatedModel(EpidemicModelBase):
-    def __init__(self, model_data: DataLoader, cm: torch.Tensor):
+    def __init__(self, sim_obj):
         """
         Initializes the VaccinatedModel class.
 
@@ -18,13 +18,12 @@ class VaccinatedModel(EpidemicModelBase):
             cm (torch.Tensor): Contact matrix.
 
         """
-        super().__init__(model_data=model_data)
+        from src.model.matrix_generator import MatrixGenerator
+        super().__init__(sim_obj=sim_obj)
+        self.matrix_generator = MatrixGenerator(model=self, cm=sim_obj.cm)
         self.s_mtx = self.n_age * self.n_comp
 
-        from src.model.matrix_generator import MatrixGenerator
-        self.matrix_generator = MatrixGenerator(model=self, cm=cm, ps=self.ps)
-
-    def _get_constant_matrices(self):
+    def initialize_constant_matrices(self):
         mtx_gen = self.matrix_generator
         self.A = mtx_gen.get_A()
         self.T = mtx_gen.get_T()

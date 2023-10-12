@@ -94,7 +94,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
     sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
     r0generator = R0Generator(sim_obj.data, device=sim_obj.data.device, n_age=sim_obj.n_age)
     # Calculate base transmission rate
-    beta = r0 / r0generator.get_eig_val(contact_mtx=sim_obj.contact_matrix,
+    beta = r0 / r0generator.get_eig_val(contact_mtx=sim_obj.cm,
                                         susceptibles=sim_obj.susceptibles.reshape(1, -1),
                                         population=sim_obj.population)
     sim_obj.params["beta"] = beta
@@ -142,18 +142,18 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
     sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
 
     r0generator = R0Generator(sim_obj.data, device=sim_obj.data.device, n_age=sim_obj.n_age)
-    ngm_ev = r0generator.get_eig_val(contact_mtx=sim_obj.contact_matrix,
-                                        susceptibles=sim_obj.susceptibles.reshape(1, -1),
-                                        population=sim_obj.population)
+    ngm_ev = r0generator.get_eig_val(contact_mtx=sim_obj.cm,
+                                     susceptibles=sim_obj.susceptibles.reshape(1, -1),
+                                     population=sim_obj.population)
     # Calculate base transmission rate
     beta = r0 / ngm_ev
     sim_obj.params["beta"] = beta
     model._get_constant_matrices()
 
     t = torch.linspace(1, 1000, 1000).to(sim_obj.device)
-    sol_real = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix,
+    sol_real = sim_obj.model.get_solution(t=t, cm=sim_obj.cm,
                                           daily_vac=torch.tensor(vaccination_opt).float())
-    sol_bad = sim_obj.model.get_solution(t=t, cm=sim_obj.contact_matrix,
+    sol_bad = sim_obj.model.get_solution(t=t, cm=sim_obj.cm,
                                          daily_vac=torch.tensor(vaccination).float())
 
     comp_sol = model.aggregate_by_age(sol_real, comp)

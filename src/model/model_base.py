@@ -5,7 +5,7 @@ from src.dataloader import DataLoader
 
 
 class EpidemicModelBase(ABC):
-    def __init__(self, model_data: DataLoader):
+    def __init__(self, sim_obj):
         """
         Initialises Abstract base class for epidemic models.
 
@@ -18,19 +18,19 @@ class EpidemicModelBase(ABC):
         Returns:
             None
         """
-        self.data = model_data
-        self.ps = model_data.model_parameters
-        self.population = model_data.age_data.flatten()
+        self.data = sim_obj.data
+        self.ps = sim_obj.params
+        self.population = sim_obj.population
         self.compartments = self.get_compartments()
         self.n_comp = len(self.compartments)
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
-        self.n_age = self.population.shape[0]
+        self.n_age = sim_obj.n_age
         self.s_mtx = self.n_age * self.n_comp
-        self.device = model_data.device
+        self.device = sim_obj.device
         self.size = self.n_age * self.n_comp
 
     @abstractmethod
-    def _get_constant_matrices(self):
+    def initialize_constant_matrices(self):
         pass
 
     def get_compartments(self):
@@ -41,18 +41,20 @@ class EpidemicModelBase(ABC):
 
     def get_initial_values(self):
         """
+
         This method retrieves the initial values for the model. It sets the initial value for the infected (e_0^3)
         compartment of the 3rd age group to 1 and subtracts 1 from the susceptible (s) compartment for the appropriate
         age group.
 
         Returns:
             torch.Tensor: Initial values of the model.
+
         """
         iv = torch.zeros(self.size).to(self.device)
-        age_group = 3 * self.n_comp
+        age_group = 3
         iv[age_group + self.c_idx['i_0']] = 1
         iv[self.idx('s_0')] = self.population
-        iv[age_group + self.c_idx['s_0']] -= 1
+        iv[age_group * self.n_comp + self.c_idx['s_0']] -= 1
         return iv
 
     def idx(self, state: str) -> bool:
@@ -60,8 +62,9 @@ class EpidemicModelBase(ABC):
 
     def aggregate_by_age(self, solution, comp):
         """
+
         This method aggregates the solution by age for a compartment by summing the solution
-        values of individual substates.
+        values of individual substates for each age group.
 
         Args:
             solution (torch.Tensor): Model solution tensor.
@@ -69,6 +72,7 @@ class EpidemicModelBase(ABC):
 
         Returns:
             torch.Tensor: Aggregated solution by age.
+
         """
         result = 0
         for state in get_substates(self.data.state_data[comp]["n_substates"], comp):
@@ -78,7 +82,6 @@ class EpidemicModelBase(ABC):
 
 def get_substates(n_substates, comp_name):
     """
-   Returns a list of compartment names based on the number of states and class name.
 
    This function returns a list of compartment names based on the number of states specified and the class name.
    It is used to generate the compartments for the model.
@@ -89,5 +92,6 @@ def get_substates(n_substates, comp_name):
 
    Returns:
        list: List of state names.
+
    """
     return [f"{comp_name}_{i}" for i in range(n_substates)]

@@ -70,6 +70,17 @@ class MatrixGenerator:
     """
     Class responsible for generating the matrices used in the model.
 
+    Let y be size n_samples * s_mtx, each row corresponding to a different simulation. The general formula we represent
+    the system of ODEs with is the following:
+
+            y' = (y @ T_1) * (y @ T_2) + y * L,
+
+    where T_1 and T_2 are responsible for the transmission of the disease, and L defines the linear changes.
+
+    In addition to this, continuous vaccination can be written as
+
+            vacc = (y @ V_1) / (y @ V_2).
+
     Args:
         model (EpidemicModelBase): An instance of the EpidemicModelBase class.
         cm: The contact matrix.
@@ -87,28 +98,22 @@ class MatrixGenerator:
         c_idx: A dictionary containing the indices of different compartments' components.
 
     Methods:
-        get_A(): Generate the matrix A.
-        get_T(): Generate the matrix T.
-        get_B(): Generate the matrix B.
-        get_V_1(daily_vac): Generate the matrix V_1.
-        get_V_2(): Generate the matrix V_2.
         _get_comp_slice(comp): Get a slice representing the indices of a given compartment.
         _get_end_state(comp): Get the string representing the last state of a given compartment.
         _get_trans_param_dict(): Get a dictionary of transition parameters for different compartments.
     """
 
-    def __init__(self, model: EpidemicModelBase, cm, ps):
+    def __init__(self, model: EpidemicModelBase, cm):
         """
         Initialize the MatrixGenerator instance.
 
         Args:
-            model (EpidemicModelBase: An instance of the EpidemicModelBase class.
+            model (EpidemicModelBase): An instance of the EpidemicModelBase class.
             cm: The contact matrix.
-            ps: A dictionary containing model parameters.
 
         """
         self.cm = cm
-        self.ps = ps
+        self.ps = model.ps
         self.data = model.data
         self.state_data = model.data.state_data
         self.trans_data = model.data.trans_data
@@ -119,36 +124,40 @@ class MatrixGenerator:
         self.device = model.device
         self.idx = model.idx
         self.c_idx = model.c_idx
-        # First
         self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data.values()
                                  if trans["type"] == "infection"][0]
         self.infectious_states = get_infectious_states(self.state_data)
 
-    def get_A(self) -> torch.Tensor:
+    def get_A(self, ps=None) -> torch.Tensor:
         """
         Returns:
             Torch.Tensor: When multiplied with y, the resulting tensor contains the rate of transmission for
             the susceptibles of age group i at the indices of compartments s^i and e_0^i
         """
+        if ps is None:
+            ps = self.ps
         A = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
-        transmission_rate = self.ps["beta"] * self.ps["susc"] / self.population
+        transmission_rate = ps["beta"] * ps["susc"] / self.population
         idx = self.idx
 
         A[idx('s_0'), idx('s_0')] = - transmission_rate
         A[idx('s_0'), idx(self.inf_inflow_state)] = transmission_rate
         return A
 
-    def get_T(self) -> torch.Tensor:
+    def get_T(self, cm=None) -> torch.Tensor:
         T = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
+        if cm is None:
+            cm = self.cm
         # Multiplied with y, the resulting 1D tensor contains the sum of all contacts with infecteds of
         # age group i at indices of compartments s_i and e_i^0
         for i_state in self.infectious_states:
-            T[self._get_comp_slice(i_state), self._get_comp_slice('s_0')] = self.cm.T
-            T[self._get_comp_slice(i_state), self._get_comp_slice(self.inf_inflow_state)] = self.cm.T
+            T[self._get_comp_slice(i_state), self._get_comp_slice('s_0')] = cm.T
+            T[self._get_comp_slice(i_state), self._get_comp_slice(self.inf_inflow_state)] = cm.T
         return T
 
-    def get_B(self) -> torch.Tensor:
-        ps = self.ps
+    def get_B(self, ps=None) -> torch.Tensor:
+        if ps is None:
+            ps = self.ps
         state_data = self.state_data
         trans_data = self.trans_data
         # B is the tensor representing the first-order elements of the ODE system. We begin by

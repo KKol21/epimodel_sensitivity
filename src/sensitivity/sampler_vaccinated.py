@@ -19,7 +19,7 @@ class SamplerVaccinated(SamplerBase):
                                "upper": np.ones(sim_obj.n_age)
                                }
         self.optimal_vacc = None
-        self.batch_size = 10000
+        self.batch_size = 1000
 
     def run_sampling(self):
         """
@@ -79,8 +79,6 @@ class SamplerVaccinated(SamplerBase):
         return torch.concat(batches)
 
     def get_sol_from_lhs(self, lhs_table):
-        # Generate matrices used in model representation
-        self.sim_obj.model._get_constant_matrices()
         # Initialize timesteps and initial values
         t_eval = torch.stack(
             [torch.linspace(1, 1100, 1100)] * lhs_table.shape[0]
