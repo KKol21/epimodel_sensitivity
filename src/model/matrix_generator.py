@@ -206,8 +206,6 @@ class MatrixGenerator:
     def get_V_2(self) -> torch.Tensor:
         idx = self.idx
         V_2 = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
-        # Make sure to avoid division by zero
-        V_2[0, ~(idx('s_0') + idx('v_0'))] = 1
         # Fill in all the terms such that we will divide the terms at the indices of s^i and v^i by (s^i + r^i)
         V_2[idx('s_0'), idx('s_0')] = -1
         V_2[idx('r_0'), idx('s_0')] = -1

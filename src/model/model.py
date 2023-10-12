@@ -1,8 +1,7 @@
 import torch
 import torchode as to
 
-from src.model.model_base import EpidemicModelBase, get_substates
-from src.dataloader import DataLoader
+from src.model.model_base import EpidemicModelBase
 
 
 class VaccinatedModel(EpidemicModelBase):
@@ -11,11 +10,10 @@ class VaccinatedModel(EpidemicModelBase):
         Initializes the VaccinatedModel class.
 
         This method initializes the VaccinatedModel class by calling the parent class (EpidemicModelBase)
-        constructor, and creating the appropriate the matrix generator.
+        constructor, and instantiating the matrix generator used in solving the model.
 
         Args:
-            model_data (DataLoader): DataLoader object containing model data
-            cm (torch.Tensor): Contact matrix.
+            sim_obj (SimulationVaccinated): Simulation object
 
         """
         from src.model.matrix_generator import MatrixGenerator
@@ -42,20 +40,15 @@ class VaccinatedModel(EpidemicModelBase):
     def get_solution(self, t_eval, y0, daily_vac):
         n_samples = y0.shape[0]
         V = self.get_vacc_tensors(daily_vac)
-        # from numpy import array
-        # array(y @ self.A)
-        # array(y @ self.T)
-        # array(y @ self.B)
-        # array(torch.ones(self.s_mtx) @ self.B)
-        # array(torch.mul(y @ self.A, y @ self.T))
-        # array(base_result)
-        # base_result[0, :].sum()
+        v_div = torch.ones((n_samples, self.s_mtx)).to(self.device)
+        div_idx = self.idx('s_0') + self.idx('v_0')
 
         def odefun(t, y, V):
             base_result = torch.mul(y @ self.A, y @ self.T) + y @ self.B
             if self.ps["t_start"] < t[0] < (self.ps["t_start"] + self.ps["T"]):
+                v_div[:, div_idx] = (y @ self.V_2)[:, div_idx]
                 vacc = torch.div(torch.einsum('ij,ijk->ik', y, V),
-                                 y @ self.V_2)
+                                 v_div)
                 return base_result + vacc
             return base_result
 
