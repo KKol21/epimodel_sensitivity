@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 
 import torch
-from src.dataloader import DataLoader
+from time import time
+from tqdm import tqdm
 
 
 class EpidemicModelBase(ABC):
@@ -13,7 +14,7 @@ class EpidemicModelBase(ABC):
         retrieve initial values, and obtain the model solution.
 
         Args:
-            model_data (DataLoader): Model data object containing model parameters and device information.
+            sim_obj (Simulation
 
         Returns:
             None
@@ -21,16 +22,22 @@ class EpidemicModelBase(ABC):
         self.data = sim_obj.data
         self.ps = sim_obj.params
         self.population = sim_obj.population
+        self.n_age = sim_obj.n_age
+        self.device = sim_obj.device
+        self.test = sim_obj.test
+
         self.compartments = self.get_compartments()
         self.n_comp = len(self.compartments)
+
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
-        self.n_age = sim_obj.n_age
         self.s_mtx = self.n_age * self.n_comp
-        self.device = sim_obj.device
-        self.size = self.n_age * self.n_comp
 
     @abstractmethod
     def initialize_constant_matrices(self):
+        pass
+
+    @abstractmethod
+    def get_solution(self, t_eval, y0, lhs_table):
         pass
 
     def get_compartments(self):
@@ -50,7 +57,7 @@ class EpidemicModelBase(ABC):
             torch.Tensor: Initial values of the model.
 
         """
-        iv = torch.zeros(self.size).to(self.device)
+        iv = torch.zeros(self.s_mtx).to(self.device)
         age_group = 3
         iv[age_group + self.c_idx['i_0']] = 1
         iv[self.idx('s_0')] = self.population
@@ -58,7 +65,47 @@ class EpidemicModelBase(ABC):
         return iv
 
     def idx(self, state: str) -> bool:
-        return torch.arange(self.size) % self.n_comp == self.c_idx[state]
+        return torch.arange(self.s_mtx) % self.n_comp == self.c_idx[state]
+
+    def get_batched_output(self, lhs_table, batch_size, target_var):
+        batches = []
+        n_samples = len(lhs_table[0])
+
+        t_start = time()
+        for batch_idx in tqdm(range(0, n_samples, batch_size),
+                              desc="Batches completed"):
+            batch = lhs_table[batch_idx: batch_idx + batch_size]
+            solutions = self.get_sol_from_lhs(batch)
+            comp_maxes = self.get_max(sol=solutions,
+                                      comp=target_var.split('_')[0])
+            batches.append(comp_maxes)
+        elapsed = time() - t_start
+        print(f"\n Average speed = {round(n_samples / elapsed, 3)} iterations/second \n")
+        return torch.concat(batches)
+
+    def get_sol_from_lhs(self, lhs_table):
+        # Initialize timesteps and initial values
+        t_eval = torch.stack(
+            [torch.linspace(1, 1100, 1100)] * lhs_table.shape[0]
+        ).to(self.device)
+
+        y0 = torch.stack(
+            [self.get_initial_values()] * lhs_table.shape[0]
+        ).to(self.device)
+
+        sol = self.get_solution(t_eval=t_eval, y0=y0, lhs_table=lhs_table).ys
+        if self.test:
+            # Check if population size changed
+            if any([abs(self.population.sum() - sol[i, -1, :].sum()) > 50 for i in range(sol.shape[0])]):
+                raise Exception("Unexpected change in population size!")
+        return sol
+
+    def get_max(self, sol, comp: str):
+        comp_max = []
+        for i in range(sol.shape[0]):
+            comp_sol = self.aggregate_by_age(solution=sol[i, :, :], comp=comp)
+            comp_max.append(torch.max(comp_sol))
+        return torch.tensor(comp_max)
 
     def aggregate_by_age(self, solution, comp):
         """
@@ -82,12 +129,8 @@ class EpidemicModelBase(ABC):
 
 def get_substates(n_substates, comp_name):
     """
-
-   This function returns a list of compartment names based on the number of states specified and the class name.
-   It is used to generate the compartments for the model.
-
    Args:
-       n_substates (int): Number of classes for the compartment.
+       n_substates (int): Number of substates
        comp_name (str): Compartment name.
 
    Returns:

@@ -45,7 +45,7 @@ serve as an excellent starting point for evaluating compartmental epidemic model
 
 The following flowchart represents the pipeline established in this project: ![Flowchart](/images/Flowchart.jpg)
 
-By running the methods contained in `simulation.py`, the folder `sens_data` is created, containing the LHS tables, 
+By running the methods contained in `simulation.py`, the folder `sens_data_vacc` is created, containing the LHS tables, 
 the value of the target variables in corresponding order to the samples, the PRCC values calculated, the tornado 
 plots, and the plots of the epidemic in the subfolders `lhs`, `simulations`, `prcc`, 
 `prcc_plots`, and `epidemic_plots`, respectively.

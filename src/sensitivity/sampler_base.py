@@ -38,6 +38,7 @@ class SamplerBase(ABC):
         self.type = sim_state["type"] if "type" in sim_state.keys() else None
         self.r0generator = sim_state["r0generator"]
         self.lhs_boundaries = None
+        self.mode = None
 
     @abstractmethod
     def run_sampling(self):
@@ -61,11 +62,12 @@ class SamplerBase(ABC):
 
     def _save_output(self, output, folder_name):
         # Create directories for saving calculation outputs
-        os.makedirs(f"../sens_data", exist_ok=True)
+        base_name = f"../sens_data_{self.mode}"
+        os.makedirs(base_name, exist_ok=True)
 
         # Save LHS output
-        os.makedirs(f"../sens_data/" + folder_name, exist_ok=True)
-        filename = f"../sens_data/{folder_name}/{folder_name}_{self._get_variable_parameters()}"
+        os.makedirs(f"{base_name}/{folder_name}", exist_ok=True)
+        filename = f"{base_name}/{folder_name}/{folder_name}_{self._get_variable_parameters()}"
         np.savetxt(fname=filename + ".csv", X=output.cpu(), delimiter=";")
 
 

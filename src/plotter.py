@@ -71,7 +71,7 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
     plt.xlim(-1.1, 1.1)
     plt.ylim(-1, len(params))
     # plt.text()
-    plt.savefig(f'../sens_data/prcc_plots/prcc_tornado_plot_{filename}.pdf',
+    plt.savefig(f'../sens_data_vacc/prcc_plots/prcc_tornado_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()
 
@@ -98,12 +98,11 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
                                         susceptibles=sim_obj.susceptibles.reshape(1, -1),
                                         population=sim_obj.population)
     sim_obj.params["beta"] = beta
-    model._get_constant_matrices()
+    model.initialize_constant_matrices()
 
     t_eval = torch.linspace(1, 1200, 1200).to(sim_obj.device)
-    sol = sim_obj.model.get_solution(t_eval=t_eval[None, :],
-                                     y0=sim_obj.model.get_initial_values()[None, :],
-                                     daily_vac=torch.tensor(vaccination[None, :]).float()).ys[0, :, :]
+    sol = sim_obj.model.get_solution(t_eval=t_eval[None, :], y0=sim_obj.model.get_initial_values()[None, :],
+                                     lhs_table=torch.tensor(vaccination[None, :]).float()).ys[0, :, :]
     mask = torch.cat((torch.full((100, ), True),
                       sol[100:, model.idx('ic_0')].sum(axis=1) > 1))
     sol = sol[mask, :]
@@ -117,7 +116,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
     plt.gca().set_xlabel('Napok')
     plt.gca().set_ylabel('Kompartmentek méretei')
     plt.title(plot_title, y=1.03, fontsize=12)
-    plt.savefig(f'../sens_data/epidemic_plots/epidemic_plot_{filename}.pdf',
+    plt.savefig(f'../sens_data_vacc/epidemic_plots/epidemic_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()
     plt.close()
@@ -166,7 +165,7 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
     plt.gca().set_xlabel('Napok')
     plt.gca().set_ylabel('Intenzív betegek száma')
     plt.title(plot_title, y=1.03, fontsize=12)
-    plt.savefig(f'../sens_data/epidemic_plots_/epidemic_plot_{filename}_{r0}.pdf',
+    plt.savefig(f'../sens_data_vacc/epidemic_plots_/epidemic_plot_{filename}_{r0}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()
     plt.close()

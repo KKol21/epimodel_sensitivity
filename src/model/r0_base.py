@@ -23,7 +23,7 @@ class R0GeneratorBase(ABC):
                                if data["type"] in ["infected", "infectious"]}
 
     def get_infected_states(self):
-        from src.model.model import get_substates
+        from src.model.model_base import get_substates
         states = []
         for state, data in self.data.state_data.items():
             if data["type"] in ["infected", "infectious"]:
