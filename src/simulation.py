@@ -39,7 +39,8 @@ class SimulationVaccinated:
         self.susc_choices = [1.0]
         self.r0_choices = [1.8]
         self.target_var_choices = ["i_max", "ic_max", "d_max"]  # i_max, ic_max, d_max
-        self.n_samples = 100
+        self.n_samples = 1000
+        self.batch_size = 1000
 
         # Define initial configs
         self._get_initial_config()
@@ -75,8 +76,7 @@ class SimulationVaccinated:
                          "r0generator": r0generator,
                          "target_var": target_var}
             param_generator = SamplerVaccinated(sim_state=sim_state,
-                                                sim_obj=self,
-                                                n_samples=self.n_samples)
+                                                sim_obj=self)
             param_generator.run_sampling()
 
     def calculate_prcc(self):

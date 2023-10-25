@@ -9,10 +9,9 @@ from src.sensitivity.sampler_base import SamplerBase
 
 
 class SamplerVaccinated(SamplerBase):
-    def __init__(self, sim_state: dict, sim_obj, n_samples):
+    def __init__(self, sim_state: dict, sim_obj):
         super().__init__(sim_state, sim_obj)
         self.mode = "vacc"
-        self.n_samples = n_samples
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
         self.target_var = sim_state["target_var"]
@@ -20,7 +19,6 @@ class SamplerVaccinated(SamplerBase):
                                "upper": np.ones(sim_obj.n_age)
                                }
         self.optimal_vacc = None
-        self.batch_size = 1000
 
     def run_sampling(self):
         """
@@ -38,21 +36,14 @@ class SamplerVaccinated(SamplerBase):
             None
 
         """
-        n_samples = self.n_samples
-        batch_size = self.batch_size
-        # Create samples
-        bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
-        sampling = LHS(xlimits=bounds)
-        lhs_table = sampling(n_samples)
+        lhs_table = self._get_lhs_table()
         # Make sure that total vaccines given to an age group
         # doesn't exceed the population of that age group
         lhs_table = self.allocate_vaccines(lhs_table).to(self.sim_obj.data.device)
-        print(f"\n Simulation for {n_samples} samples ({self._get_variable_parameters()})")
-        print(f"Batch size: {batch_size}\n")
 
         # Calculate values of target variable for each sample
         results = self.sim_obj.model.get_batched_output(lhs_table,
-                                                        batch_size,
+                                                        self.batch_size,
                                                         self.target_var)
         # Sort tables by target values
         sorted_idx = results.argsort()
