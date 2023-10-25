@@ -69,7 +69,7 @@ class EpidemicModelBase(ABC):
 
     def get_batched_output(self, lhs_table, batch_size, target_var):
         batches = []
-        n_samples = len(lhs_table[0])
+        n_samples = lhs_table.shape[0]
 
         t_start = time()
         for batch_idx in tqdm(range(0, n_samples, batch_size),
