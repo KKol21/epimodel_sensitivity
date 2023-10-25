@@ -34,11 +34,11 @@ class SamplerBase(ABC):
         self.sim_obj = sim_obj
         self.sim_state = sim_state
         self.base_r0 = sim_state["base_r0"]
-        self.beta = sim_state["beta"] if "beta" in sim_state.keys() else None
-        self.type = sim_state["type"] if "type" in sim_state.keys() else None
         self.r0generator = sim_state["r0generator"]
         self.lhs_boundaries = None
         self.mode = None
+        self.n_samples = sim_obj.n_samples
+        self.batch_size = sim_obj.batch_size
 
     @abstractmethod
     def run_sampling(self):
@@ -48,16 +48,15 @@ class SamplerBase(ABC):
     def _get_variable_parameters(self):
         pass
 
-    def _get_lhs_table(self, number_of_samples: int):
-        # Get actual limit matrices
-        lower_bound = self.lhs_boundaries[self.type]["lower"]
-        upper_bound = self.lhs_boundaries[self.type]["upper"]
-        # Get LHS tables
-        lhs_table = create_latin_table(n_of_samples=number_of_samples,
-                                       lower=lower_bound,
-                                       upper=upper_bound)
-        print("Simulation for", number_of_samples,
-              "samples (", "-".join(self._get_variable_parameters()), ")")
+    def _get_lhs_table(self):
+        n_samples = self.n_samples
+        batch_size = self.batch_size
+        # Create samples
+        bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
+        sampling = LHS(xlimits=bounds)
+        lhs_table = sampling(n_samples)
+        print(f"\n Simulation for {n_samples} samples ({self._get_variable_parameters()})")
+        print(f"Batch size: {batch_size}\n")
         return lhs_table
 
     def _save_output(self, output, folder_name):
