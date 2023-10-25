@@ -49,8 +49,8 @@ class EpidemicModelBase(ABC):
     def get_initial_values(self):
         """
 
-        This method retrieves the initial values for the model. It sets the initial value for the infected (e_0^3)
-        compartment of the 3rd age group to 1 and subtracts 1 from the susceptible (s) compartment for the appropriate
+        This method retrieves the initial values for the model. It sets the initial value for the infected compartment
+        of the 3rd age group (i_0^3) to 1 and subtracts 1 from the susceptible (s_0^3) compartment for the appropriate
         age group.
 
         Returns:

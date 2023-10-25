@@ -5,12 +5,12 @@ import numpy as np
 import scipy.stats as ss
 import torch
 
-from src.dataloader import DataLoader
+from src.misc.dataloader import DataLoader
 from src.model.model_vaccinated import VaccinatedModel
 from src.sensitivity.prcc import get_prcc_values
 from src.model.r0 import R0Generator
 from src.sensitivity.sampler_vaccinated import SamplerVaccinated
-from src.plotter import generate_prcc_plot, generate_epidemic_plot, generate_epidemic_plot_
+from src.misc.plotter import generate_prcc_plot, generate_epidemic_plot, generate_epidemic_plot_
 
 
 class SimulationVaccinated:
@@ -31,14 +31,6 @@ class SimulationVaccinated:
     """
 
     def __init__(self):
-        """
-        Initializes the SimulationVaccinated class.
-
-        This class is responsible for running simulations with different parameter combinations,
-        calculating PRCC values from the simulation results obtained by evaluating the samples created by LHS,
-        and generating various plots based on the sensitivity analysis.
-
-        """
         # Load data
         self.data = DataLoader()
         self.test = True
@@ -47,7 +39,7 @@ class SimulationVaccinated:
         self.susc_choices = [1.0]
         self.r0_choices = [1.8]
         self.target_var_choices = ["i_max", "ic_max", "d_max"]  # i_max, ic_max, d_max
-        self.n_samples = 1000
+        self.n_samples = 100
 
         # Define initial configs
         self._get_initial_config()
@@ -67,10 +59,7 @@ class SimulationVaccinated:
 
         """
         susceptibility = torch.ones(self.n_age).to(self.data.device)
-        simulations = itertools.product(self.susc_choices,
-                                        self.r0_choices,
-                                        self.target_var_choices)
-        for susc, base_r0, target_var in simulations:
+        for susc, base_r0, target_var in self.simulations:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})
             r0generator = R0Generator(self.data, device=self.data.device, n_age=self.n_age)
@@ -101,8 +90,7 @@ class SimulationVaccinated:
         """
 
         os.makedirs(f'../sens_data_vacc/prcc', exist_ok=True)
-        simulations = itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)
-        for susc, base_r0, target_var in simulations:
+        for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             lhs_table = np.loadtxt(f'../sens_data_vacc/lhs/lhs_{filename}.csv', delimiter=';')
             sim_output = np.loadtxt(f'../sens_data_vacc/simulations/simulations_{filename}.csv', delimiter=';')
@@ -121,9 +109,8 @@ class SimulationVaccinated:
 
 
         """
-        os.makedirs(f'../sens_data_vacc//prcc_plots', exist_ok=True)
-        simulations = itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)
-        for susc, base_r0, target_var in simulations:
+        os.makedirs(f'../sens_data_vacc/prcc_plots', exist_ok=True)
+        for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             prcc = np.loadtxt(fname=f'../sens_data_vacc/prcc/prcc_{filename}.csv')
 
@@ -134,9 +121,8 @@ class SimulationVaccinated:
                                r0=base_r0)
 
     def calculate_p_values(self, significance=0.05):
-        os.makedirs(f'../sens_data_vacc//p_values', exist_ok=True)
-        simulations = itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)
-        for susc, base_r0, target_var in simulations:
+        os.makedirs(f'../sens_data_vacc/p_values', exist_ok=True)
+        for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             prcc = np.loadtxt(fname=f'../sens_data_vacc/prcc/prcc_{filename}.csv')
             t = prcc * np.sqrt((self.n_samples - 2 - self.n_age) / (1 - prcc ** 2))
@@ -164,8 +150,7 @@ class SimulationVaccinated:
 
         """
         os.makedirs(f'../sens_data_vacc//epidemic_plots', exist_ok=True)
-        simulations = itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)
-        for susc, base_r0, target_var in simulations:
+        for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             vaccination = np.loadtxt(fname=f'../sens_data_vacc/optimal_vaccination/optimal_vaccination_{filename}.csv')
             generate_epidemic_plot(self, vaccination, filename, target_var, base_r0,
@@ -192,7 +177,8 @@ class SimulationVaccinated:
         filename = f'1.0-{r0_bad}-{target_var}'
         filename_opt = f'1.0-{r0}-{target_var}'
         vaccination = np.loadtxt(fname=f'../sens_data_vacc/optimal_vaccination/optimal_vaccination_{filename}.csv')
-        vaccination_opt = np.loadtxt(fname=f'../sens_data_vacc/optimal_vaccination/optimal_vaccination_{filename_opt}.csv')
+        vaccination_opt = np.loadtxt(
+            fname=f'../sens_data_vacc/optimal_vaccination/optimal_vaccination_{filename_opt}.csv')
         generate_epidemic_plot_(sim_obj=self,
                                 vaccination=vaccination,
                                 vaccination_opt=vaccination_opt,
@@ -210,3 +196,5 @@ class SimulationVaccinated:
         self.device = self.data.device
         self.population = self.data.age_data.flatten()
         self.age_vector = self.population.reshape((-1, 1))
+        self.simulations = [(susc, r0, target_var) for susc, r0, target_var in
+                            itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)]

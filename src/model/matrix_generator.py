@@ -128,14 +128,13 @@ class MatrixGenerator:
                                  if trans["type"] == "infection"][0]
         self.infectious_states = get_infectious_states(self.state_data)
 
-    def get_A(self, ps=None) -> torch.Tensor:
+    def get_A(self) -> torch.Tensor:
         """
         Returns:
             Torch.Tensor: When multiplied with y, the resulting tensor contains the rate of transmission for
             the susceptibles of age group i at the indices of compartments s^i and e_0^i
         """
-        if ps is None:
-            ps = self.ps
+        ps = self.ps
         A = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
         transmission_rate = ps["beta"] * ps["susc"] / self.population
         idx = self.idx
@@ -155,9 +154,8 @@ class MatrixGenerator:
             T[self._get_comp_slice(i_state), self._get_comp_slice(self.inf_inflow_state)] = cm.T
         return T
 
-    def get_B(self, ps=None) -> torch.Tensor:
-        if ps is None:
-            ps = self.ps
+    def get_B(self) -> torch.Tensor:
+        ps = self.ps
         state_data = self.state_data
         trans_data = self.trans_data
         # B is the tensor representing the first-order elements of the ODE system. We begin by
@@ -166,7 +164,7 @@ class MatrixGenerator:
                                if data["type"] not in ["susceptible",
                                                        "recovered",
                                                        "dead"]}
-        B = generate_transition_matrix(intermediate_states, trans_data, self.ps,
+        B = generate_transition_matrix(intermediate_states, trans_data, ps,
                                        self.n_age, self.n_comp, self.c_idx)
 
         # Fill in the rest of the first-order terms
@@ -200,7 +198,7 @@ class MatrixGenerator:
         V_1 = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
         # Tensor responsible for the nominators of the vaccination formula
         V_1[self.idx('s_0'), self.idx('s_0')] = daily_vac
-        V_1[self.idx('v_0'), self.idx('s_0')] = daily_vac
+        V_1[self.idx('s_0'), self.idx('v_0')] = daily_vac
         return V_1
 
     def get_V_2(self) -> torch.Tensor:
