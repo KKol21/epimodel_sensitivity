@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 
 import torch
+import torchode as to
+
 from time import time
 from tqdm import tqdm
 
@@ -11,10 +13,7 @@ class EpidemicModelBase(ABC):
         Initialises Abstract base class for epidemic models.
 
         This class provides the base functionality for epidemic models. It contains methods to initialize the model,
-        retrieve initial values, and obtain the model solution.
-
-        Args:
-            sim_obj (Simulation
+        retrieve initial values, and obtain the model solutution.
 
         Returns:
             None
@@ -32,6 +31,12 @@ class EpidemicModelBase(ABC):
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
         self.s_mtx = self.n_age * self.n_comp
 
+        self.A = None
+        self.T = None
+        self.B = None
+        self.V_1 = None
+        self.V_2 = None
+
     @abstractmethod
     def initialize_constant_matrices(self):
         pass
@@ -39,6 +44,57 @@ class EpidemicModelBase(ABC):
     @abstractmethod
     def get_solution(self, t_eval, y0, lhs_table):
         pass
+
+    @staticmethod
+    def get_sol_from_solver(y0, t_eval, odefun):
+        term = to.ODETerm(odefun)
+        step_method = to.Euler(term=term)
+        step_size_controller = to.FixedStepController()
+        solver = to.AutoDiffAdjoint(step_method, step_size_controller)
+        problem = to.InitialValueProblem(y0=y0, t_eval=t_eval)
+        dt0 = torch.full((y0.shape[0],), 1)
+
+        return solver.solve(problem, dt0=dt0)
+
+    def get_basic_solver(self):
+        A_mul = self.get_mul_method(self.A)
+        T_mul = self.get_mul_method(self.T)
+        B_mul = self.get_mul_method(self.B)
+
+        def odefun(t, y):
+            return torch.mul(A_mul(y, self.A), T_mul(y, self.T)) + B_mul(y, self.B)
+
+        return odefun
+
+    def get_vaccinated_solver(self):
+        A_mul = self.get_mul_method(self.A)
+        T_mul = self.get_mul_method(self.T)
+        B_mul = self.get_mul_method(self.B)
+        V_1_mul = self.get_mul_method(self.V_1)
+
+        v_div = torch.ones((self.V_1.shape[0], self.s_mtx)).to(self.device)
+        div_idx = self.idx('s_0') + self.idx('v_0')
+
+        def odefun(t, y):
+            base_result = torch.mul(A_mul(y, self.A), T_mul(y, self.T)) + B_mul(y, self.B)
+            if self.ps["t_start"] < t[0] < self.ps["t_start"] + self.ps["T"]:
+                v_div[:, div_idx] = (y @ self.V_2)[:, div_idx]
+                vacc = torch.div(V_1_mul(y, self.V_1),
+                                 v_div)
+                return base_result + vacc
+            return base_result
+
+        return odefun
+
+    @staticmethod
+    def get_mul_method(tensor: torch.Tensor):
+        def mul_by_2d(y, tensor):
+            return y @ tensor
+
+        def mul_by_3d(y, tensor):
+            return torch.einsum('ij,ijk->ik', y, tensor)
+
+        return mul_by_2d if len(tensor.size()) < 3 else mul_by_3d
 
     def get_compartments(self):
         compartments = []
@@ -66,6 +122,25 @@ class EpidemicModelBase(ABC):
 
     def idx(self, state: str) -> bool:
         return torch.arange(self.s_mtx) % self.n_comp == self.c_idx[state]
+
+    def aggregate_by_age(self, solution, comp):
+        """
+
+        This method aggregates the solution by age for a compartment by summing the solution
+        values of individual substates for each age group.
+
+        Args:
+            solution (torch.Tensor): Model solution tensor.
+            comp (str): Compartment name.
+
+        Returns:
+            torch.Tensor: Aggregated solution by age.
+
+        """
+        result = 0
+        for state in get_substates(self.data.state_data[comp]["n_substates"], comp):
+            result += solution[:, self.idx(state)].sum(axis=1)
+        return result
 
     def get_batched_output(self, lhs_table, batch_size, target_var):
         batches = []
@@ -106,26 +181,6 @@ class EpidemicModelBase(ABC):
             comp_sol = self.aggregate_by_age(solution=sol[i, :, :], comp=comp)
             comp_max.append(torch.max(comp_sol))
         return torch.tensor(comp_max)
-
-    def aggregate_by_age(self, solution, comp):
-        """
-
-        This method aggregates the solution by age for a compartment by summing the solution
-        values of individual substates for each age group.
-
-        Args:
-            solution (torch.Tensor): Model solution tensor.
-            comp (str): Compartment name.
-
-        Returns:
-            torch.Tensor: Aggregated solution by age.
-
-        """
-        result = 0
-        for state in get_substates(self.data.state_data[comp]["n_substates"], comp):
-            result += solution[:, self.idx(state)].sum(axis=1)
-        return result
-
 
 def get_substates(n_substates, comp_name):
     """
