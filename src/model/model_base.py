@@ -13,7 +13,7 @@ class EpidemicModelBase(ABC):
         Initialises Abstract base class for epidemic models.
 
         This class provides the base functionality for epidemic models. It contains methods to initialize the model,
-        retrieve initial values, and obtain the model solutution.
+        retrieve initial values, and obtain the model solutution
 
         Returns:
             None
