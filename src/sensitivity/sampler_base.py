@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import os
+import time
 
 import numpy as np
 from smt.sampling_methods import LHS
@@ -37,6 +38,7 @@ class SamplerBase(ABC):
         self.r0generator = sim_state["r0generator"]
         self.lhs_boundaries = None
         self.mode = None
+        self.target_var = None
         self.n_samples = sim_obj.n_samples
         self.batch_size = sim_obj.batch_size
 
@@ -58,6 +60,22 @@ class SamplerBase(ABC):
         print(f"\n Simulation for {n_samples} samples ({self._get_variable_parameters()})")
         print(f"Batch size: {batch_size}\n")
         return lhs_table
+
+    def _get_sim_output(self, lhs_table):
+        # Calculate values of target variable for each sample
+        sim_output = self.sim_obj.model.get_batched_output(lhs_table,
+                                                           self.batch_size,
+                                                           self.target_var)
+        # Sort tables by target values
+        sorted_idx = sim_output.argsort()
+        sim_output = sim_output[sorted_idx]
+        lhs_table = lhs_table[sorted_idx]
+
+        time.sleep(0.3)
+
+        # Save samples, target values
+        self._save_output(output=lhs_table, folder_name='lhs')
+        self._save_output(output=sim_output, folder_name='simulations')
 
     def _save_output(self, output, folder_name):
         # Create directories for saving calculation outputs

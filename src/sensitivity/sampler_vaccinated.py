@@ -1,7 +1,4 @@
-import time
-
 import numpy as np
-from smt.sampling_methods import LHS
 import torch
 
 
@@ -41,21 +38,10 @@ class SamplerVaccinated(SamplerBase):
         # doesn't exceed the population of that age group
         lhs_table = self.allocate_vaccines(lhs_table).to(self.sim_obj.data.device)
 
-        # Calculate values of target variable for each sample
-        results = self.sim_obj.model.get_batched_output(lhs_table,
-                                                        self.batch_size,
-                                                        self.target_var)
-        # Sort tables by target values
-        sorted_idx = results.argsort()
-        results = results[sorted_idx]
-        lhs_table = lhs_table[sorted_idx]
+        self._get_sim_output(lhs_table)
         self.optimal_vacc = lhs_table[0]
-        sim_output = results
-        time.sleep(0.3)
 
-        # Save samples, target values, and the most optimal vaccination strategy found with sampling
-        self._save_output(output=lhs_table, folder_name='lhs')
-        self._save_output(output=sim_output, folder_name='simulations')
+        # Save the most optimal vaccination strategy found with sampling
         self._save_output(output=self.optimal_vacc, folder_name='optimal_vaccination')
 
     def _get_variable_parameters(self):
