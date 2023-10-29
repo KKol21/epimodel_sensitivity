@@ -4,10 +4,9 @@ from src.sensitivity.sampler_base import SamplerBase
 
 
 class SamplerContact(SamplerBase):
-    def __init__(self, sim_state: dict, sim_obj, n_samples):
+    def __init__(self, sim_state: dict, sim_obj):
         super().__init__(sim_state, sim_obj)
         self.mode = "contact"
-        self.n_samples = n_samples
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
         self.target_var = sim_state["target_var"]
@@ -27,7 +26,7 @@ class SamplerContact(SamplerBase):
     def _get_cm_entries_lockdown_from_lhs(self, lhs_sample: np.ndarray):
         # Get ratio matrix
         ratio_matrix = get_rectangular_matrix_from_upper_triu(rvector=lhs_sample,
-                                                              matrix_size=self.sim_obj.no_ag)
+                                                              matrix_size=self.sim_obj.n_age)
         # Get modified full contact matrix
         cm_sim = (1 - ratio_matrix) * (self.sim_obj.contact_matrix - self.sim_obj.contact_home)
         cm_sim += self.sim_obj.contact_home
@@ -47,7 +46,7 @@ class SamplerContact(SamplerBase):
                                                                susceptibles=self.sim_obj.susceptibles.reshape(1, -1),
                                                                population=self.sim_obj.population)[0]
         output = np.array([0, beta_lhs])
-        output = np.append(output, np.zeros(self.sim_obj.no_ag))
+        output = np.append(output, np.zeros(self.sim_obj.n_age))
         return output
 
 

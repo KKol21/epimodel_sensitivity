@@ -23,7 +23,6 @@ class SamplerBase(ABC):
         base_r0 (float): The base reproduction number (R0) of the simulation.
         beta (float or None): The infection rate parameter (beta) of the simulation, if available.
         type (str or None): The type of the simulation, if available.
-        r0generator: The R0 generator used in the simulation.
         lhs_boundaries (dict): The boundaries for Latin Hypercube Sampling (LHS) parameter ranges.
 
     Methods:
@@ -37,7 +36,6 @@ class SamplerBase(ABC):
         self.base_r0 = sim_state["base_r0"]
         self.r0generator = sim_state["r0generator"]
         self.lhs_boundaries = None
-        self.mode = None
         self.target_var = None
         self.n_samples = sim_obj.n_samples
         self.batch_size = sim_obj.batch_size
@@ -74,17 +72,17 @@ class SamplerBase(ABC):
         time.sleep(0.3)
 
         # Save samples, target values
-        self._save_output(output=lhs_table, folder_name='lhs')
-        self._save_output(output=sim_output, folder_name='simulations')
+        self._save_output(output=lhs_table, output_type='lhs')
+        self._save_output(output=sim_output, output_type='simulations')
 
-    def _save_output(self, output, folder_name):
+    def _save_output(self, output, output_type):
         # Create directories for saving calculation outputs
-        base_name = f"../sens_data_{self.mode}"
-        os.makedirs(base_name, exist_ok=True)
+        folder_name = self.sim_obj.folder_name
+        os.makedirs(folder_name, exist_ok=True)
 
         # Save LHS output
-        os.makedirs(f"{base_name}/{folder_name}", exist_ok=True)
-        filename = f"{base_name}/{folder_name}/{folder_name}_{self._get_variable_parameters()}"
+        os.makedirs(f"{folder_name}/{output_type}", exist_ok=True)
+        filename = f"{folder_name}/{output_type}/{output_type}_{self._get_variable_parameters()}"
         np.savetxt(fname=filename + ".csv", X=output.cpu(), delimiter=";")
 
 
