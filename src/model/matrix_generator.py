@@ -194,7 +194,9 @@ class MatrixGenerator:
                 result *= self.ps[distr_param]
         return result
 
-    def get_V_1(self, daily_vac: torch.Tensor) -> torch.Tensor:
+    def get_V_1(self, daily_vac=None) -> torch.Tensor:
+        if daily_vac is None:
+            daily_vac = self.ps["daily_vac"]
         V_1 = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
         # Tensor responsible for the nominators of the vaccination formula
         V_1[self.idx('s_0'), self.idx('s_0')] = daily_vac

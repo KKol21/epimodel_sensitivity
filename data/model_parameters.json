@@ -93,6 +93,27 @@
         ],
         "description": "Probability of hospitalization (or intensive care)"
     },
+    "daily_vac": {
+        "value": [
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000,
+            3000
+        ],
+        "description": "Amount of daily vaccines given to each age group"
+    },
     "xi": {
         "value": [
             0.333333,

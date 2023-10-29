@@ -8,23 +8,25 @@ class ContactModel(EpidemicModelBase):
         """
         Initializes the VaccinatedModel class.
 
-        This method initializes the VaccinatedModel class by calling the parent class (EpidemicModelBase)
+        This method initializes the ContactModel class by calling the parent class (EpidemicModelBase)
         constructor, and instantiating the matrix generator used in solving the model.
 
         Args:
-            sim_obj (SimulationVaccinated): Simulation object
+            sim_obj (SimulationContact): Simulation object
 
         """
         from src.model.matrix_generator import MatrixGenerator
         super().__init__(sim_obj=sim_obj)
         self.matrix_generator = MatrixGenerator(model=self, cm=sim_obj.cm)
         self.s_mtx = self.n_age * self.n_comp
+        self.upper_tri_size = sim_obj.upper_tri_size
 
     def initialize_constant_matrices(self):
         mtx_gen = self.matrix_generator
         self.A = mtx_gen.get_A()
         self.T = mtx_gen.get_T()
         self.B = mtx_gen.get_B()
+        self.V_1 = mtx_gen.get_V_1()
         self.V_2 = mtx_gen.get_V_2()
 
     def _get_A_from_betas(self, betas):
@@ -42,8 +44,9 @@ class ContactModel(EpidemicModelBase):
         return T
 
     def get_solution(self, t_eval, y0, lhs_table):
-        contact_samples = lhs_table[:, -1:]
-        betas = lhs_table[:, -1]
+        r0_idx = int(self.upper_tri_size + 1)
+        contact_samples = lhs_table[:, :r0_idx - 1]
+        betas = lhs_table[:, r0_idx]
         self.A = self._get_A_from_betas(betas)
         self.T = self._get_T_from_contacts(contact_samples)
         if "vaccination" in [trans["type"] for trans in self.data.trans_data.values()]:

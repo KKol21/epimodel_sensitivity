@@ -1,7 +1,6 @@
 import json
 
 import torch
-import numpy as np
 import xlrd
 import os
 
@@ -22,7 +21,6 @@ class DataLoader:
         self._get_model_parameters_data()
         self._get_contact_mtx()
         self._load_model_structure()
-        self.param_names = np.array([f'daily_vac_{i}' for i in range(self.contact_data["home"].shape[0])])
 
     def _get_age_data(self):
         wb = xlrd.open_workbook(self._age_data_file)

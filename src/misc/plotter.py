@@ -19,7 +19,7 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
     Generate a tornado plot to visualize the Partial Rank Correlation Coefficient (PRCC) values.
 
     Args:
-        params (list): The list of parameter names.
+        params (np.ndarray): The list of parameter names.
         target_var (str): The target variable.
         prcc (np.ndarray): The PRCC values.
         filename (str): The filename for saving the plot.

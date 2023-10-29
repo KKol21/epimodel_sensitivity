@@ -182,6 +182,7 @@ class EpidemicModelBase(ABC):
             comp_max.append(torch.max(comp_sol))
         return torch.tensor(comp_max)
 
+
 def get_substates(n_substates, comp_name):
     """
    Args:
