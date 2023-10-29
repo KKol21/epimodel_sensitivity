@@ -37,7 +37,7 @@ class ContactModel(EpidemicModelBase):
         self.A = self._get_A_from_betas(betas)
         self.T = self._get_T_from_contacts(cm_samples)
         if self.is_vaccinated:
-            odefun = self.get_vaccinated_solver()
+            odefun = self.get_vaccinated_solver(lhs_table.shape[0])
         else:
             odefun = self.get_basic_solver()
         return self.get_sol_from_solver(y0, t_eval, odefun)

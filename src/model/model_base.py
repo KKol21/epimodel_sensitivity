@@ -69,13 +69,13 @@ class EpidemicModelBase(ABC):
 
         return odefun
 
-    def get_vaccinated_solver(self):
+    def get_vaccinated_solver(self, curr_batch_size):
         A_mul = self.get_mul_method(self.A)
         T_mul = self.get_mul_method(self.T)
         B_mul = self.get_mul_method(self.B)
         V_1_mul = self.get_mul_method(self.V_1)
 
-        v_div = torch.ones((self.sim_obj.n_samples, self.s_mtx)).to(self.device)
+        v_div = torch.ones((curr_batch_size, self.s_mtx)).to(self.device)
         div_idx = self.idx('s_0') + self.idx('v_0')
 
         def odefun(t, y):
