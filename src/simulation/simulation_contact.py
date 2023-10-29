@@ -26,6 +26,8 @@ class SimulationContact(SimulationBase):
     def __init__(self):
         super().__init__()
         self.upper_tri_size = int((self.n_age + 1) * self.n_age / 2)
+        self.contact_home = self.data.contact_data["home"]
+        self.folder_name = "../sens_data_contact"
 
         # Initalize model
         self.model = ContactModel(sim_obj=self)
@@ -57,6 +59,7 @@ class SimulationContact(SimulationBase):
                          "susc": susc,
                          "r0generator": r0generator,
                          "target_var": target_var}
+            self.model.sim_state = sim_state
             param_generator = SamplerContact(sim_state=sim_state,
                                              sim_obj=self)
             param_generator.run_sampling()

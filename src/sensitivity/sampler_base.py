@@ -83,7 +83,7 @@ class SamplerBase(ABC):
         # Save LHS output
         os.makedirs(f"{folder_name}/{output_type}", exist_ok=True)
         filename = f"{folder_name}/{output_type}/{output_type}_{self._get_variable_parameters()}"
-        np.savetxt(fname=filename + ".csv", X=output.cpu(), delimiter=";")
+        np.savetxt(fname=filename + ".csv", X=output, delimiter=";")
 
 
 def create_latin_table(n_of_samples, lower, upper):

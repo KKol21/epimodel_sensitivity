@@ -36,6 +36,6 @@ class VaccinatedModel(EpidemicModelBase):
         return V_1
 
     def get_solution(self, t_eval, y0, lhs_table):
-        self.V_1 = self._get_vacc_from_lhs(lhs_table)
+        self.V_1 = self._get_vacc_from_lhs(torch.from_numpy(lhs_table).float())
         odefun = self.get_vaccinated_solver()
         return self.get_sol_from_solver(y0, t_eval, odefun)

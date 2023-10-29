@@ -36,7 +36,7 @@ class SamplerVaccinated(SamplerBase):
         lhs_table = self._get_lhs_table()
         # Make sure that total vaccines given to an age group
         # doesn't exceed the population of that age group
-        lhs_table = self.allocate_vaccines(lhs_table).to(self.sim_obj.data.device)
+        lhs_table = self.allocate_vaccines(lhs_table)
 
         self._get_sim_output(lhs_table)
         self.optimal_vacc = lhs_table[0]
@@ -79,4 +79,4 @@ class SamplerVaccinated(SamplerBase):
 
             lhs_table = self.norm_table_rows(total_vac / params['total_vaccines'])
             total_vac = params["total_vaccines"] * lhs_table
-        return torch.Tensor(lhs_table)
+        return lhs_table

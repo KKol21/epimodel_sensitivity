@@ -18,6 +18,8 @@ class EpidemicModelBase(ABC):
         Returns:
             None
         """
+        self.sim_obj = sim_obj
+        self.sim_state = None
         self.data = sim_obj.data
         self.ps = sim_obj.params
         self.population = sim_obj.population
@@ -30,6 +32,7 @@ class EpidemicModelBase(ABC):
 
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
         self.s_mtx = self.n_age * self.n_comp
+        self.is_vaccinated = "vaccination" in [trans["type"] for trans in self.data.trans_data.values()]
 
         self.A = None
         self.T = None
@@ -72,7 +75,7 @@ class EpidemicModelBase(ABC):
         B_mul = self.get_mul_method(self.B)
         V_1_mul = self.get_mul_method(self.V_1)
 
-        v_div = torch.ones((self.V_1.shape[0], self.s_mtx)).to(self.device)
+        v_div = torch.ones((self.sim_obj.n_samples, self.s_mtx)).to(self.device)
         div_idx = self.idx('s_0') + self.idx('v_0')
 
         def odefun(t, y):
