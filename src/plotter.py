@@ -1,8 +1,13 @@
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, colors
 import numpy as np
 import torch
 import seaborn
 import pandas as pd
+from matplotlib.colors import ListedColormap
+from matplotlib.ticker import LogLocator, LogFormatter
+from matplotlib.tri import Triangulation
+
+from src.model.model_contact import get_rectangular_matrix_from_upper_triu
 
 
 def get_target(target_var):
@@ -64,6 +69,7 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
     def get_age_group(param):
         age_start = int(param.split('_')[2]) * 5
         return f'{age_start}-{age_start + 4} ' if age_start != 75 else '75+ '
+
     labels = list(map(get_age_group, params))
     plt.yticks(ys, labels)
 
@@ -84,8 +90,8 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
 
     if plot_title is None:
         target = get_target(target_var)
-        plot_title = "Járványgörbe korcsoportokra aggregálva \n"\
-                     f"Vakcinálás célváltozója: {target}\n"\
+        plot_title = "Járványgörbe korcsoportokra aggregálva \n" \
+                     f"Vakcinálás célváltozója: {target}\n" \
                      f"R0={r0}"
 
     colors = ['orange', 'red', 'black']
@@ -103,7 +109,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
     t_eval = torch.linspace(1, 1200, 1200).to(sim_obj.device)
     sol = sim_obj.model.get_solution(t_eval=t_eval[None, :], y0=sim_obj.model.get_initial_values()[None, :],
                                      lhs_table=vaccination[None, :]).ys[0, :, :]
-    mask = torch.cat((torch.full((100, ), True),
+    mask = torch.cat((torch.full((100,), True),
                       sol[100:, model.idx('ic_0')].sum(axis=1) > 1))
     sol = sol[mask, :]
     t = t_eval[mask]
@@ -122,7 +128,8 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
     plt.close()
 
 
-def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, target_var, r0, r0_bad, plot_title=None, compartments=None):
+def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, target_var, r0, r0_bad, plot_title=None,
+                            compartments=None):
     from src.model.r0 import R0Generator
 
     if compartments is None:
@@ -130,8 +137,8 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
 
     if plot_title is None:
         target = get_target(target_var)
-        plot_title = "Járványgörbe korcsoportokra aggregálva \n"\
-                     f"Vakcinálás célváltozója: {target}\n"\
+        plot_title = "Járványgörbe korcsoportokra aggregálva \n" \
+                     f"Vakcinálás célváltozója: {target}\n" \
                      r"Szimuláció $\mathcal{R}_0=$" + str(r0)
 
     comp = 'ic'
@@ -183,3 +190,79 @@ def get_hmap(cm):
     hmap = hmap.get_figure()
     hmap.suptitle('Kontakt mátrix hőtérképe')
     hmap.savefig('../cont_mtx_hmap.pdf', dpi=400)
+
+
+def construct_triangle_grids_prcc_p_value(n_age):
+    # vertices of the little squares
+    xv, yv = np.meshgrid(np.arange(-0.5, n_age), np.arange(-0.5, n_age))
+    # centers of the little square
+    xc, yc = np.meshgrid(np.arange(0, n_age), np.arange(0, n_age))
+    x = np.concatenate([xv.ravel(), xc.ravel()])
+    y = np.concatenate([yv.ravel(), yc.ravel()])
+    triangles_prcc = [(i + j * (n_age + 1), i + 1 + j * (n_age + 1),
+                       i + (j + 1) * (n_age + 1))
+                      for j in range(n_age) for i in range(n_age)]
+    triangles_p = [(i + 1 + j * (n_age + 1), i + 1 + (j + 1) *
+                    (n_age + 1),
+                    i + (j + 1) * (n_age + 1))
+                   for j in range(n_age) for i in range(n_age)]
+    triang = [Triangulation(x, y, triangles, mask=None)
+              for triangles in [triangles_prcc, triangles_p]]
+    return triang
+
+
+def get_mask_and_values(n_age, prcc_vector, p_values):
+    prcc_mtx = get_rectangular_matrix_from_upper_triu(
+        rvector=prcc_vector,
+        matrix_size=n_age)
+    p_values_mtx = get_rectangular_matrix_from_upper_triu(
+        rvector=p_values,
+        matrix_size=n_age)
+    values_all = [prcc_mtx, p_values_mtx]
+    values = np.triu(values_all, k=0)
+
+    # get the masked values
+    mask = np.where(values[0] == 0, np.nan, values_all)
+    return mask
+
+
+def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save, plot_title):
+    p_value_cmap = ListedColormap(['Orange', 'red', 'darkred'])
+    cmaps = ["Greens", p_value_cmap]
+
+    log_norm = colors.LogNorm(vmin=1e-3, vmax=1e0)  # used for p_values
+    norm = plt.Normalize(vmin=0, vmax=1)  # used for PRCC_values
+
+    fig, ax = plt.subplots()
+    triang = construct_triangle_grids_prcc_p_value(n_age=n_age)
+    mask = get_mask_and_values(n_age=n_age, prcc_vector=prcc_vector, p_values=p_values)
+    images = [ax.tripcolor(t, np.ravel(val), cmap=cmap, ec="white")
+              for t, val, cmap in zip(triang,
+                                      mask, cmaps)]
+
+    fig.colorbar(images[0], ax=ax, shrink=0.7, aspect=20 * 0.7)  # for the prcc values
+    cbar_pval = fig.colorbar(images[1], ax=ax, shrink=0.7, aspect=20 * 0.7, pad=0.1)
+
+    images[1].set_norm(norm=log_norm)
+    images[0].set_norm(norm=norm)
+
+    locator = LogLocator()
+    formatter = LogFormatter()
+    cbar_pval.locator = locator
+    cbar_pval.formatter = formatter
+    cbar_pval.update_normal(images[1])
+
+    ax.set_xticks(range(n_age))
+    ax.set_yticks(range(n_age))
+    ax.yaxis.set_label_position("right")
+    ax.yaxis.tick_right()
+    ax.set(frame_on=False)
+    plt.gca().grid(which='minor', color='gray', linestyle='-', linewidth=1)
+    ax.margins(x=0, y=0)
+    ax.set_aspect('equal', 'box')  # square cells
+    plt.tight_layout()
+    plt.title(plot_title, y=1.03, fontsize=25)
+    plt.title(plot_title, y=1.03, fontsize=25)
+    plt.savefig(filename_to_save, format="pdf",
+                bbox_inches='tight')
+    plt.close()

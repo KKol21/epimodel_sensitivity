@@ -8,6 +8,7 @@ from src.model.model_contact import ContactModel
 from src.model.r0 import R0Generator
 from src.sensitivity.sampler_contact import SamplerContact
 from src.simulation.simulation_base import SimulationBase
+from src.plotter import plot_prcc_p_values_as_heatmap
 
 
 class SimulationContact(SimulationBase):
@@ -68,7 +69,7 @@ class SimulationContact(SimulationBase):
                                              sim_obj=self)
             param_generator.run_sampling()
 
-    def plot_prcc(self):
+    def plot_prcc_and_p_values(self):
         """
 
         Generates and saves PRCC plots based on the calculated PRCC values.
@@ -79,15 +80,16 @@ class SimulationContact(SimulationBase):
 
 
         """
-        os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
+        os.makedirs(f'{self.folder_name}/prcc_p_val_plots', exist_ok=True)
         for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
+            p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
 
-            generate_prcc_plot(params=self.param_names,
-                               target_var=target_var,
-                               prcc=prcc,
-                               filename=filename,
-                               r0=base_r0)
+            plot_prcc_p_values_as_heatmap(n_age=self.n_age,
+                                          prcc_vector=prcc,
+                                          p_values=p_val,
+                                          filename_to_save=f"{self.folder_name}/prcc_p_val_plots/{filename}.pdf",
+                                          plot_title="test")
 
 

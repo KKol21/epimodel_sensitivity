@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-import scipy.stats as ss
 import torch
 
 from src.model.model_vaccinated import VaccinatedModel
@@ -66,24 +65,6 @@ class SimulationVaccinated(SimulationBase):
                                                 sim_obj=self)
             param_generator.run_sampling()
 
-    def calculate_p_values(self, significance=0.05):
-        os.makedirs(f'../../sens_data_vacc/p_values', exist_ok=True)
-        for susc, base_r0, target_var in self.simulations:
-            filename = f'{susc}-{base_r0}-{target_var}'
-            prcc = np.loadtxt(fname=f'../sens_data_vacc/prcc/prcc_{filename}.csv')
-            t = prcc * np.sqrt((self.n_samples - 2 - self.n_age) / (1 - prcc ** 2))
-            # p-value for 2-sided test
-            dof = self.n_samples - 2 - self.n_age
-            p_values = 2 * (1 - ss.t.cdf(x=abs(t), df=dof))
-            np.savetxt(fname=f'../sens_data_vacc/p_values/p_values_{filename}.csv', X=p_values)
-            is_first = True
-            for idx, p_val in enumerate(p_values):
-                if p_val > significance:
-                    if is_first:
-                        print("\nInsignificant p-values in ", filename, " case: \n")
-                        is_first = False
-                    print("  age group: ", idx, " p-val: ", p_val)
-
     def plot_optimal_vaccine_distributions(self):
         """
 
@@ -95,7 +76,7 @@ class SimulationVaccinated(SimulationBase):
         The plots are saved in separate files in the 'sens_data_vacc/epidemic_plots' directory.
 
         """
-        os.makedirs(f'../../sens_data_vacc/epidemic_plots', exist_ok=True)
+        os.makedirs(f'../sens_data_vacc/epidemic_plots', exist_ok=True)
         for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             vaccination = np.loadtxt(fname=f'../sens_data_vacc/optimal_vaccination/optimal_vaccination_{filename}.csv')
@@ -116,7 +97,7 @@ class SimulationVaccinated(SimulationBase):
 
         """
 
-        os.makedirs('../sens_data_vacc//epidemic_plots_', exist_ok=True)
+        os.makedirs(self.folder_name + '/epidemic_plots_', exist_ok=True)
         target_var = 'ic_max'
         r0 = 3
         r0_bad = 3
