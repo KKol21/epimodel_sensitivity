@@ -61,9 +61,9 @@ class SamplerBase(ABC):
 
     def _get_sim_output(self, lhs_table):
         # Calculate values of target variable for each sample
-        sim_output = self.sim_obj.model.get_batched_output(lhs_table,
-                                                           self.batch_size,
-                                                           self.target_var)
+        sim_output = self.sim_obj.model.get_batched_output(lhs_table=lhs_table,
+                                                           batch_size=self.batch_size,
+                                                           target_var=self.target_var)
         # Sort tables by target values
         sorted_idx = sim_output.argsort()
         sim_output = sim_output[sorted_idx]

@@ -1,5 +1,9 @@
+import os
+
+import numpy as np
 import torch
 
+from src.plotter import generate_prcc_plot
 from src.model.model_contact import ContactModel
 from src.model.r0 import R0Generator
 from src.sensitivity.sampler_contact import SamplerContact
@@ -27,7 +31,7 @@ class SimulationContact(SimulationBase):
         super().__init__()
         self.upper_tri_size = int((self.n_age + 1) * self.n_age / 2)
         self.contact_home = self.data.contact_data["home"]
-        self.folder_name = "../sens_data_contact"
+        self.folder_name += "/sens_data_contact"
 
         # Initalize model
         self.model = ContactModel(sim_obj=self)
@@ -63,5 +67,27 @@ class SimulationContact(SimulationBase):
             param_generator = SamplerContact(sim_state=sim_state,
                                              sim_obj=self)
             param_generator.run_sampling()
+
+    def plot_prcc(self):
+        """
+
+        Generates and saves PRCC plots based on the calculated PRCC values.
+
+        This method reads the saved PRCC values for each parameter combination and generates
+        PRCC plots using the `generate_prcc_plot` function. The plots are saved in separate files
+        in the subfolder sens_data_contact/prcc_plots.
+
+
+        """
+        os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
+        for susc, base_r0, target_var in self.simulations:
+            filename = f'{susc}-{base_r0}-{target_var}'
+            prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
+
+            generate_prcc_plot(params=self.param_names,
+                               target_var=target_var,
+                               prcc=prcc,
+                               filename=filename,
+                               r0=base_r0)
 
 

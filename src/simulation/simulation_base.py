@@ -1,12 +1,11 @@
 import itertools
 import os
-from abc import ABC
+from abc import ABC, abstractmethod
 
 import numpy as np
 
-from src.misc.dataloader import DataLoader
+from src.dataloader import DataLoader, PROJECT_PATH
 from src.sensitivity.prcc import get_prcc_values
-from src.misc.plotter import generate_prcc_plot
 
 
 class SimulationBase(ABC):
@@ -19,7 +18,7 @@ class SimulationBase(ABC):
         self.susc_choices = [1.0]
         self.r0_choices = [1.8]
         self.target_var_choices = ["i_max", "ic_max", "d_max"]  # i_max, ic_max, d_max
-        self.n_samples = 10000
+        self.n_samples = 300
         self.batch_size = 1000
 
         # Define initial configs
@@ -36,7 +35,11 @@ class SimulationBase(ABC):
         self.age_vector = self.population.reshape((-1, 1))
         self.simulations = [(susc, r0, target_var) for susc, r0, target_var in
                             itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices)]
-        self.folder_name = None
+        self.folder_name = PROJECT_PATH
+
+    @abstractmethod
+    def run_sampling(self):
+        pass
 
     def calculate_prcc(self):
         """
@@ -56,25 +59,3 @@ class SimulationBase(ABC):
 
             prcc = get_prcc_values(np.c_[lhs_table, sim_output.T])
             np.savetxt(fname=f'{folder_name}/prcc/prcc_{filename}.csv', X=prcc)
-
-    def plot_prcc(self):
-        """
-
-        Generates and saves PRCC plots based on the calculated PRCC values.
-
-        This method reads the saved PRCC values for each parameter combination and generates
-        PRCC plots using the `generate_prcc_plot` function. The plots are saved in separate files
-        in the subfolder sens_data_contact/prcc_plots.
-
-
-        """
-        os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
-        for susc, base_r0, target_var in self.simulations:
-            filename = f'{susc}-{base_r0}-{target_var}'
-            prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
-
-            generate_prcc_plot(params=self.param_names,
-                               target_var=target_var,
-                               prcc=prcc,
-                               filename=filename,
-                               r0=base_r0)

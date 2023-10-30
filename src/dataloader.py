@@ -2,19 +2,19 @@ import json
 
 import torch
 import xlrd
-import os
+from os.path import dirname, realpath
 
 
-PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
+PROJECT_PATH = dirname(dirname(realpath(__file__))).replace('\\', "/")
 
 
 class DataLoader:
     def __init__(self):
-        self.device = 'cpu'#'cuda' if torch.cuda.is_available() else 'cpu'
-        self._model_parameters_data_file = os.path.join(PROJECT_PATH, "../../data", "model_parameters.json")
-        self._contact_data_file = os.path.join(PROJECT_PATH, "../../data", "contact_matrices.xls")
-        self._age_data_file = os.path.join(PROJECT_PATH, "../../data", "age_distribution.xls")
-        self._model_structure_file = os.path.join(PROJECT_PATH, "../../data", "model_struct.json")
+        self.device = 'cpu' #  'cuda' if torch.cuda.is_available() else 'cpu'
+        self._model_parameters_data_file = PROJECT_PATH + "/data/model_parameters.json"
+        self._contact_data_file = PROJECT_PATH + "/data/contact_matrices.xls"
+        self._age_data_file = PROJECT_PATH + "/data/age_distribution.xls"
+        self._model_structure_file = PROJECT_PATH + "/data/model_struct.json"
 
 
         self._get_age_data()

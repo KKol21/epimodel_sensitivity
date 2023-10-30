@@ -153,7 +153,7 @@ class EpidemicModelBase(ABC):
         for batch_idx in tqdm(range(0, n_samples, batch_size),
                               desc="Batches completed"):
             batch = lhs_table[batch_idx: batch_idx + batch_size]
-            solutions = self.get_sol_from_lhs(batch)
+            solutions = self.get_sol_from_lhs(lhs_table=batch)
             comp_maxes = self.get_max(sol=solutions,
                                       comp=target_var.split('_')[0])
             batches.append(comp_maxes)

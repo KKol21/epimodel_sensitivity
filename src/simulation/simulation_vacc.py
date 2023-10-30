@@ -1,4 +1,3 @@
-import itertools
 import os
 
 import numpy as np
@@ -6,11 +5,10 @@ import scipy.stats as ss
 import torch
 
 from src.model.model_vaccinated import VaccinatedModel
-from src.sensitivity.prcc import get_prcc_values
 from src.model.r0 import R0Generator
 from src.simulation.simulation_base import SimulationBase
 from src.sensitivity.sampler_vaccinated import SamplerVaccinated
-from src.misc.plotter import generate_prcc_plot, generate_epidemic_plot, generate_epidemic_plot_
+from src.plotter import generate_prcc_plot, generate_epidemic_plot, generate_epidemic_plot_
 
 
 class SimulationVaccinated(SimulationBase):
@@ -32,7 +30,7 @@ class SimulationVaccinated(SimulationBase):
 
     def __init__(self):
         super().__init__()
-        self.folder_name = f"../sens_data_vacc"
+        self.folder_name += "/sens_data_vacc"
 
         # Initalize model
         self.model = VaccinatedModel(sim_obj=self)
@@ -135,3 +133,25 @@ class SimulationVaccinated(SimulationBase):
                                 r0=r0,
                                 r0_bad=r0_bad,
                                 compartments=['ic'])
+
+    def plot_prcc(self):
+        """
+
+        Generates and saves PRCC plots based on the calculated PRCC values.
+
+        This method reads the saved PRCC values for each parameter combination and generates
+        PRCC plots using the `generate_prcc_plot` function. The plots are saved in separate files
+        in the subfolder sens_data_contact/prcc_plots.
+
+
+        """
+        os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
+        for susc, base_r0, target_var in self.simulations:
+            filename = f'{susc}-{base_r0}-{target_var}'
+            prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
+
+            generate_prcc_plot(params=self.param_names,
+                               target_var=target_var,
+                               prcc=prcc,
+                               filename=filename,
+                               r0=base_r0)

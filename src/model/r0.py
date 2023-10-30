@@ -35,8 +35,9 @@ class R0Generator(R0GeneratorBase):
         def isinf_state(state):
             return self.state_data[state]['type'] in ['infected', 'infectious']
 
-        trans_mtx = generate_transition_matrix(self.inf_state_dict, self.data.trans_data, self.data.model_parameters,
-                                               self.n_age, self.n_states, self.i).to(self.device)
+        trans_mtx = generate_transition_matrix(states_dict=self.inf_state_dict, trans_data=self.data.trans_data,
+                                               parameters=self.data.model_parameters, n_age=self.n_age,
+                                               n_comp=self.n_states, c_idx=self.i).to(self.device)
         end_state = {state: f"{state}_{data['n_substates'] - 1}" for state, data in self.data.state_data.items()}
         basic_trans_dict = {trans: data for trans, data in self.data.trans_data.items()
                             if data['type'] == 'basic'

@@ -60,7 +60,7 @@ class ContactModel(EpidemicModelBase):
         base_r0 = self.sim_state["base_r0"]
         r0gen = self.sim_state["r0generator"]
         betas = [base_r0 / r0gen.get_eig_val(contact_mtx=cm,
-                                             susceptibles=self.sim_obj.susceptibles.reshape(1, -1),
+                                             susceptibles=self.sim_obj.susceptibles.flatten(),
                                              population=self.sim_obj.population)
                  for cm in cm_samples]
         return betas

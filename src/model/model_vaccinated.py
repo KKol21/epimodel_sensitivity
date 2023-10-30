@@ -27,15 +27,15 @@ class VaccinatedModel(EpidemicModelBase):
         self.B = mtx_gen.get_B()
         self.V_2 = mtx_gen.get_V_2()
 
-    def _get_vacc_from_lhs(self, lhs_table):
+    def get_solution(self, t_eval, y0, lhs_table):
+        self.V_1 = self._get_V_1_from_lhs(lhs_table=torch.from_numpy(lhs_table).float())
+        odefun = self.get_vaccinated_solver(curr_batch_size=lhs_table.shape[0])
+        return self.get_sol_from_solver(y0, t_eval, odefun)
+
+    def _get_V_1_from_lhs(self, lhs_table):
         daily_vacc = lhs_table * self.ps['total_vaccines'] / self.ps["T"]
         s_mtx = self.s_mtx
         V_1 = torch.zeros((daily_vacc.shape[0], s_mtx, s_mtx)).to(self.device)
         for idx, sample in enumerate(daily_vacc):
-            V_1[idx, :, :] = self.matrix_generator.get_V_1(sample)
+            V_1[idx, :, :] = self.matrix_generator.get_V_1(daily_vac=sample)
         return V_1
-
-    def get_solution(self, t_eval, y0, lhs_table):
-        self.V_1 = self._get_vacc_from_lhs(torch.from_numpy(lhs_table).float())
-        odefun = self.get_vaccinated_solver(lhs_table.size(0))
-        return self.get_sol_from_solver(y0, t_eval, odefun)

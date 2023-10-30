@@ -164,8 +164,8 @@ class MatrixGenerator:
                                if data["type"] not in ["susceptible",
                                                        "recovered",
                                                        "dead"]}
-        B = generate_transition_matrix(intermediate_states, trans_data, ps,
-                                       self.n_age, self.n_comp, self.c_idx)
+        B = generate_transition_matrix(states_dict=intermediate_states, trans_data=trans_data, parameters=ps,
+                                       n_age=self.n_age, n_comp=self.n_comp, c_idx=self.c_idx)
 
         # Fill in the rest of the first-order terms
         idx = self.idx
