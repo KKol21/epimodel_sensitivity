@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
 import os
 import time
+from abc import ABC, abstractmethod
 
 import numpy as np
 from smt.sampling_methods import LHS
@@ -21,8 +21,6 @@ class SamplerBase(ABC):
         sim_obj: The simulation object representing the underlying simulation model.
         sim_state (dict): The state of the simulation as a dictionary containing relevant parameters.
         base_r0 (float): The base reproduction number (R0) of the simulation.
-        beta (float or None): The infection rate parameter (beta) of the simulation, if available.
-        type (str or None): The type of the simulation, if available.
         lhs_boundaries (dict): The boundaries for Latin Hypercube Sampling (LHS) parameter ranges.
 
     Methods:
@@ -39,6 +37,7 @@ class SamplerBase(ABC):
         self.target_var = None
         self.n_samples = sim_obj.n_samples
         self.batch_size = sim_obj.batch_size
+        self.target = "peak"
 
     @abstractmethod
     def run_sampling(self):
@@ -60,10 +59,12 @@ class SamplerBase(ABC):
         return lhs_table
 
     def _get_sim_output(self, lhs_table):
+        from src.sensitivity.peak_calc import PeakCalculator
         # Calculate values of target variable for each sample
-        sim_output = self.sim_obj.model.get_batched_output(lhs_table=lhs_table,
-                                                           batch_size=self.batch_size,
-                                                           target_var=self.target_var)
+        PeakCalculator = PeakCalculator(self.sim_obj)
+        sim_output = PeakCalculator.get_output(lhs_table=lhs_table,
+                                               batch_size=self.batch_size,
+                                               target_var=self.target_var)
         # Sort tables by target values
         sorted_idx = sim_output.argsort()
         sim_output = sim_output[sorted_idx]

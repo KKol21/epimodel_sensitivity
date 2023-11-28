@@ -1,32 +1,58 @@
 import torch
 
-from src.model.r0_base import R0GeneratorBase
 from src.model.matrix_generator import generate_transition_matrix, get_infectious_states
 
 
-class R0Generator(R0GeneratorBase):
-    def __init__(self, data, device, n_age: int):
-        """
-        Initialises R0Generator class instance, for the calculation of the effective reproduction number
-        (R0) for the specified model and parameters. It is used for computing the base transmission rate,
-        by factoring it out from the NGM (next-generation matrix), and dividing a given R0 by the
-        spectral radius (largest eigenvalue) of the NGM.
-
-        Args:
-            data:
-            device: The device (CPU or GPU) on which the calculations will be performed.
-            n_age (int): The number of age groups in the model.
-
-        """
+class R0Generator:
+    def __init__(self, sim_obj):
+        data = sim_obj.data
         self.data = data
-        super().__init__(data=data, n_age=n_age)
+        self.device = data.device
+        self.state_data = data.state_data
+        self.trans_data = data.trans_data
+        self.inf_states = self.get_infected_states()
+        self.n_comp = len(self.inf_states)
+        self.n_age = sim_obj.n_age
+        self.parameters = data.model_parameters
+        self.n_states = len(self.inf_states)
+        self.i = {self.inf_states[index]: index for index in torch.arange(0, self.n_states)}
+        self.s_mtx = self.n_age * self.n_states
 
-        self.device = device
         self._get_e()
+        self.contact_matrix = torch.zeros((self.n_age, self.n_age))
+        self.inf_state_dict = {state: data for state, data in self.state_data.items()
+                               if data["type"] in ["infected", "infectious"]}
         self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data.values()
                                  if trans["type"] == "infection"][0]
 
-    def _get_v(self) -> None:
+    def get_infected_states(self):
+        from src.model.model_base import get_substates
+        states = []
+        for state, data in self.data.state_data.items():
+            if data["type"] in ["infected", "infectious"]:
+                states += get_substates(data["n_substates"], state)
+        return states
+
+    def _idx(self, state: str) -> bool:
+        return torch.arange(self.n_age * self.n_states) % self.n_states == self.i[state]
+
+    def get_eig_val(self, susceptibles: torch.Tensor, population: torch.Tensor,
+                    contact_mtx: torch.Tensor = None) -> float:
+        # contact matrix needed for effective reproduction number: [c_{j,i} * S_i(t) / N_i(t)]
+        if contact_mtx is not None:
+            self.contact_matrix = contact_mtx
+        cm = self.contact_matrix / population.reshape((-1, 1))
+        cm = cm * susceptibles
+        f = self._get_f(cm)
+        v_inv = self._get_v()
+        ngm_large = v_inv @ f
+        ngm = self.e @ ngm_large @ self.e.T
+
+        dom_eig_val = torch.sort(torch.abs(
+                torch.linalg.eigvals(ngm)))[0][-1]
+        return float(dom_eig_val)
+
+    def _get_v(self) -> torch.Tensor:
         """
         Compute and store the inverse of the transition matrix.
 
@@ -47,7 +73,7 @@ class R0Generator(R0GeneratorBase):
         for trans, data in basic_trans_dict.items():
             param = self.data.model_parameters[data['param']]
             trans_mtx[self._idx(end_state[data['source']]), self._idx(f"{data['target']}_0")] = param
-        self.v_inv = torch.linalg.inv(trans_mtx)
+        return torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
         """

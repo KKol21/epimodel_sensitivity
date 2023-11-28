@@ -50,7 +50,7 @@ class ContactModel(EpidemicModelBase):
             A[idx, :, :] = self.matrix_generator.get_A()
         return A
 
-    def _get_T_from_contacts(self, cm_samples):
+    def _get_T_from_contacts(self, cm_samples: torch.Tensor):
         T = torch.zeros((cm_samples.size(0), self.s_mtx, self.s_mtx)).to(self.device)
         for idx, cm in enumerate(cm_samples):
             T[idx, :, :] = self.matrix_generator.get_T(cm)

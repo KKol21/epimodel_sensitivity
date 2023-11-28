@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 
-from src.sensitivity.sampler_base import SamplerBase
+from src.sensitivity.sampling.sampler_base import SamplerBase
 
 
 class SamplerVaccinated(SamplerBase):

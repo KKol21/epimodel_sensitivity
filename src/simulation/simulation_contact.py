@@ -3,10 +3,9 @@ import os
 import numpy as np
 import torch
 
-from src.plotter import generate_prcc_plot
 from src.model.model_contact import ContactModel
 from src.model.r0 import R0Generator
-from src.sensitivity.sampler_contact import SamplerContact
+from src.sensitivity.sampling.sampler_contact import SamplerContact
 from src.simulation.simulation_base import SimulationBase
 from src.plotter import plot_prcc_p_values_as_heatmap
 
@@ -52,7 +51,7 @@ class SimulationContact(SimulationBase):
         for susc, base_r0, target_var in self.simulations:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})
-            r0generator = R0Generator(self.data, device=self.data.device, n_age=self.n_age)
+            r0generator = R0Generator(self)
             # Calculate base transmission rate
             beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.cm,
                                                      susceptibles=self.susceptibles.reshape(1, -1),

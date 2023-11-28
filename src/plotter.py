@@ -98,7 +98,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
 
     model = sim_obj.model
     sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
-    r0generator = R0Generator(sim_obj.data, device=sim_obj.data.device, n_age=sim_obj.n_age)
+    r0generator = R0Generator(sim_obj)
     # Calculate base transmission rate
     beta = r0 / r0generator.get_eig_val(contact_mtx=sim_obj.cm,
                                         susceptibles=sim_obj.susceptibles.reshape(1, -1),
@@ -147,7 +147,7 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
     model = sim_obj.model
     sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
 
-    r0generator = R0Generator(sim_obj.data, device=sim_obj.data.device, n_age=sim_obj.n_age)
+    r0generator = R0Generator(sim_obj)
     ngm_ev = r0generator.get_eig_val(contact_mtx=sim_obj.cm,
                                      susceptibles=sim_obj.susceptibles.reshape(1, -1),
                                      population=sim_obj.population)

@@ -6,7 +6,7 @@ import torch
 from src.model.model_vaccinated import VaccinatedModel
 from src.model.r0 import R0Generator
 from src.simulation.simulation_base import SimulationBase
-from src.sensitivity.sampler_vaccinated import SamplerVaccinated
+from src.sensitivity.sampling.sampler_vaccinated import SamplerVaccinated
 from src.plotter import generate_prcc_plot, generate_epidemic_plot, generate_epidemic_plot_
 
 
@@ -49,7 +49,7 @@ class SimulationVaccinated(SimulationBase):
         for susc, base_r0, target_var in self.simulations:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})
-            r0generator = R0Generator(self.data, device=self.data.device, n_age=self.n_age)
+            r0generator = R0Generator(self)
             # Calculate base transmission rate
             beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.cm,
                                                      susceptibles=self.susceptibles.reshape(1, -1),

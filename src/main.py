@@ -3,7 +3,7 @@ from src.simulation.simulation_contact import SimulationContact
 
 
 def main():
-    sim_type = "contact"  # vacc, contact, param
+    sim_type = "vacc"  # vacc, contact, param
     if sim_type == "vacc":
         simulation = SimulationVaccinated()
         simulation.run_sampling()
