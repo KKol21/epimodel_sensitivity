@@ -4,18 +4,16 @@ import torch
 import xlrd
 from os.path import dirname, realpath
 
-
 PROJECT_PATH = dirname(dirname(realpath(__file__))).replace('\\', "/")
 
 
 class DataLoader:
     def __init__(self):
-        self.device = 'cpu' #  'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cpu'  # 'cuda' if torch.cuda.is_available() else 'cpu'
         self._model_parameters_data_file = PROJECT_PATH + "/data/model_parameters.json"
         self._contact_data_file = PROJECT_PATH + "/data/contact_matrices.xls"
         self._age_data_file = PROJECT_PATH + "/data/age_distribution.xls"
         self._model_structure_file = PROJECT_PATH + "/data/model_struct.json"
-
 
         self._get_age_data()
         self._get_model_parameters_data()
@@ -25,6 +23,7 @@ class DataLoader:
     def _get_age_data(self):
         wb = xlrd.open_workbook(self._age_data_file)
         sheet = wb.sheet_by_index(0)
+        self.n_age = sheet.nrows
         datalist = torch.Tensor([sheet.row_values(i) for i in range(0, sheet.nrows)])
         wb.unload_sheet(0)
         self.age_data = datalist.to(self.device)
@@ -33,13 +32,13 @@ class DataLoader:
         # Load model param_names
         with open(self._model_parameters_data_file) as f:
             parameters = json.load(f)
-        self.model_parameters = dict()
+        self.model_params = dict()
         for param in parameters.keys():
             param_value = parameters[param]["value"]
             if isinstance(param_value, list):
-                self.model_parameters.update({param: torch.Tensor(param_value).to(self.device)})
+                self.model_params.update({param: torch.Tensor(param_value).to(self.device)})
             else:
-                self.model_parameters.update({param: param_value})
+                self.model_params.update({param: param_value})
 
     def _get_contact_mtx(self):
         wb = xlrd.open_workbook(self._contact_data_file)
@@ -52,6 +51,8 @@ class DataLoader:
             datalist = self.transform_matrix(datalist.to(self.device))
             contact_matrices.update({cm_type: datalist})
         self.contact_data = contact_matrices
+        self.cm = contact_matrices["home"] + contact_matrices["work"] + \
+                  contact_matrices["school"] + contact_matrices["other"]
 
     def transform_matrix(self, matrix: torch.Tensor) -> torch.Tensor:
         """

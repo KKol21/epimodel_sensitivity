@@ -19,18 +19,17 @@ class SimulationBase(ABC):
         self.susc_choices = [1.0]
         self.r0_choices = [1.8]
         self.target_var_choices = ["i_max", "ic_max", "d_max"]  # i_max, ic_max, d_max
-        self.n_samples = 10000
+        self.n_samples = 1000
         self.batch_size = 1000
 
         # Define initial configs
         self._get_initial_config()
 
     def _get_initial_config(self):
-        self.params = self.data.model_parameters
-        self.n_age = self.data.contact_data["home"].shape[0]
+        self.params = self.data.model_params
+        self.n_age = self.data.n_age
         self.param_names = np.array([f'daily_vac_{i}' for i in range(self.n_age)])
-        self.cm = self.data.contact_data["home"] + self.data.contact_data["work"] + \
-                  self.data.contact_data["school"] + self.data.contact_data["other"]
+        self.cm = self.data.cm
         self.device = self.data.device
         self.population = self.data.age_data.flatten()
         self.age_vector = self.population.reshape((-1, 1))

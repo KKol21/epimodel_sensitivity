@@ -13,7 +13,7 @@ class R0Generator:
         self.inf_states = self.get_infected_states()
         self.n_comp = len(self.inf_states)
         self.n_age = sim_obj.n_age
-        self.parameters = data.model_parameters
+        self.parameters = data.model_params
         self.n_states = len(self.inf_states)
         self.i = {self.inf_states[index]: index for index in torch.arange(0, self.n_states)}
         self.s_mtx = self.n_age * self.n_states
@@ -62,7 +62,7 @@ class R0Generator:
             return self.state_data[state]['type'] in ['infected', 'infectious']
 
         trans_mtx = generate_transition_matrix(states_dict=self.inf_state_dict, trans_data=self.data.trans_data,
-                                               parameters=self.data.model_parameters, n_age=self.n_age,
+                                               parameters=self.data.model_params, n_age=self.n_age,
                                                n_comp=self.n_states, c_idx=self.i).to(self.device)
         end_state = {state: f"{state}_{data['n_substates'] - 1}" for state, data in self.data.state_data.items()}
         basic_trans_dict = {trans: data for trans, data in self.data.trans_data.items()
@@ -71,7 +71,7 @@ class R0Generator:
                             and isinf_state(data['target'])}
 
         for trans, data in basic_trans_dict.items():
-            param = self.data.model_parameters[data['param']]
+            param = self.data.model_params[data['param']]
             trans_mtx[self._idx(end_state[data['source']]), self._idx(f"{data['target']}_0")] = param
         return torch.linalg.inv(trans_mtx)
 

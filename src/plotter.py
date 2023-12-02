@@ -7,7 +7,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.ticker import LogLocator, LogFormatter
 from matplotlib.tri import Triangulation
 
-from src.model.model_contact import get_rectangular_matrix_from_upper_triu
+from src.sensitivity.target_calc.sensitivity_model_contact import get_rectangular_matrix_from_upper_triu
 
 
 def get_target(target_var):
@@ -107,7 +107,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
     model.initialize_constant_matrices()
 
     t_eval = torch.linspace(1, 1200, 1200).to(sim_obj.device)
-    sol = sim_obj.model.get_solution(t_eval=t_eval[None, :], y0=sim_obj.model.get_initial_values()[None, :],
+    sol = sim_obj.model.get_solution(y0=sim_obj.model.get_initial_values()[None, :], t_eval=t_eval[None, :],
                                      lhs_table=vaccination[None, :]).ys[0, :, :]
     mask = torch.cat((torch.full((100,), True),
                       sol[100:, model.idx('ic_0')].sum(axis=1) > 1))
