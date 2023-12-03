@@ -7,7 +7,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.ticker import LogLocator, LogFormatter
 from matplotlib.tri import Triangulation
 
-from src.sensitivity.target_calc.sensitivity_model_contact import get_rectangular_matrix_from_upper_triu
+from src.sensitivity.sensitivity_model.sensitivity_model_contact import get_rectangular_matrix_from_upper_triu
 
 
 def get_target(target_var):
@@ -122,7 +122,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
     plt.gca().set_xlabel('Napok')
     plt.gca().set_ylabel('Kompartmentek méretei')
     plt.title(plot_title, y=1.03, fontsize=12)
-    plt.savefig(f'../sens_data_vacc/epidemic_plots/epidemic_plot_{filename}.pdf',
+    plt.savefig(f'{sim_obj.folder_name}/epidemic_plots/epidemic_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()
     plt.close()
@@ -172,7 +172,7 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
     plt.gca().set_xlabel('Napok')
     plt.gca().set_ylabel('Intenzív betegek száma')
     plt.title(plot_title, y=1.03, fontsize=12)
-    plt.savefig(f'../sens_data_vacc/epidemic_plots_/epidemic_plot_{filename}_{r0}.pdf',
+    plt.savefig(f'{sim_obj.folder_name}/epidemic_plots_/epidemic_plot_{filename}_{r0}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()
     plt.close()

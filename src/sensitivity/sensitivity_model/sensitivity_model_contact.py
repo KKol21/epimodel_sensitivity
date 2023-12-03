@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from src.sensitivity.target_calc.sensitivity_model_base import SensitivityModelBase
+from src.sensitivity.sensitivity_model.sensitivity_model_base import SensitivityModelBase
 
 
 class ContactModel(SensitivityModelBase):

@@ -61,7 +61,7 @@ class SamplerBase(ABC):
     def _get_sim_output(self, lhs_table):
         from src.sensitivity.target_calc.peak_calc import PeakCalculator
         # Calculate values of target variable for each sample
-        PeakCalculator = PeakCalculator(self.sim_obj)
+        PeakCalculator = PeakCalculator(self.sim_obj.model)
         sim_output = PeakCalculator.get_output(lhs_table=lhs_table,
                                                batch_size=self.batch_size,
                                                target_var=self.target_var)

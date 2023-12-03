@@ -5,9 +5,8 @@ from tqdm import tqdm
 
 
 class PeakCalculator:
-    def __init__(self, sim_obj):
-        self.sim_obj = sim_obj
-        self.model = sim_obj.model
+    def __init__(self, model):
+        self.model = model
 
     def get_output(self, lhs_table, batch_size, target_var):
         batches = []

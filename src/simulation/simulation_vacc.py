@@ -3,7 +3,7 @@ import os
 import numpy as np
 import torch
 
-from src.sensitivity.target_calc.sensitivity_model_vaccinated import VaccinatedModel
+from src.sensitivity.sensitivity_model.sensitivity_model_vaccinated import VaccinatedModel
 from src.model.r0 import R0Generator
 from src.simulation.simulation_base import SimulationBase
 from src.sensitivity.sampling.sampler_vaccinated import SamplerVaccinated
