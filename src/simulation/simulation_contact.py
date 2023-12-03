@@ -51,7 +51,7 @@ class SimulationContact(SimulationBase):
         for susc, base_r0, target_var in self.simulations:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})
-            r0generator = R0Generator(self)
+            r0generator = R0Generator(self.data)
             # Calculate base transmission rate
             beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.cm,
                                                      susceptibles=self.susceptibles.reshape(1, -1),

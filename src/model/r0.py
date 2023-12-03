@@ -4,15 +4,14 @@ from src.model.matrix_generator import generate_transition_matrix, get_infectiou
 
 
 class R0Generator:
-    def __init__(self, sim_obj):
-        data = sim_obj.data
+    def __init__(self, data):
         self.data = data
         self.device = data.device
         self.state_data = data.state_data
         self.trans_data = data.trans_data
         self.inf_states = self.get_infected_states()
         self.n_comp = len(self.inf_states)
-        self.n_age = sim_obj.n_age
+        self.n_age = data.n_age
         self.parameters = data.model_params
         self.n_states = len(self.inf_states)
         self.i = {self.inf_states[index]: index for index in torch.arange(0, self.n_states)}

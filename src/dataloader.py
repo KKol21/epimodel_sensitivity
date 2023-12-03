@@ -9,7 +9,7 @@ PROJECT_PATH = dirname(dirname(realpath(__file__))).replace('\\', "/")
 
 class DataLoader:
     def __init__(self):
-        self.device = 'cpu'  # 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self._model_parameters_data_file = PROJECT_PATH + "/data/model_parameters.json"
         self._contact_data_file = PROJECT_PATH + "/data/contact_matrices.xls"
         self._age_data_file = PROJECT_PATH + "/data/age_distribution.xls"
@@ -48,7 +48,7 @@ class DataLoader:
             datalist = torch.Tensor([sheet.row_values(i) for i in range(0, sheet.nrows)]).to(self.device)
             cm_type = wb.sheet_names()[idx]
             wb.unload_sheet(0)
-            datalist = self.transform_matrix(datalist.to(self.device))
+            datalist = self.transform_matrix(datalist)
             contact_matrices.update({cm_type: datalist})
         self.contact_data = contact_matrices
         self.cm = contact_matrices["home"] + contact_matrices["work"] + \

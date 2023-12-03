@@ -3,6 +3,10 @@
         "value": 1,
         "description": "Reciprocal of expected time spent in exposed states"
     },
+    "beta": {
+        "value": 0.03,
+        "description": "Base transmission rate"
+    },
     "gamma": {
         "value": 1,
         "description": "Reciprocal of expected time spent in infected states"

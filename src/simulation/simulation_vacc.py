@@ -49,7 +49,7 @@ class SimulationVaccinated(SimulationBase):
         for susc, base_r0, target_var in self.simulations:
             susceptibility[:4] = susc
             self.params.update({"susc": susceptibility})
-            r0generator = R0Generator(self)
+            r0generator = R0Generator(self.data)
             # Calculate base transmission rate
             beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.cm,
                                                      susceptibles=self.susceptibles.reshape(1, -1),
@@ -131,7 +131,8 @@ class SimulationVaccinated(SimulationBase):
             filename = f'{susc}-{base_r0}-{target_var}'
             prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
 
-            generate_prcc_plot(params=self.param_names,
+            generate_prcc_plot(sim_obj=self,
+                               params=self.param_names,
                                target_var=target_var,
                                prcc=prcc,
                                filename=filename,

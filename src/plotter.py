@@ -19,7 +19,7 @@ def get_target(target_var):
         return "halottak száma"
 
 
-def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
+def generate_prcc_plot(sim_obj, params, target_var, prcc: np.ndarray, filename: str, r0):
     """
     Generate a tornado plot to visualize the Partial Rank Correlation Coefficient (PRCC) values.
 
@@ -77,7 +77,7 @@ def generate_prcc_plot(params, target_var, prcc: np.ndarray, filename: str, r0):
     plt.xlim(-1.1, 1.1)
     plt.ylim(-1, len(params))
     # plt.text()
-    plt.savefig(f'../sens_data_vacc/prcc_plots/prcc_tornado_plot_{filename}.pdf',
+    plt.savefig(f'{sim_obj.folder_name}/prcc_plots/prcc_tornado_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()
 
@@ -98,7 +98,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
 
     model = sim_obj.model
     sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
-    r0generator = R0Generator(sim_obj)
+    r0generator = R0Generator(sim_obj.data)
     # Calculate base transmission rate
     beta = r0 / r0generator.get_eig_val(contact_mtx=sim_obj.cm,
                                         susceptibles=sim_obj.susceptibles.reshape(1, -1),
@@ -147,7 +147,7 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
     model = sim_obj.model
     sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
 
-    r0generator = R0Generator(sim_obj)
+    r0generator = R0Generator(sim_obj.data)
     ngm_ev = r0generator.get_eig_val(contact_mtx=sim_obj.cm,
                                      susceptibles=sim_obj.susceptibles.reshape(1, -1),
                                      population=sim_obj.population)

@@ -1,4 +1,4 @@
-from model_base import EpidemicModelBase
+from src.model.model_base import EpidemicModelBase
 import torch
 
 
@@ -13,15 +13,19 @@ class EpidemicModel(EpidemicModelBase):
 
     def get_ode(self):
         if self.is_vaccinated:
+            v_div = torch.ones(self.s_mtx).to(self.device)
+            div_idx = self.idx('s_0') + self.idx('v_0')
+
             def vaccinated_ode(t, y):
                 base_result = torch.mul(y @ self.A, y @ self.T) + y @ self.B
                 if self.ps["t_start"] < t[0] < (self.ps["t_start"] + self.ps["T"]):
+                    v_div[div_idx] = (y @ self.V_2)[0, div_idx]
                     vacc = torch.div(y @ self.V_1,
-                                     y @ self.V_2)
+                                     v_div)
                     return base_result + vacc
                 return base_result
             return vaccinated_ode
 
         def basic_ode(t, y):
-            return torch.mul(y @ self.A, y * self.T) + y @ self.B
+            return torch.mul(y @ self.A, y @ self.T) + y @ self.B
         return basic_ode
