@@ -35,7 +35,7 @@ class PeakCalculator:
         ).to(self.model.device)
 
         sol = self.model.get_solution(y0=y0, t_eval=t_eval, lhs_table=lhs_table).ys
-        if self.model.test:
+        if not self.model.test:
             # Check if population size changed
             if any([abs(self.model.population.sum() - sol[i, -1, :].sum()) > 50 for i in range(sol.shape[0])]):
                 raise Exception("Unexpected change in population size!")

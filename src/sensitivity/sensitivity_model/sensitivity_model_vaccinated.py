@@ -20,7 +20,7 @@ class VaccinatedModel(SensitivityModelBase):
 
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]
-        self.V_1 = self._get_V_1_from_lhs(lhs_table=torch.from_numpy(lhs_table).float())
+        self.V_1 = self._get_V_1_from_lhs(lhs_table=lhs_table)
         odefun = self.get_vaccinated_ode(curr_batch_size=lhs_table.shape[0])
         return self.get_sol_from_ode(y0, t_eval, odefun)
 

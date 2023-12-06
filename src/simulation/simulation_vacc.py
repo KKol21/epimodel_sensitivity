@@ -80,7 +80,7 @@ class SimulationVaccinated(SimulationBase):
         for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             vaccination = np.loadtxt(fname=f'../sens_data_vacc/optimal_vaccination/optimal_vaccination_{filename}.csv')
-            generate_epidemic_plot(self, vaccination, filename, target_var, base_r0,
+            generate_epidemic_plot(self, torch.from_numpy(vaccination).float(), filename, target_var, base_r0,
                                    compartments=["ic", "d"])
 
     def plot_subopt(self):

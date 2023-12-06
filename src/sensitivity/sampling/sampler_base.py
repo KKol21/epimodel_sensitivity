@@ -3,6 +3,7 @@ import time
 from abc import ABC, abstractmethod
 
 import numpy as np
+import torch
 from smt.sampling_methods import LHS
 
 
@@ -37,7 +38,6 @@ class SamplerBase(ABC):
         self.target_var = None
         self.n_samples = sim_obj.n_samples
         self.batch_size = sim_obj.batch_size
-        self.target = "peak"
 
     @abstractmethod
     def run_sampling(self):
@@ -60,11 +60,15 @@ class SamplerBase(ABC):
 
     def _get_sim_output(self, lhs_table):
         from src.sensitivity.target_calc.peak_calc import PeakCalculator
+        from src.sensitivity.target_calc.final_size_calc import FinalSizeCalculator
         # Calculate values of target variable for each sample
-        PeakCalculator = PeakCalculator(self.sim_obj.model)
-        sim_output = PeakCalculator.get_output(lhs_table=lhs_table,
-                                               batch_size=self.batch_size,
-                                               target_var=self.target_var)
+        if self.target_var == "d_max":
+            target_calculator = FinalSizeCalculator(self.sim_obj.model)
+        else:
+            target_calculator = PeakCalculator(self.sim_obj.model)
+        sim_output = target_calculator.get_output(lhs_table=torch.from_numpy(lhs_table).float(),
+                                                  batch_size=self.batch_size,
+                                                  target_var=self.target_var)
         # Sort tables by target values
         sorted_idx = sim_output.argsort()
         sim_output = sim_output[sorted_idx]
