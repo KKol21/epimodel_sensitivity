@@ -49,14 +49,13 @@ class EpidemicModelBase(ABC):
     def get_solution(self, y0, t_eval, **kwargs):
         pass
 
-    @staticmethod
-    def get_sol_from_ode(y0, t_eval, odefun):
+    def get_sol_from_ode(self, y0, t_eval, odefun):
         term = to.ODETerm(odefun)
         step_method = to.Euler(term=term)
         step_size_controller = to.FixedStepController()
         solver = to.AutoDiffAdjoint(step_method, step_size_controller)
         problem = to.InitialValueProblem(y0=y0, t_eval=t_eval)
-        dt0 = torch.full((y0.shape[0],), 1)
+        dt0 = torch.full((y0.shape[0],), 1).to(self.device)
 
         return solver.solve(problem, dt0=dt0)
 

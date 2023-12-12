@@ -25,7 +25,7 @@ class VaccinatedModel(SensitivityModelBase):
         return self.get_sol_from_ode(y0, t_eval, odefun)
 
     def _get_V_1_from_lhs(self, lhs_table):
-        daily_vacc = lhs_table * self.ps['total_vaccines'] / self.ps["T"]
+        daily_vacc = (lhs_table * self.ps['total_vaccines'] / self.ps["T"]).to(self.device)
         s_mtx = self.s_mtx
         V_1 = torch.zeros((daily_vacc.shape[0], s_mtx, s_mtx)).to(self.device)
         for idx, sample in enumerate(daily_vacc):

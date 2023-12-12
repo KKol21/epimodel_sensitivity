@@ -12,7 +12,7 @@ class FinalSizeCalculator:
         model = self.model
 
         n_samples = lhs_table.shape[0]
-        indices = torch.IntTensor(range(0, n_samples), device=device)
+        indices = torch.IntTensor(range(0, n_samples)).to(device)
         final_sizes = torch.zeros(n_samples, device=device)
 
         t_limit = [0, 400]
@@ -38,7 +38,7 @@ class FinalSizeCalculator:
                                                     samples=batch)
                 last_val = solutions[:, -1, :]  # solutions.shape = (len(indices), t_limit, n_comp)
                 # Check which simulations have finished
-                finished = last_val[:, model.idx("i_0")].sum(axis=1) < 1
+                finished = (last_val[:, model.idx("i_0")].sum(axis=1) < 1).to(device)
                 if any(finished):
                     final_sizes[curr_indices[finished]] = self.get_size(sol=solutions[finished],
                                                                         comp=target_var.split('_')[0])
@@ -48,7 +48,7 @@ class FinalSizeCalculator:
             # Adjust time period
             t_limit[0] = t_limit[1]
             t_limit[1] += 100
-            indices = indices[torch.isin(indices, torch.Tensor(ind_to_keep))]
+            indices = indices[torch.isin(indices, torch.Tensor(ind_to_keep).to(device))]
         print("\n Elapsed time: ", time() - time_start)
         return final_sizes
 
