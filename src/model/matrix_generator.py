@@ -165,7 +165,7 @@ class MatrixGenerator:
                                                        "recovered",
                                                        "dead"]}
         B = generate_transition_matrix(states_dict=intermediate_states, trans_data=trans_data, parameters=ps,
-                                       n_age=self.n_age, n_comp=self.n_comp, c_idx=self.c_idx)
+                                       n_age=self.n_age, n_comp=self.n_comp, c_idx=self.c_idx).to(self.device)
 
         # Fill in the rest of the first-order terms
         idx = self.idx

@@ -66,19 +66,19 @@ class SamplerBase(ABC):
             target_calculator = FinalSizeCalculator(self.sim_obj.model)
         else:
             target_calculator = PeakCalculator(self.sim_obj.model)
-        sim_output = target_calculator.get_output(lhs_table=torch.from_numpy(lhs_table).float(),
+        sim_output = target_calculator.get_output(lhs_table=torch.from_numpy(lhs_table).float().to(self.sim_obj.device),
                                                   batch_size=self.batch_size,
                                                   target_var=self.target_var)
         # Sort tables by target values
         sorted_idx = sim_output.argsort()
         sim_output = sim_output[sorted_idx]
-        lhs_table = lhs_table[sorted_idx]
+        lhs_table = lhs_table[sorted_idx.cpu()]
 
         time.sleep(0.3)
 
         # Save samples, target values
         self._save_output(output=lhs_table, output_type='lhs')
-        self._save_output(output=sim_output, output_type='simulations')
+        self._save_output(output=sim_output.cpu(), output_type='simulations')
 
     def _save_output(self, output, output_type):
         # Create directories for saving calculation outputs
