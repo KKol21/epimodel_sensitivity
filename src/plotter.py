@@ -109,10 +109,10 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
     t_eval = torch.linspace(1, 1200, 1200).to(sim_obj.device)
     sol = sim_obj.model.get_solution(y0=sim_obj.model.get_initial_values()[None, :], t_eval=t_eval[None, :],
                                      lhs_table=vaccination[None, :]).ys[0, :, :]
-    mask = torch.cat((torch.full((100,), True),
+    mask = torch.cat((torch.full((100,), True).to(sim_obj.device),
                       sol[100:, model.idx('ic_0')].sum(axis=1) > 1))
-    sol = sol[mask, :]
-    t = t_eval[mask]
+    sol = sol[mask, :].cpu()
+    t = t_eval[mask].cpu()
 
     for idx, comp in enumerate(compartments):
         comp_sol = model.aggregate_by_age(sol, comp)

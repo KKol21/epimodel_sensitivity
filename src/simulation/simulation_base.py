@@ -18,9 +18,9 @@ class SimulationBase(ABC):
         # User-defined parameters
         self.susc_choices = [1.0]
         self.r0_choices = [1.8]
-        self.target_var_choices = ["i_max", "ic_max", "d_max"]  # i_max, ic_max, d_max
-        self.n_samples = 50
-        self.batch_size = 500
+        self.target_var_choices = ["d_max"]#["i_max", "ic_max", "d_max"]  # i_max, ic_max, d_max
+        self.n_samples = 10000
+        self.batch_size = 1000
 
         # Define initial configs
         self._get_initial_config()
