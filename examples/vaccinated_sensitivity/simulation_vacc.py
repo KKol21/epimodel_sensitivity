@@ -3,10 +3,10 @@ import os
 import numpy as np
 import torch
 
-from src.sensitivity.sensitivity_model.sensitivity_model_vaccinated import VaccinatedModel
+from examples.vaccinated_sensitivity.sensitivity_model_vaccinated import VaccinatedModel
 from src.model.r0 import R0Generator
 from src.simulation.simulation_base import SimulationBase
-from src.sensitivity.sampling.sampler_vaccinated import SamplerVaccinated
+from examples.vaccinated_sensitivity.sampler_vaccinated import SamplerVaccinated
 from src.plotter import generate_prcc_plot, generate_epidemic_plot, generate_epidemic_plot_
 
 
@@ -76,10 +76,10 @@ class SimulationVaccinated(SimulationBase):
         The plots are saved in separate files in the 'sens_data_vacc/epidemic_plots' directory.
 
         """
-        os.makedirs(f'../sens_data_vacc/epidemic_plots', exist_ok=True)
+        os.makedirs(f'{self.folder_name}/epidemic_plots', exist_ok=True)
         for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
-            vaccination = np.loadtxt(fname=f'../sens_data_vacc/optimal_vaccination/optimal_vaccination_{filename}.csv')
+            vaccination = np.loadtxt(fname=f'{self.folder_name}/optimal_vaccination/optimal_vaccination_{filename}.csv')
             generate_epidemic_plot(self, torch.from_numpy(vaccination).float(), filename, target_var, base_r0,
                                    compartments=["ic", "d"])
 
@@ -103,9 +103,9 @@ class SimulationVaccinated(SimulationBase):
         r0_bad = 3
         filename = f'1.0-{r0_bad}-{target_var}'
         filename_opt = f'1.0-{r0}-{target_var}'
-        vaccination = np.loadtxt(fname=f'../sens_data_vacc/optimal_vaccination/optimal_vaccination_{filename}.csv')
+        vaccination = np.loadtxt(fname=f'{self.folder_name}/optimal_vaccination/optimal_vaccination_{filename}.csv')
         vaccination_opt = np.loadtxt(
-            fname=f'../sens_data_vacc/optimal_vaccination/optimal_vaccination_{filename_opt}.csv')
+            fname=f'{self.folder_name}/optimal_vaccination/optimal_vaccination_{filename_opt}.csv')
         generate_epidemic_plot_(sim_obj=self,
                                 vaccination=vaccination,
                                 vaccination_opt=vaccination_opt,

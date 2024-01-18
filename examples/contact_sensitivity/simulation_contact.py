@@ -3,9 +3,9 @@ import os
 import numpy as np
 import torch
 
-from src.sensitivity.sensitivity_model.sensitivity_model_contact import ContactModel
+from examples.contact_sensitivity.sensitivity_model_contact import ContactModel
 from src.model.r0 import R0Generator
-from src.sensitivity.sampling.sampler_contact import SamplerContact
+from examples.contact_sensitivity.sampler_contact import SamplerContact
 from src.simulation.simulation_base import SimulationBase
 from src.plotter import plot_prcc_p_values_as_heatmap
 

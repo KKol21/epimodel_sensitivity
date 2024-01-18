@@ -48,6 +48,8 @@ class ContactModel(SensitivityModelBase):
         return T
 
     def _get_betas_from_contacts(self, cm_samples):
+        if self.sim_state is None:
+            raise Exception('Simulation state must be provided!')
         base_r0 = self.sim_state["base_r0"]
         r0gen = self.sim_state["r0generator"]
         betas = [base_r0 / r0gen.get_eig_val(contact_mtx=cm,

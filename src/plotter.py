@@ -7,7 +7,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.ticker import LogLocator, LogFormatter
 from matplotlib.tri import Triangulation
 
-from src.sensitivity.sensitivity_model.sensitivity_model_contact import get_rectangular_matrix_from_upper_triu
+from examples.contact_sensitivity.sensitivity_model_contact import get_rectangular_matrix_from_upper_triu
 
 
 def get_target(target_var):
