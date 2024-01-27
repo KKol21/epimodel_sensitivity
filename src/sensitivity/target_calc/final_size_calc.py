@@ -15,7 +15,7 @@ class FinalSizeCalculator:
         indices = torch.IntTensor(range(0, n_samples)).to(device)
         final_sizes = torch.zeros(n_samples, device=device)
 
-        t_limit = [0, 400]
+        t_limit = [0, 500]
         y0 = torch.stack(
             [model.get_initial_values()] * n_samples
         ).to(device)
@@ -47,7 +47,7 @@ class FinalSizeCalculator:
                 ind_to_keep += curr_indices[~finished]
             # Adjust time period
             t_limit[0] = t_limit[1]
-            t_limit[1] += 100
+            t_limit[1] += 50
             indices = indices[torch.isin(indices, torch.Tensor(ind_to_keep).to(device))]
         print("\n Elapsed time: ", time() - time_start)
         return final_sizes

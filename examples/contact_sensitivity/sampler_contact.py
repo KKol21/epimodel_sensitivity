@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.sensitivity.sampling.sampler_base import SamplerBase
+from src.sensitivity.sampler_base import SamplerBase
 
 
 class SamplerContact(SamplerBase):

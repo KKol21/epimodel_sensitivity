@@ -1,6 +1,6 @@
 import torch
 
-from src.sensitivity.sensitivity_model.sensitivity_model_base import SensitivityModelBase
+from src.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 
 class VaccinatedModel(SensitivityModelBase):
