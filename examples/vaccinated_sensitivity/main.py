@@ -6,8 +6,8 @@ def main():
     simulation.run_sampling()
     simulation.calculate_prcc()
     simulation.calculate_p_values()
-    simulation.plot_prcc()
-    simulation.plot_optimal_vaccine_distributions()
+    simulation.plot_prcc_with_p_values()
+    #simulation.plot_optimal_vaccine_distributions()
 
 
 if __name__ == '__main__':

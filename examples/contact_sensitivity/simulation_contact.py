@@ -6,7 +6,7 @@ import torch
 from examples.contact_sensitivity.sensitivity_model_contact import ContactModel
 from src.model.r0 import R0Generator
 from examples.contact_sensitivity.sampler_contact import SamplerContact
-from src.simulation.simulation_base import SimulationBase
+from src.simulation_base import SimulationBase
 from src.plotter import plot_prcc_p_values_as_heatmap
 
 

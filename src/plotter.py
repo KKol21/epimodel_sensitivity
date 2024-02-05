@@ -1,4 +1,6 @@
 from matplotlib import pyplot as plt, colors
+from matplotlib.cm import ScalarMappable
+
 import numpy as np
 import torch
 import seaborn
@@ -19,7 +21,7 @@ def get_target(target_var):
         return "halottak száma"
 
 
-def generate_prcc_plot(sim_obj, params, target_var, prcc: np.ndarray, filename: str, r0):
+def generate_prcc_plot(sim_obj, params, target_var, prcc: np.ndarray, p_val, filename: str, r0):
     """
     Generate a tornado plot to visualize the Partial Rank Correlation Coefficient (PRCC) values.
 
@@ -40,12 +42,24 @@ def generate_prcc_plot(sim_obj, params, target_var, prcc: np.ndarray, filename: 
               r"$\mathcal{R}_0=$" + str(r0), fontsize=15, wrap=True)
 
     ys = range(len(params))[::-1]
+
+    p_val_colors = ['green', 'yellow', 'red']
+    thresholds = [0, 0.01, 0.1, 1]
+    cmap = ListedColormap(p_val_colors)
+    norm = colors.BoundaryNorm(boundaries=thresholds, ncolors=cmap.N, clip=True)
+
+    sm = ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = plt.colorbar(sm, orientation='vertical', shrink=0.7, pad=0.02)
+    cbar.set_label('p-values')
+
     # Plot the bars one by one
     for y, value in zip(ys, prcc):
+        facecolor = cmap(norm((p_val[len(prcc) - 1 - y])))
         plt.broken_barh(
             [(value if value < 0 else 0, abs(value))],
             (y - 0.4, 0.8),
-            facecolors=['white', 'white'],
+            facecolors=[facecolor, facecolor],
             edgecolors=['black', 'black'],
             linewidth=1,
         )

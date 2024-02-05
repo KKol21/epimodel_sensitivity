@@ -5,7 +5,7 @@ import torch
 
 from examples.vaccinated_sensitivity.sensitivity_model_vaccinated import VaccinatedModel
 from src.model.r0 import R0Generator
-from src.simulation.simulation_base import SimulationBase
+from src.simulation_base import SimulationBase
 from examples.vaccinated_sensitivity.sampler_vaccinated import SamplerVaccinated
 from src.plotter import generate_prcc_plot, generate_epidemic_plot, generate_epidemic_plot_
 
@@ -115,7 +115,7 @@ class SimulationVaccinated(SimulationBase):
                                 r0_bad=r0_bad,
                                 compartments=['ic'])
 
-    def plot_prcc(self):
+    def plot_prcc_with_p_values(self):
         """
 
         Generates and saves PRCC plots based on the calculated PRCC values.
@@ -130,10 +130,12 @@ class SimulationVaccinated(SimulationBase):
         for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
+            p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
 
             generate_prcc_plot(sim_obj=self,
                                params=self.param_names,
                                target_var=target_var,
                                prcc=prcc,
+                               p_val=p_val,
                                filename=filename,
                                r0=base_r0)
