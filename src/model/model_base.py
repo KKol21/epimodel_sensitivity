@@ -92,18 +92,11 @@ class EpidemicModelBase(ABC):
         This method aggregates the solution by age for a compartment by summing the solution
         values of individual substates for each age group.
 
-        Args:
-            solution (torch.Tensor): Model solution tensor.
-            comp (str): Compartment name.
-
-        Returns:
-            torch.Tensor: Aggregated solution by age.
-
         """
-        result = 0
-        for state in get_substates(n_substates=self.data.state_data[comp]["n_substates"], comp_name=comp):
-            result += solution[:, self.idx(state)].sum(axis=1)
-        return result
+        substates = get_substates(n_substates=self.data.state_data[comp]["n_substates"], comp_name=comp)
+        substate_indices = [self.idx(state) for state in substates]
+        substate_sums = torch.stack([solution[:, idx].sum(dim=1) for idx in substate_indices], dim=0)
+        return substate_sums.sum(dim=0)
 
 
 def get_substates(n_substates, comp_name):

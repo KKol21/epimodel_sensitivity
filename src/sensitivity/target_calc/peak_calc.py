@@ -1,49 +1,20 @@
-from time import time
-
 import torch
-from tqdm import tqdm
+
+from src.sensitivity.target_calc.target_calc_base import TargetCalcBase
 
 
-class PeakCalculator:
+class PeakCalculator(TargetCalcBase):
     def __init__(self, model):
-        self.model = model
+        super().__init__(model)
 
-    def get_output(self, lhs_table, batch_size, target_var):
-        batches = []
-        n_samples = lhs_table.shape[0]
+    def stopping_condition(self, **kwargs):
+        comp_idx = self.model.idx(kwargs["comp"])
+        sol = kwargs["solutions"]
+        last_val = sol[:, -1, :]  # solutions.shape = (len(indices), t_limit, n_comp)
+        finished = (sol[:, -2, :][comp_idx] - last_val[comp_idx]).sum(axis=1) > 0
+        return finished, last_val
 
-        t_start = time()
-        for batch_idx in tqdm(range(0, n_samples, batch_size),
-                              desc="Batches completed"):
-            batch = lhs_table[batch_idx: batch_idx + batch_size]
-            solutions = self.get_sol_from_lhs(lhs_table=batch)
-            comp_maxes = self.get_max(sol=solutions,
-                                      comp=target_var.split('_')[0])
-            batches.append(comp_maxes)
-        elapsed = time() - t_start
-        print(f"\n Average speed = {round(n_samples / elapsed, 3)} iterations/second \n")
-        return torch.concat(batches)
-
-    def get_sol_from_lhs(self, lhs_table):
-        # Initialize timesteps and initial values
-        t_eval = torch.stack(
-            [torch.linspace(1, 1100, 1100)] * lhs_table.shape[0]
-        ).to(self.model.device)
-
-        y0 = torch.stack(
-            [self.model.get_initial_values()] * lhs_table.shape[0]
-        ).to(self.model.device)
-
-        sol = self.model.get_solution(y0=y0, t_eval=t_eval, lhs_table=lhs_table).ys
-        if not self.model.test:
-            # Check if population size changed
-            if any([abs(self.model.population.sum() - sol[i, -1, :].sum()) > 50 for i in range(sol.shape[0])]):
-                raise Exception("Unexpected change in population size!")
-        return sol
-
-    def get_max(self, sol, comp: str):
-        comp_max = []
-        for i in range(sol.shape[0]):
-            comp_sol = self.model.aggregate_by_age(solution=sol[i, :, :], comp=comp)
-            comp_max.append(torch.max(comp_sol))
-        return torch.tensor(comp_max)
+    def metric(self, sol, comp):
+        comp_max = torch.stack([torch.max(self.model.aggregate_by_age(solution=sol[i, :, :], comp=comp))
+                                for i in range(sol.shape[0])]).to(self.model.device)
+        return comp_max

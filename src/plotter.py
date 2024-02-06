@@ -1,11 +1,11 @@
+import numpy as np
+import pandas as pd
+import seaborn
+import torch
+
+
 from matplotlib import pyplot as plt, colors
 from matplotlib.cm import ScalarMappable
-
-import numpy as np
-import torch
-import seaborn
-import pandas as pd
-from matplotlib.colors import ListedColormap
 from matplotlib.ticker import LogLocator, LogFormatter
 from matplotlib.tri import Triangulation
 
@@ -45,7 +45,7 @@ def generate_prcc_plot(sim_obj, params, target_var, prcc: np.ndarray, p_val, fil
 
     p_val_colors = ['green', 'yellow', 'red']
     thresholds = [0, 0.01, 0.1, 1]
-    cmap = ListedColormap(p_val_colors)
+    cmap = colors.ListedColormap(p_val_colors)
     norm = colors.BoundaryNorm(boundaries=thresholds, ncolors=cmap.N, clip=True)
 
     sm = ScalarMappable(cmap=cmap, norm=norm)
@@ -108,7 +108,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
                      f"Vakcinálás célváltozója: {target}\n" \
                      f"R0={r0}"
 
-    colors = ['orange', 'red', 'black']
+    comp_colors = ['orange', 'red', 'black']
 
     model = sim_obj.model
     sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
@@ -130,7 +130,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
 
     for idx, comp in enumerate(compartments):
         comp_sol = model.aggregate_by_age(sol, comp)
-        plt.plot(t, comp_sol, label=comp.upper(), color=colors[idx], linewidth=2)
+        plt.plot(t, comp_sol, label=comp.upper(), color=comp_colors[idx], linewidth=2)
 
     plt.legend()
     plt.gca().set_xlabel('Napok')
@@ -241,7 +241,7 @@ def get_mask_and_values(n_age, prcc_vector, p_values):
 
 
 def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save, plot_title):
-    p_value_cmap = ListedColormap(['Orange', 'red', 'darkred'])
+    p_value_cmap = colors.ListedColormap(['Orange', 'red', 'darkred'])
     cmaps = ["Greens", p_value_cmap]
 
     log_norm = colors.LogNorm(vmin=1e-3, vmax=1e0)  # used for p_values
