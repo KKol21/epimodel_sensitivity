@@ -1,34 +1,32 @@
+from abc import ABC, abstractmethod
 import itertools
 import os
-from abc import ABC, abstractmethod
 
 import numpy as np
 from scipy import stats as ss
 
-from src.dataloader import DataLoader, PROJECT_PATH
+from src.dataloader import PROJECT_PATH
 from src.sensitivity.prcc import get_prcc_values
 
 
 class SimulationBase(ABC):
-    def __init__(self):
+    def __init__(self, data):
         # Load data
-        self.data = DataLoader()
+        self.data = data
         self.test = True
 
-        # User-defined parameters
+        # User-defined params
         self.susc_choices = [1.0]
         self.r0_choices = [1.8]
-        self.target_var_choices = ["d_max"]#["i_max", "ic_max", "d_max"]  # i_max, ic_max, d_max
-        self.n_samples = 100
+        self.target_var_choices = ["d_max"]  # ["i_max", "ic_max", "d_max"]
+        self.n_samples = 5000
         self.batch_size = 1000
 
-        # Define initial configs
         self._get_initial_config()
 
     def _get_initial_config(self):
         self.params = self.data.model_params
         self.n_age = self.data.n_age
-        self.param_names = np.array([f'daily_vac_{i}' for i in range(self.n_age)])
         self.cm = self.data.cm
         self.device = self.data.device
         self.population = self.data.age_data.flatten()
@@ -42,12 +40,12 @@ class SimulationBase(ABC):
         pass
 
     def calculate_prcc(self):
-        """
+        f"""
 
         Calculates PRCC (Partial Rank Correlation Coefficient) values from saved LHS tables and simulation results.
 
         This method reads the saved LHS tables and simulation results for each parameter combination and calculates
-        the PRCC values. The PRCC values are saved in separate files in the 'sens_data_contact/prcc' directory.
+        the PRCC values. The PRCC values are saved in separate files in the 'sens_data_"folder_name"/prcc' directory.
 
         """
         folder_name = self.folder_name

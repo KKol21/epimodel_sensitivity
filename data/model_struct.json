@@ -36,7 +36,7 @@
     "trans_0": {
       "source": "s",
       "target": "e",
-      "param": "beta_0",
+      "param": "beta",
       "distr": null,
       "type": "infection",
       "actor": "i"

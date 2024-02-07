@@ -8,14 +8,12 @@ from src.sensitivity.sampler_base import SamplerBase
 class SamplerVaccinated(SamplerBase):
     def __init__(self, sim_state: dict, sim_obj):
         super().__init__(sim_state, sim_obj)
-        self.mode = "vacc"
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
         self.target_var = sim_state["target_var"]
         self.lhs_boundaries = {"lower": np.zeros(sim_obj.n_age),  # Ratio of daily vaccines given to each age group
                                "upper": np.ones(sim_obj.n_age)
                                }
-        self.optimal_vacc = None
 
     def run_sampling(self):
         """
@@ -39,10 +37,10 @@ class SamplerVaccinated(SamplerBase):
         lhs_table = self.allocate_vaccines(lhs_table)
 
         self._get_sim_output(lhs_table)
-        self.optimal_vacc = lhs_table[0]
+        optimal_vacc = lhs_table[0]
 
         # Save the most optimal vaccination strategy found with sampling
-        self._save_output(output=self.optimal_vacc, output_type='optimal_vaccination')
+        self._save_output(output=optimal_vacc, output_name='optimal_vaccination')
 
     def _get_variable_parameters(self):
         return f'{self.susc}-{self.base_r0}-{self.target_var}'

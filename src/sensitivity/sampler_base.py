@@ -15,12 +15,12 @@ class SamplerBase(ABC):
     parameter combinations and collect simulation results.
 
     Args:
-        sim_state (dict): The state of the simulation as a dictionary containing relevant parameters.
+        sim_state (dict): The state of the simulation as a dictionary containing relevant params.
         sim_obj: The simulation object representing the underlying simulation model.
 
     Attributes:
         sim_obj: The simulation object representing the underlying simulation model.
-        sim_state (dict): The state of the simulation as a dictionary containing relevant parameters.
+        sim_state (dict): The state of the simulation as a dictionary containing relevant params.
         base_r0 (float): The base reproduction number (R0) of the simulation.
         lhs_boundaries (dict): The boundaries for Latin Hypercube Sampling (LHS) parameter ranges.
 
@@ -50,25 +50,17 @@ class SamplerBase(ABC):
     def _get_lhs_table(self):
         n_samples = self.n_samples
         batch_size = self.batch_size
-        # Create samples
+
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
         lhs_table = sampling(n_samples)
+
         print(f"\n Simulation for {n_samples} samples ({self._get_variable_parameters()})")
         print(f"Batch size: {batch_size}\n")
         return lhs_table
 
     def _get_sim_output(self, lhs_table):
-        from src.sensitivity.target_calc.peak_calc import PeakCalculator
-        from src.sensitivity.target_calc.final_size_calc import FinalSizeCalculator
-        # Calculate values of target variable for each sample
-        if self.target_var == "d_max":
-            target_calculator = FinalSizeCalculator(self.sim_obj.model)
-        else:
-            target_calculator = PeakCalculator(self.sim_obj.model)
-        sim_output = target_calculator.get_output(lhs_table=torch.from_numpy(lhs_table).float().to(self.sim_obj.device),
-                                                  batch_size=self.batch_size,
-                                                  target_var=self.target_var)
+        sim_output = self.calculate_target(lhs_table=lhs_table)
         # Sort tables by target values
         sorted_idx = sim_output.argsort()
         sim_output = sim_output[sorted_idx]
@@ -77,17 +69,36 @@ class SamplerBase(ABC):
         time.sleep(0.3)
 
         # Save samples, target values
-        self._save_output(output=lhs_table, output_type='lhs')
-        self._save_output(output=sim_output.cpu(), output_type='simulations')
+        self._save_output(output=lhs_table, output_name='lhs')
+        self._save_output(output=sim_output.cpu(), output_name='simulations')
 
-    def _save_output(self, output, output_type):
+    def calculate_target(self, lhs_table):
+        from src.sensitivity.target_calc.r0_calc import R0Calculator
+
+        #if self.target_var == "r0":
+        #    r0_calculator = R0Calculator(self.sim_obj.model)
+        #   return r0_calculator.calculate_R0s(lhs_table=lhs_table)
+
+        from src.sensitivity.target_calc.peak_calc import PeakCalculator
+        from src.sensitivity.target_calc.final_size_calc import FinalSizeCalculator
+
+        if self.target_var == "d_max":
+            target_calculator = FinalSizeCalculator(self.sim_obj.model)
+        else:
+            target_calculator = PeakCalculator(self.sim_obj.model)
+
+        return target_calculator.get_output(lhs_table=torch.from_numpy(lhs_table).float().to(self.sim_obj.device),
+                                            batch_size=self.batch_size,
+                                            target_var=self.target_var)
+
+    def _save_output(self, output, output_name):
         # Create directories for saving calculation outputs
         folder_name = self.sim_obj.folder_name
         os.makedirs(folder_name, exist_ok=True)
 
         # Save LHS output
-        os.makedirs(f"{folder_name}/{output_type}", exist_ok=True)
-        filename = f"{folder_name}/{output_type}/{output_type}_{self._get_variable_parameters()}"
+        os.makedirs(f"{folder_name}/{output_name}", exist_ok=True)
+        filename = f"{folder_name}/{output_name}/{output_name}_{self._get_variable_parameters()}"
         np.savetxt(fname=filename + ".csv", X=output, delimiter=";")
 
 

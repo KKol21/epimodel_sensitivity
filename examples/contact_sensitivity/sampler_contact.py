@@ -6,7 +6,6 @@ from src.sensitivity.sampler_base import SamplerBase
 class SamplerContact(SamplerBase):
     def __init__(self, sim_state: dict, sim_obj):
         super().__init__(sim_state, sim_obj)
-        self.mode = "contact"
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
         self.target_var = sim_state["target_var"]

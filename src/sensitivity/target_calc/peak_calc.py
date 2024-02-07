@@ -15,6 +15,9 @@ class PeakCalculator(TargetCalcBase):
         return finished, last_val
 
     def metric(self, sol, comp):
-        comp_max = torch.stack([torch.max(self.model.aggregate_by_age(solution=sol[i, :, :], comp=comp))
-                                for i in range(sol.shape[0])]).to(self.model.device)
+        comp_max = torch.stack(
+            [torch.max(self.model.aggregate_by_age(solution=sol[i, :, :],
+                                                   comp=comp))
+             for i in range(sol.shape[0])]
+        ).to(self.model.device)
         return comp_max

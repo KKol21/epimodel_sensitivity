@@ -27,8 +27,8 @@ class SimulationVaccinated(SimulationBase):
 
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data):
+        super().__init__(data)
         self.folder_name += "/sens_data_vacc"
 
         # Initalize model
@@ -132,10 +132,5 @@ class SimulationVaccinated(SimulationBase):
             prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
             p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
 
-            generate_prcc_plot(sim_obj=self,
-                               params=self.param_names,
-                               target_var=target_var,
-                               prcc=prcc,
-                               p_val=p_val,
-                               filename=filename,
-                               r0=base_r0)
+            generate_prcc_plot(sim_obj=self, param_names=[f'daily_vac_{i}' for i in range(self.n_age)],
+                               target_var=target_var, prcc=prcc, p_val=p_val, filename=filename, r0=base_r0)

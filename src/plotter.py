@@ -21,12 +21,12 @@ def get_target(target_var):
         return "halottak száma"
 
 
-def generate_prcc_plot(sim_obj, params, target_var, prcc: np.ndarray, p_val, filename: str, r0):
+def generate_prcc_plot(sim_obj, param_names, target_var, prcc: np.ndarray, p_val, filename: str, r0):
     """
     Generate a tornado plot to visualize the Partial Rank Correlation Coefficient (PRCC) values.
 
     Args:
-        params (np.ndarray): The list of parameter names.
+        param_names (List): The list of parameter names.
         target_var (str): The target variable.
         prcc (np.ndarray): The PRCC values.
         filename (str): The filename for saving the plot.
@@ -41,7 +41,7 @@ def generate_prcc_plot(sim_obj, params, target_var, prcc: np.ndarray, p_val, fil
               f"Célváltozó: {target_var}\n "
               r"$\mathcal{R}_0=$" + str(r0), fontsize=15, wrap=True)
 
-    ys = range(len(params))[::-1]
+    ys = range(len(param_names))[::-1]
 
     p_val_colors = ['green', 'yellow', 'red']
     thresholds = [0, 0.01, 0.1, 1]
@@ -84,12 +84,12 @@ def generate_prcc_plot(sim_obj, params, target_var, prcc: np.ndarray, p_val, fil
         age_start = int(param.split('_')[2]) * 5
         return f'{age_start}-{age_start + 4} ' if age_start != 75 else '75+ '
 
-    labels = list(map(get_age_group, params))
+    labels = list(map(get_age_group, param_names))
     plt.yticks(ys, labels)
 
     # Set the portion of the x- and y-axes to show
     plt.xlim(-1.1, 1.1)
-    plt.ylim(-1, len(params))
+    plt.ylim(-1, len(param_names))
     # plt.text()
     plt.savefig(f'{sim_obj.folder_name}/prcc_plots/prcc_tornado_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')

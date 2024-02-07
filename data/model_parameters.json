@@ -16,7 +16,7 @@
         "description": "Start of vaccination campaign"
     },
     "T": {
-        "value": 60.0,
+        "value": 90.0,
         "description": "Duration of the vaccination campaign"
     },
     "n_e": {

@@ -12,7 +12,7 @@ class R0Generator:
         self.inf_states = self.get_infected_states()
         self.n_comp = len(self.inf_states)
         self.n_age = data.n_age
-        self.parameters = data.model_params
+        self.params = data.model_params
         self.n_states = len(self.inf_states)
         self.i = {self.inf_states[index]: index for index in torch.arange(0, self.n_states)}
         self.s_mtx = self.n_age * self.n_states
@@ -88,10 +88,10 @@ class R0Generator:
         s_mtx = self.s_mtx
         n_states = self.n_states
 
-        infectious_states = get_infectious_states(state_data=self.data.state_data)
+        infectious_states = get_infectious_states(state_data=self.state_data)
 
         f = torch.zeros((s_mtx, s_mtx)).to(self.device)
-        susc_vec = self.parameters["susc"].reshape((-1, 1))
+        susc_vec = self.params["susc"].reshape((-1, 1))
         # Rate of infection for every infectious state
         for inf_state in infectious_states:
             f[i[inf_state]:s_mtx:n_states, i[self.inf_inflow_state]:s_mtx:n_states] = torch.mul(susc_vec, contact_mtx.T)
