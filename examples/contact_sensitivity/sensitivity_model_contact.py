@@ -5,7 +5,7 @@ from src.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 
 class ContactModel(SensitivityModelBase):
-    def __init__(self, sim_obj):
+    def __init__(self, sim_obj, sim_state):
         """
         Initializes the VaccinatedModel class.
 
@@ -13,6 +13,7 @@ class ContactModel(SensitivityModelBase):
         constructor, and instantiating the matrix generator used in solving the model.
 
         Args:
+            sim_state:
             sim_obj (SimulationContact): Simulation object
 
         """
@@ -20,6 +21,7 @@ class ContactModel(SensitivityModelBase):
 
         self.s_mtx = self.n_age * self.n_comp
         self.upper_tri_size = sim_obj.upper_tri_size
+        self.sim_state = sim_state
 
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]

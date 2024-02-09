@@ -7,7 +7,7 @@ def main():
     simulation = SimulationVaccinated(data)
     simulation.run_sampling()
     simulation.calculate_prcc_for_simulations()
-    simulation.calculate_p_values()
+    simulation.calculate_all_p_values()
     simulation.plot_prcc_tornado_with_p_values()
     simulation.plot_optimal_vaccine_distributions()
 

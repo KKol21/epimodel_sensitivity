@@ -10,6 +10,7 @@ class SamplerVaccinated(SamplerBase):
         super().__init__(sim_state, sim_obj)
         self.sim_obj = sim_obj
         self.susc = sim_state["susc"]
+        self.base_r0 = sim_state["base_r0"]
         self.target_var = sim_state["target_var"]
         self.lhs_boundaries = {"lower": np.zeros(sim_obj.n_age),  # Ratio of daily vaccines given to each age group
                                "upper": np.ones(sim_obj.n_age)

@@ -32,8 +32,6 @@ class SamplerBase(ABC):
     def __init__(self, sim_state: dict, sim_obj):
         self.sim_obj = sim_obj
         self.sim_state = sim_state
-        self.base_r0 = sim_state["base_r0"]
-        self.r0generator = sim_state["r0generator"]
         self.lhs_boundaries = None
         self.target_var = None
         self.n_samples = sim_obj.n_samples
@@ -73,11 +71,11 @@ class SamplerBase(ABC):
         self._save_output(output=sim_output.cpu(), output_name='simulations')
 
     def calculate_target(self, lhs_table):
-        from src.sensitivity.target_calc.r0_calc import R0Calculator
+        #  from src.sensitivity.target_calc.r0_calc import R0Calculator
 
-        #if self.target_var == "r0":
-        #    r0_calculator = R0Calculator(self.sim_obj.model)
-        #   return r0_calculator.calculate_R0s(lhs_table=lhs_table)
+        #  if self.target_var == "r0":
+        #      r0_calculator = R0Calculator(self.sim_obj.model)
+        #      return r0_calculator.calculate_R0s(lhs_table=lhs_table)
 
         from src.sensitivity.target_calc.peak_calc import PeakCalculator
         from src.sensitivity.target_calc.final_size_calc import FinalSizeCalculator

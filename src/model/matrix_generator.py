@@ -40,7 +40,7 @@ def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: 
     Args:
         states_dict:
         trans_data:
-        parameters: A dictionary containing model parameters.
+        parameters: A dictionary containing model params.
         n_age: The number of age groups.
         n_comp: The number of compartments.
         c_idx: A dictionary containing the indices of different compartments.
@@ -84,11 +84,10 @@ class MatrixGenerator:
     Args:
         model (EpidemicModelBase): An instance of the EpidemicModelBase class.
         cm: The contact matrix.
-        ps: A dictionary containing model parameters.
 
     Attributes:
         cm: The contact matrix.
-        ps: A dictionary containing model parameters.
+        ps: A dictionary containing model params.
         s_mtx: The total number of compartments in the model.
         n_age: The number of age groups.
         n_comp: The number of states.
@@ -100,7 +99,7 @@ class MatrixGenerator:
     Methods:
         _get_comp_slice(comp): Get a slice representing the indices of a given compartment.
         _get_end_state(comp): Get the string representing the last state of a given compartment.
-        _get_trans_param_dict(): Get a dictionary of transition parameters for different compartments.
+        _get_trans_param_dict(): Get a dictionary of transition params for different compartments.
     """
 
     def __init__(self, model: EpidemicModelBase, cm):

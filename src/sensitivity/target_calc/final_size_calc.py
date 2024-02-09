@@ -1,6 +1,3 @@
-import torch
-
-
 from src.sensitivity.target_calc.target_calc_base import TargetCalcBase
 from src.sensitivity.sensitivity_model_base import SensitivityModelBase
 

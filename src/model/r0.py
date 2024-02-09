@@ -18,7 +18,6 @@ class R0Generator:
         self.s_mtx = self.n_age * self.n_states
 
         self._get_e()
-        self.contact_matrix = torch.zeros((self.n_age, self.n_age))
         self.inf_state_dict = {state: data for state, data in self.state_data.items()
                                if data["type"] in ["infected", "infectious"]}
         self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data.values()
@@ -38,9 +37,7 @@ class R0Generator:
     def get_eig_val(self, susceptibles: torch.Tensor, population: torch.Tensor,
                     contact_mtx: torch.Tensor = None) -> float:
         # contact matrix needed for effective reproduction number: [c_{j,i} * S_i(t) / N_i(t)]
-        if contact_mtx is not None:
-            self.contact_matrix = contact_mtx
-        cm = self.contact_matrix / population.reshape((-1, 1))
+        cm = contact_mtx / population.reshape((-1, 1))
         cm = cm * susceptibles
         f = self._get_f(cm)
         v_inv = self._get_v()
