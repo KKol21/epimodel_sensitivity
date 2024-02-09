@@ -1,5 +1,5 @@
 from examples.vaccinated_sensitivity.simulation_vacc import SimulationVaccinated
-from src.dataloader import DataLoader
+from examples.dataloader_16_ag import DataLoader
 
 
 def main():
