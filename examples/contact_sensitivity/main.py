@@ -3,7 +3,7 @@ from src.dataloader import DataLoader
 
 
 def main():
-    data = DataLoader
+    data = DataLoader()
     sim = SimulationContact(data)
     sim.run_sampling()
     sim.calculate_prcc()

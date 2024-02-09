@@ -1,3 +1,4 @@
+import itertools
 import os
 
 import numpy as np
@@ -35,6 +36,11 @@ class SimulationVaccinated(SimulationBase):
         self.model = VaccinatedModel(sim_obj=self)
         self.susceptibles = self.model.get_initial_values()[self.model.idx("s_0")]
 
+        self.susc_choices = [1.0]
+        self.r0_choices = [1.8]
+        self.target_var_choices = ["d_max"]  # ["i_max", "ic_max", "d_max"]
+        self.simulations = list(itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices))
+
     def run_sampling(self):
         """
 
@@ -64,6 +70,11 @@ class SimulationVaccinated(SimulationBase):
             param_generator = SamplerVaccinated(sim_state=sim_state,
                                                 sim_obj=self)
             param_generator.run_sampling()
+
+    def calculate_prcc_for_simulations(self):
+        for susc, base_r0, target_var in self.simulations:
+            filename = f'{susc}-{base_r0}-{target_var}'
+            self.calculate_prcc(filename=filename)
 
     def plot_optimal_vaccine_distributions(self):
         """
@@ -115,7 +126,7 @@ class SimulationVaccinated(SimulationBase):
                                 r0_bad=r0_bad,
                                 compartments=['ic'])
 
-    def plot_prcc_with_p_values(self):
+    def plot_prcc_tornado_with_p_values(self):
         """
 
         Generates and saves PRCC plots based on the calculated PRCC values.
@@ -134,3 +145,8 @@ class SimulationVaccinated(SimulationBase):
 
             generate_prcc_plot(sim_obj=self, param_names=[f'daily_vac_{i}' for i in range(self.n_age)],
                                target_var=target_var, prcc=prcc, p_val=p_val, filename=filename, r0=base_r0)
+
+    def calculate_all_p_values(self):
+        for susc, base_r0, target_var in self.simulations:
+            filename = f'{susc}-{base_r0}-{target_var}'
+            self.calculate_p_values(filename=filename)
