@@ -1,5 +1,6 @@
-from src.model.model_base import EpidemicModelBase
 import torch
+
+from src.model.model_base import EpidemicModelBase
 
 
 class EpidemicModel(EpidemicModelBase):
@@ -24,8 +25,10 @@ class EpidemicModel(EpidemicModelBase):
                                      v_div)
                     return base_result + vacc
                 return base_result
+
             return vaccinated_ode
 
         def basic_ode(t, y):
             return torch.mul(y @ self.A, y @ self.T) + y @ self.B
+
         return basic_ode

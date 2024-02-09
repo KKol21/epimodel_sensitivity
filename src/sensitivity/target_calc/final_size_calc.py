@@ -1,5 +1,5 @@
-from src.sensitivity.target_calc.target_calc_base import TargetCalcBase
 from src.sensitivity.sensitivity_model_base import SensitivityModelBase
+from src.sensitivity.target_calc.target_calc_base import TargetCalcBase
 
 
 class FinalSizeCalculator(TargetCalcBase):

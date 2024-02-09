@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 import seaborn
 import torch
-
-
 from matplotlib import pyplot as plt, colors
 from matplotlib.cm import ScalarMappable
 from matplotlib.ticker import LogLocator, LogFormatter

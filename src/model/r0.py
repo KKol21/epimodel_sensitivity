@@ -45,7 +45,7 @@ class R0Generator:
         ngm = self.e @ ngm_large @ self.e.T
 
         dom_eig_val = torch.sort(torch.abs(
-                torch.linalg.eigvals(ngm)))[0][-1]
+            torch.linalg.eigvals(ngm)))[0][-1]
         return float(dom_eig_val)
 
     def _get_v(self) -> torch.Tensor:

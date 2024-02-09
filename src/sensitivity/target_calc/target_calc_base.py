@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from tqdm import tqdm
 from time import time
 
-
 import torch
+from tqdm import tqdm
 
 
 class TargetCalcBase(ABC):
