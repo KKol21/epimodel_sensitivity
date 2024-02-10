@@ -15,7 +15,6 @@ class SamplerContact(SamplerBase):
             "lower": np.zeros(self.sim_obj.upper_tri_size),
             "upper": np.ones(self.sim_obj.upper_tri_size)
                                }
-        self.batch_size = 1000
 
     def run_sampling(self):
         lhs_table = self._get_lhs_table()

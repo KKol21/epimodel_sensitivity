@@ -70,7 +70,7 @@ class MatrixGenerator:
     """
     Class responsible for generating the matrices used in the model.
 
-    Let y be size n_samples * s_mtx, each row corresponding to a different simulation. The general formula we represent
+    Let y be size n_samples * n_eq, each row corresponding to a different simulation. The general formula we represent
     the system of ODEs with is the following:
 
             y' = (y @ T_1) * (y @ T_2) + y * L,
@@ -88,7 +88,7 @@ class MatrixGenerator:
     Attributes:
         cm: The contact matrix.
         ps: A dictionary containing model params.
-        s_mtx: The total number of compartments in the model.
+        n_eq: The total number of compartments in the model.
         n_age: The number of age groups.
         n_comp: The number of states.
         population: The total population.
@@ -116,7 +116,7 @@ class MatrixGenerator:
         self.data = model.data
         self.state_data = model.data.state_data
         self.trans_data = model.data.trans_data
-        self.s_mtx = model.s_mtx
+        self.n_eq = model.n_eq
         self.n_age = model.n_age
         self.n_comp = model.n_comp
         self.population = model.population
@@ -127,6 +127,19 @@ class MatrixGenerator:
                                  if trans["type"] == "infection"][0]
         self.infectious_states = get_infectious_states(self.state_data)
 
+    def generate_matrix(self, matrix_name):
+        matrix_methods = {
+            "A": self.get_A,
+            "T": self.get_T,
+            "B": self.get_B,
+            "V_1": self.get_V_1,
+            "V_2": self.get_V_2
+        }
+        if matrix_name in matrix_methods:
+            return matrix_methods[matrix_name]()
+        else:
+            raise Exception("Not a valid matrix!")
+
     def get_A(self) -> torch.Tensor:
         """
         Returns:
@@ -134,7 +147,7 @@ class MatrixGenerator:
             the susceptibles of age group i at the indices of compartments s^i and e_0^i
         """
         ps = self.ps
-        A = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
+        A = torch.zeros((self.n_eq, self.n_eq)).to(self.device)
         transmission_rate = ps["beta"] * ps["susc"] / self.population
         idx = self.idx
 
@@ -143,7 +156,7 @@ class MatrixGenerator:
         return A
 
     def get_T(self, cm=None) -> torch.Tensor:
-        T = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
+        T = torch.zeros((self.n_eq, self.n_eq)).to(self.device)
         if cm is None:
             cm = self.cm
         # Multiplied with y, the resulting 1D tensor contains the sum of all contacts with infecteds of
@@ -196,7 +209,7 @@ class MatrixGenerator:
     def get_V_1(self, daily_vac=None) -> torch.Tensor:
         if daily_vac is None:
             daily_vac = self.ps["daily_vac"]
-        V_1 = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
+        V_1 = torch.zeros((self.n_eq, self.n_eq)).to(self.device)
         # Tensor responsible for the nominators of the vaccination formula
         V_1[self.idx('s_0'), self.idx('s_0')] = daily_vac
         V_1[self.idx('s_0'), self.idx('v_0')] = daily_vac
@@ -204,7 +217,7 @@ class MatrixGenerator:
 
     def get_V_2(self) -> torch.Tensor:
         idx = self.idx
-        V_2 = torch.zeros((self.s_mtx, self.s_mtx)).to(self.device)
+        V_2 = torch.zeros((self.n_eq, self.n_eq)).to(self.device)
         # Fill in all the terms such that we will divide the terms at the indices of s^i and v^i by (s^i + r^i)
         V_2[idx('s_0'), idx('s_0')] = -1
         V_2[idx('r_0'), idx('s_0')] = -1
@@ -222,7 +235,7 @@ class MatrixGenerator:
             slice: A slice representing the indices of the compartment.
 
         """
-        return slice(self.c_idx[comp], self.s_mtx, self.n_comp)
+        return slice(self.c_idx[comp], self.n_eq, self.n_comp)
 
     def get_end_state(self, comp: str) -> str:
         return f"{comp}_{self.state_data[comp]['n_substates'] - 1}"

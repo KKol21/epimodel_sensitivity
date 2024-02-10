@@ -1,7 +1,3 @@
-import numpy as np
-import torch
-
-
 from src.sensitivity.sampler_base import SamplerBase
 
 
@@ -12,8 +8,8 @@ class SamplerSEIR(SamplerBase):
         self.susc = sim_state["susc"]
         self.base_r0 = sim_state["base_r0"]
         self.target_var = sim_state["target_var"]
-        self.lhs_boundaries = {"lower": [0.1, 0.2, 0.1],   # alpha, beta, gamma
-                               "upper": [0.4, 0.6, 0.4],
+        self.lhs_boundaries = {"lower": [0.1, 0.2, 0.1],  # alpha, beta, gamma
+                               "upper": [0.4, 0.4, 0.4],
                                }
 
     def run_sampling(self):

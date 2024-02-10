@@ -84,8 +84,8 @@ class SamplerBase(ABC):
             target_calculator = FinalSizeCalculator(self.sim_obj.model)
         else:
             target_calculator = PeakCalculator(self.sim_obj.model)
-
-        return target_calculator.get_output(lhs_table=torch.from_numpy(lhs_table).float().to(self.sim_obj.device),
+        lhs = torch.from_numpy(lhs_table).float().to(self.sim_obj.device)
+        return target_calculator.get_output(lhs_table=lhs,
                                             batch_size=self.batch_size,
                                             target_var=self.target_var)
 

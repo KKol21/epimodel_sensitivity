@@ -28,7 +28,7 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         B_mul = self.get_mul_method(self.B)
         V_1_mul = self.get_mul_method(self.V_1)
 
-        v_div = torch.ones((curr_batch_size, self.s_mtx)).to(self.device)
+        v_div = torch.ones((curr_batch_size, self.n_eq)).to(self.device)
         div_idx = self.idx('s_0') + self.idx('v_0')
 
         def odefun(t, y):
@@ -39,7 +39,6 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
                                  v_div)
                 return base_result + vacc
             return base_result
-
         return odefun
 
     @staticmethod
@@ -51,3 +50,16 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
             return torch.einsum('ij,ijk->ik', y, tensor)
 
         return mul_by_2d if len(tensor.size()) < 3 else mul_by_3d
+
+    def _get_matrix_from_lhs(self, lhs_dict: dict, matrix_name: str):
+        n_eq = self.n_eq
+        n_samples = next(iter(lhs_dict.values())).shape[0]
+        mtx = torch.zeros((n_samples, n_eq, n_eq)).to(self.device)
+        for idx in range(n_samples):
+            # Select idx. value from lhs table for each parameter
+            row_dict = {key: value[idx] if len(value.size()) < 2 else value[idx, :]
+                        for key, value in lhs_dict.items()}
+            self.matrix_generator.ps.update(row_dict)
+
+            mtx[idx, :, :] = self.matrix_generator.generate_matrix(matrix_name)
+        return mtx

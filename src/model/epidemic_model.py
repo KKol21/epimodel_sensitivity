@@ -14,7 +14,7 @@ class EpidemicModel(EpidemicModelBase):
 
     def get_ode(self):
         if self.is_vaccinated:
-            v_div = torch.ones(self.s_mtx).to(self.device)
+            v_div = torch.ones(self.n_eq).to(self.device)
             div_idx = self.idx('s_0') + self.idx('v_0')
 
             def vaccinated_ode(t, y):

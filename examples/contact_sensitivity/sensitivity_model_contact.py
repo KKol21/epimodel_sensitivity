@@ -36,12 +36,8 @@ class ContactModel(SensitivityModelBase):
         return self.get_sol_from_ode(y0, t_eval, odefun)
 
     def _get_A_from_betas(self, betas):
-        s_mtx = self.s_mtx
-        A = torch.zeros((len(betas), s_mtx, s_mtx)).to(self.device)
-        for idx, beta in enumerate(betas):
-            self.matrix_generator.ps.update({"beta": beta})
-            A[idx, :, :] = self.matrix_generator.get_A()
-        return A
+        lhs_dict = {"beta": betas}
+        return self._get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="A")
 
     def _get_T_from_contacts(self, cm_samples: torch.Tensor):
         T = torch.zeros((cm_samples.size(0), self.s_mtx, self.s_mtx)).to(self.device)
@@ -58,7 +54,7 @@ class ContactModel(SensitivityModelBase):
                                              susceptibles=self.sim_obj.susceptibles.flatten(),
                                              population=self.sim_obj.population)
                  for cm in cm_samples]
-        return betas
+        return torch.tensor(betas, device=self.device)
 
     def get_contacts_from_lhs(self, lhs_table):
         contact_sim = torch.zeros((lhs_table.shape[0], self.sim_obj.n_age, self.sim_obj.n_age))
@@ -69,10 +65,8 @@ class ContactModel(SensitivityModelBase):
 
 
 def get_contact_matrix_from_upper_triu(rvector, age_vector):
-    new_2 = get_rectangular_matrix_from_upper_triu(rvector=rvector,
-                                                   matrix_size=age_vector.size(0))
-    vector = new_2 / age_vector
-    return vector
+    new = get_rectangular_matrix_from_upper_triu(rvector=rvector, matrix_size=age_vector.size(0)) / age_vector
+    return new
 
 
 def get_rectangular_matrix_from_upper_triu(rvector, matrix_size):

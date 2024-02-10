@@ -37,8 +37,8 @@ class SimulationVaccinated(SimulationBase):
         self.susceptibles = self.model.get_initial_values()[self.model.idx("s_0")]
 
         self.susc_choices = [1.0]
-        self.r0_choices = [1.8]
-        self.target_var_choices = ["i_max"]  # ["i_max", "ic_max", "d_max"]
+        self.r0_choices = [1.8, 3]
+        self.target_var_choices = ["d_max", "ic_max"]  # ["i_max", "ic_max", "d_max"]
         self.simulations = list(itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices))
 
     def run_sampling(self):

@@ -24,7 +24,7 @@ class EpidemicModelBase(ABC):
         self.device = data.device
 
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
-        self.s_mtx = self.n_age * self.n_comp
+        self.n_eq = self.n_age * self.n_comp
         self.is_vaccinated = "vaccination" in [trans["type"] for trans in self.data.trans_data.values()]
 
         from src.model.matrix_generator import MatrixGenerator
@@ -76,7 +76,7 @@ class EpidemicModelBase(ABC):
             torch.Tensor: Initial values of the model.
 
         """
-        iv = torch.zeros(self.s_mtx).to(self.device)
+        iv = torch.zeros(self.n_eq).to(self.device)
         age_group = self.n_age // 4
         iv[age_group + self.c_idx['i_0']] = 1
         iv[self.idx('s_0')] = self.population
@@ -84,7 +84,7 @@ class EpidemicModelBase(ABC):
         return iv
 
     def idx(self, state: str) -> bool:
-        return torch.arange(self.s_mtx) % self.n_comp == self.c_idx[state]
+        return torch.arange(self.n_eq) % self.n_comp == self.c_idx[state]
 
     def aggregate_by_age(self, solution, comp):
         """

@@ -16,7 +16,6 @@ class VaccinatedModel(SensitivityModelBase):
 
         """
         super().__init__(sim_obj=sim_obj)
-        self.s_mtx = self.n_age * self.n_comp
 
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]
@@ -26,8 +25,5 @@ class VaccinatedModel(SensitivityModelBase):
 
     def _get_V_1_from_lhs(self, lhs_table):
         daily_vacc = (lhs_table * self.ps['total_vaccines'] / self.ps["T"]).to(self.device)
-        s_mtx = self.s_mtx
-        V_1 = torch.zeros((daily_vacc.shape[0], s_mtx, s_mtx)).to(self.device)
-        for idx, sample in enumerate(daily_vacc):
-            V_1[idx, :, :] = self.matrix_generator.get_V_1(daily_vac=sample)
-        return V_1
+        lhs_dict = {"daily_vac": daily_vacc}
+        return self._get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="V_1")

@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 
 from src.sensitivity.sensitivity_model_base import SensitivityModelBase
@@ -18,11 +17,9 @@ class SEIRModel(SensitivityModelBase):
         """
         super().__init__(sim_obj=sim_obj)
 
-        self.s_mtx = self.n_age * self.n_comp
-
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]
-        self.A = self._get_A_from_betas(lhs_table[:, 1])
+        self.A = self._get_A_from_betas(lhs_table)
         self.B = self._get_B_from_lhs(lhs_table)
         if self.is_vaccinated:
             odefun = self.get_vaccinated_ode(lhs_table.shape[0])
@@ -30,21 +27,18 @@ class SEIRModel(SensitivityModelBase):
             odefun = self.get_basic_ode()
         return self.get_sol_from_ode(y0, t_eval, odefun)
 
-    def _get_A_from_betas(self, betas):
-        s_mtx = self.s_mtx
+    def _get_A_from_betas_(self, betas):
+        s_mtx = self.n_eq
         A = torch.zeros((len(betas), s_mtx, s_mtx)).to(self.device)
         for idx, beta in enumerate(betas):
             self.matrix_generator.ps.update({"beta": beta})
             A[idx, :, :] = self.matrix_generator.get_A()
         return A
 
+    def _get_A_from_betas(self, lhs):
+        lhs_dict = {"beta": lhs[:, 1]}
+        return self._get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="A")
+
     def _get_B_from_lhs(self, lhs):
-        s_mtx = self.s_mtx
-        alphas = lhs[:, 0]
-        gammas = lhs[:, 2]
-        B = torch.zeros((lhs.shape[0], s_mtx, s_mtx)).to(self.device)
-        for idx, (alpha, gamma) in enumerate(zip(alphas, gammas)):
-            self.matrix_generator.ps.update({"alpha": alpha,
-                                             "gamma": gamma})
-            B[idx, :, :] = self.matrix_generator.get_B()
-        return B
+        lhs_dict = {"alpha": lhs[:, 0], "gamma": lhs[:, 2]}
+        return self._get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="B")
