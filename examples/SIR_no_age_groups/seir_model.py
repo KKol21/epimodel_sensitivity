@@ -23,6 +23,7 @@ class SEIRModel(SensitivityModelBase):
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]
         self.A = self._get_A_from_betas(lhs_table[:, 1])
+        self.B = self._get_B_from_lhs(lhs_table)
         if self.is_vaccinated:
             odefun = self.get_vaccinated_ode(lhs_table.shape[0])
         else:
@@ -41,8 +42,8 @@ class SEIRModel(SensitivityModelBase):
         s_mtx = self.s_mtx
         alphas = lhs[:, 0]
         gammas = lhs[:, 2]
-        B = torch.zeros((len(lhs.shape[0]), s_mtx, s_mtx)).to(self.device)
-        for idx, alpha, gamma in enumerate(zip(alphas, gammas)):
+        B = torch.zeros((lhs.shape[0], s_mtx, s_mtx)).to(self.device)
+        for idx, (alpha, gamma) in enumerate(zip(alphas, gammas)):
             self.matrix_generator.ps.update({"alpha": alpha,
                                              "gamma": gamma})
             B[idx, :, :] = self.matrix_generator.get_B()

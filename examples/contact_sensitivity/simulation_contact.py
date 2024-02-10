@@ -69,7 +69,7 @@ class SimulationContact(SimulationBase):
                          "r0generator": r0generator,
                          "target_var": target_var}
             self.model = ContactModel(sim_obj=self, sim_state=sim_state)
-            self.model.initialize_constant_matrices()
+            self.model.initialize_matrices()
 
             param_generator = SamplerContact(sim_state=sim_state,
                                              sim_obj=self)

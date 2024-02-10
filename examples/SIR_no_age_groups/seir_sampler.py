@@ -12,8 +12,8 @@ class SamplerSEIR(SamplerBase):
         self.susc = sim_state["susc"]
         self.base_r0 = sim_state["base_r0"]
         self.target_var = sim_state["target_var"]
-        self.lhs_boundaries = {"lower": [0.1, 0.1, 0.1],   # alpha, beta, gamma
-                               "upper": [2, 10, 2],
+        self.lhs_boundaries = {"lower": [0.1, 0.2, 0.1],   # alpha, beta, gamma
+                               "upper": [0.4, 0.6, 0.4],
                                }
 
     def run_sampling(self):
@@ -32,7 +32,6 @@ class SamplerSEIR(SamplerBase):
             r0s.append(r0gen.get_eig_val(susceptibles=self.sim_obj.susceptibles,
                                          population=self.sim_obj.data.age_data,
                                          contact_mtx=self.sim_obj.cm))
-
 
     def _get_variable_parameters(self):
         return f'{self.susc}-{self.base_r0}-{self.target_var}'

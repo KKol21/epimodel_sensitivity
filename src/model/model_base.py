@@ -36,7 +36,7 @@ class EpidemicModelBase(ABC):
         self.V_1 = None
         self.V_2 = None
 
-    def initialize_constant_matrices(self):
+    def initialize_matrices(self):
         mtx_gen = self.matrix_generator
         self.A = mtx_gen.get_A()
         self.T = mtx_gen.get_T()
@@ -77,7 +77,7 @@ class EpidemicModelBase(ABC):
 
         """
         iv = torch.zeros(self.s_mtx).to(self.device)
-        age_group = 3
+        age_group = self.n_age // 4
         iv[age_group + self.c_idx['i_0']] = 1
         iv[self.idx('s_0')] = self.population
         iv[age_group * self.n_comp + self.c_idx['s_0']] -= 1

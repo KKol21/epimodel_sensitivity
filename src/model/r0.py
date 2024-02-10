@@ -44,8 +44,10 @@ class R0Generator:
         ngm_large = v_inv @ f
         ngm = self.e @ ngm_large @ self.e.T
 
-        dom_eig_val = torch.sort(torch.abs(
-            torch.linalg.eigvals(ngm)))[0][-1]
+        if len(ngm.shape) == 0:
+            dom_eig_val = torch.abs(ngm)
+        else:
+            dom_eig_val = torch.sort(torch.abs(torch.linalg.eigvals(ngm)))[0][-1]
         return float(dom_eig_val)
 
     def _get_v(self) -> torch.Tensor:

@@ -29,9 +29,10 @@ class TargetCalcBase(ABC):
                 [torch.arange(*t_limit)] * len(indices)
             ).to(self.model.device)
             ind_to_keep = []
-            for batch_idx in tqdm(range(0, len(indices), batch_size),
-                                  leave=False,
-                                  desc=f"\n Batches solved, time limit: {t_limit[1]}, samples left: {indices.numel()}"):
+            for batch_idx in tqdm(
+                    range(0, len(indices), batch_size),
+                    leave=False,
+                    desc=f"\n Batches solved, time limit: {t_limit[1]}, samples left: {indices.numel()}"):
                 batch_slice = slice(batch_idx, batch_idx + batch_size)
                 curr_indices = indices[batch_slice]
                 batch = lhs_table[curr_indices]
@@ -39,7 +40,7 @@ class TargetCalcBase(ABC):
                 solutions = self.get_batch_solution(y0=y0[curr_indices], t_eval=t_eval[batch_slice], samples=batch)
                 # Check which simulations have finished
                 finished, last_val = self.stopping_condition(solutions=solutions, comp=comp)
-
+                # Save outputs for finished simulations
                 if any(finished):
                     output[curr_indices[finished]] = self.metric(sol=solutions[finished],
                                                                  comp=comp)
@@ -49,6 +50,7 @@ class TargetCalcBase(ABC):
             # Adjust time period
             t_limit[0] = t_limit[1]
             t_limit[1] += 50
+            # Remove indices of completed simulations
             indices = indices[torch.isin(indices,
                                          torch.Tensor(ind_to_keep).to(device))]
         print("\n Elapsed time: ", time() - time_start)

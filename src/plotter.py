@@ -116,7 +116,7 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
                                         susceptibles=sim_obj.susceptibles.reshape(1, -1),
                                         population=sim_obj.population)
     sim_obj.params["beta"] = beta
-    model.initialize_constant_matrices()
+    model.initialize_matrices()
 
     t_eval = torch.linspace(1, 1200, 1200).to(sim_obj.device)
     sol = sim_obj.model.get_solution(y0=sim_obj.model.get_initial_values()[None, :], t_eval=t_eval[None, :],

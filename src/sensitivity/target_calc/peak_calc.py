@@ -8,10 +8,11 @@ class PeakCalculator(TargetCalcBase):
         super().__init__(model)
 
     def stopping_condition(self, **kwargs):
-        comp_idx = self.model.idx(kwargs["comp"])
+        # solutions.shape = (len(indices), t_limit, n_comp)
+        comp_idx = self.model.idx(f'{kwargs["comp"]}_0')
         sol = kwargs["solutions"]
         last_val = sol[:, -1, :]  # solutions.shape = (len(indices), t_limit, n_comp)
-        finished = (sol[:, -2, :][comp_idx] - last_val[comp_idx]).sum(axis=1) > 0
+        finished = (sol[:, -2, comp_idx] - last_val[:, comp_idx]).sum(axis=1) > 0
         return finished, last_val
 
     def metric(self, sol, comp):

@@ -1,19 +1,17 @@
 import itertools
-import os
 
-import numpy as np
 import torch
 
 from examples.SIR_no_age_groups.seir_model import SEIRModel
+from examples.SIR_no_age_groups.seir_sampler import SamplerSEIR
 from src.model.r0 import R0Generator
-from examples.contact_sensitivity.sampler_contact import SamplerContact
 from src.simulation_base import SimulationBase
 
 
-class SimulationContact(SimulationBase):
+class SimulationSEIR(SimulationBase):
     def __init__(self, data):
         super().__init__(data)
-        self.folder_name += "/sens_data_contact"
+        self.folder_name += "/sens_data_SEIR_no_ag"
 
         # Initalize model
         self.model = SEIRModel(sim_obj=self)
@@ -22,9 +20,8 @@ class SimulationContact(SimulationBase):
         # User-defined params
         self.susc_choices = [1.0]
         self.r0_choices = [1.8]
-        self.target_var_choices = ["d_max"]  # ["i_max", "ic_max", "d_max"]
+        self.target_var_choices = ["i_max"]  # ["i_max", "ic_max", "d_max"]
         self.simulations = list(itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices))
-
 
     def run_sampling(self):
         """
@@ -47,12 +44,12 @@ class SimulationContact(SimulationBase):
                                                      population=self.population)
             self.params.update({"beta": beta})
             # Generate matrices used in model representation
-            self.model.initialize_constant_matrices()
+            self.model.initialize_matrices()
             sim_state = {"base_r0": base_r0,
                          "susc": susc,
                          "r0generator": r0generator,
                          "target_var": target_var}
             self.model.sim_state = sim_state
-            param_generator = SamplerContact(sim_state=sim_state,
-                                             sim_obj=self)
+            param_generator = SamplerSEIR(sim_state=sim_state,
+                                          sim_obj=self)
             param_generator.run_sampling()

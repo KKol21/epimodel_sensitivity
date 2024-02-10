@@ -14,8 +14,8 @@ class SimulationBase(ABC):
         self.data = data
         self.test = True
 
-        self.n_samples = 500
-        self.batch_size = 100
+        self.n_samples = 2000
+        self.batch_size = 500
 
         self._get_initial_config()
 
