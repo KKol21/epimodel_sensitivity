@@ -1,13 +1,13 @@
 from types import SimpleNamespace
-from examples.SIR_no_age_groups.simulation_seir import SimulationSEIR
+from examples.SEIR_2_age_group.simulation_seir import SimulationSEIR
 
 import torch
 
 model_params = {"gamma": 0.2, "beta": 0.2, "alpha": 0.3}
 
-contact_data = torch.tensor([[1]])
+contact_data = torch.tensor([[1, 2], [0.5, 1]])
 
-age_data = torch.tensor([[10000]])
+age_data = torch.tensor([[1E5, 2E5]])
 
 state_data = {
     "s": {
@@ -54,8 +54,9 @@ data = SimpleNamespace(**{"model_params": model_params,
                           "age_data": age_data,
                           "state_data": state_data,
                           "trans_data": trans_data,
-                          "n_age": 1,
+                          "n_age": len(age_data[0]),
                           "device": "cpu"})
 
 sim = SimulationSEIR(data)
 sim.run_sampling()
+sim.plot_prcc_from_sim()

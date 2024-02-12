@@ -12,7 +12,7 @@ class SamplerContact(SamplerBase):
         self.target_var = sim_state["target_var"]
 
         self.lhs_boundaries = {
-            "lower": np.zeros(self.sim_obj.upper_tri_size),
+            "lower": np.full(fill_value=0.1, shape=self.sim_obj.upper_tri_size),
             "upper": np.ones(self.sim_obj.upper_tri_size)
                                }
 

@@ -80,7 +80,7 @@ class SamplerBase(ABC):
         from src.sensitivity.target_calc.peak_calc import PeakCalculator
         from src.sensitivity.target_calc.final_size_calc import FinalSizeCalculator
 
-        if self.target_var == "d_max":
+        if self.target_var in ["d_max", "r_max"]:
             target_calculator = FinalSizeCalculator(self.sim_obj.model)
         else:
             target_calculator = PeakCalculator(self.sim_obj.model)

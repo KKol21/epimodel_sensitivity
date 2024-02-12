@@ -40,7 +40,7 @@ class SimulationContact(SimulationBase):
         # User-defined params
         self.susc_choices = [1.0]
         self.r0_choices = [1.8]
-        self.target_var_choices = ["i_max"]  # ["i_max", "ic_max", "d_max"]
+        self.target_var_choices = ["d_max"]  # ["i_max", "ic_max", "d_max"]
         self.simulations = list(itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices))
 
     def run_sampling(self):
