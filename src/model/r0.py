@@ -22,6 +22,7 @@ class R0Generator:
                                if data["type"] in ["infected", "infectious"]}
         self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data.values()
                                  if trans["type"] == "infection"][0]
+        # Should there be multiple inflow states?
 
     def get_infected_states(self):
         from src.model.model_base import get_substates
@@ -62,7 +63,7 @@ class R0Generator:
         trans_mtx = generate_transition_matrix(states_dict=self.inf_state_dict, trans_data=self.data.trans_data,
                                                parameters=self.data.model_params, n_age=self.n_age,
                                                n_comp=self.n_states, c_idx=self.i).to(self.device)
-        end_state = {state: f"{state}_{data['n_substates'] - 1}" for state, data in self.data.state_data.items()}
+        end_state_dict = {state: f"{state}_{data['n_substates'] - 1}" for state, data in self.data.state_data.items()}
         basic_trans_dict = {trans: data for trans, data in self.data.trans_data.items()
                             if data['type'] == 'basic'
                             and isinf_state(data['source'])
@@ -70,7 +71,9 @@ class R0Generator:
 
         for trans, data in basic_trans_dict.items():
             param = self.data.model_params[data['param']]
-            trans_mtx[self._idx(end_state[data['source']]), self._idx(f"{data['target']}_0")] = param
+            source_idx = self._idx(end_state_dict[data['source']])
+            target_idx = self._idx(f"{data['target']}_0")
+            trans_mtx[source_idx, target_idx] = param
         return torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
@@ -87,11 +90,20 @@ class R0Generator:
         s_mtx = self.s_mtx
         n_states = self.n_states
 
-        infectious_states = get_infectious_states(state_data=self.state_data)
-
         f = torch.zeros((s_mtx, s_mtx)).to(self.device)
         susc_vec = self.params["susc"].reshape((-1, 1))
-        # Rate of infection for every infectious state
+        """
+        tms_params = self.data.tms_data["params"]
+
+        left_mul = 1
+        for non_inf_param in tms_params["non_infectious"].values():
+            left_mul *= self.params[non_inf_param]
+        right_mul = 1
+        for inf_param in tms_params["infectious"].values():
+            right_mul *= self.params[inf_param]
+        """
+        # Transmission rate for every infectious state
+        infectious_states = get_infectious_states(state_data=self.state_data)
         for inf_state in infectious_states:
             f[i[inf_state]:s_mtx:n_states, i[self.inf_inflow_state]:s_mtx:n_states] = torch.mul(susc_vec, contact_mtx.T)
         return f

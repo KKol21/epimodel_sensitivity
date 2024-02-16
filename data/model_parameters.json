@@ -19,26 +19,6 @@
         "value": 90.0,
         "description": "Duration of the vaccination campaign"
     },
-    "n_e": {
-        "value": 3,
-        "description": "Number of exposed states"
-    },
-    "n_i": {
-        "value": 5,
-        "description": "Number of infected states"
-    },
-    "n_h": {
-        "value": 1,
-        "description": "Number of hospitalized states"
-    },
-    "n_ic": {
-        "value": 1,
-        "description": "Number of intensive care states"
-    },
-    "n_icr": {
-        "value": 1,
-        "description": "Number of intensive care recovery states"
-    },
     "total_vaccines": {
         "value": 3000000,
         "description": "Number of vaccines given to a specific age group"

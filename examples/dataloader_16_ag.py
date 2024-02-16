@@ -87,3 +87,4 @@ class DataLoader(DataLoaderBase):
 
         self.state_data = model_structure["states"]
         self.trans_data = model_structure["transitions"]
+        self.tms_data = model_structure["transmission"]

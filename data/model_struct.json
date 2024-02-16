@@ -2,14 +2,16 @@
   "states": {
     "s": {
       "type": "susceptible",
-      "n_substates": 1},
+      "n_substates": 1
+    },
     "e": {
       "type": "infected",
       "n_substates": 3
     },
     "i": {
       "type": "infectious",
-      "n_substates": 5},
+      "n_substates": 5
+    },
     "ic": {
       "type": "recovering",
       "n_substates": 1
@@ -24,14 +26,45 @@
     },
     "r": {
       "type": "recovered",
-      "n_substates": 1},
+      "n_substates": 1
+    },
     "d": {
       "type": "dead",
-      "n_substates": 1},
+      "n_substates": 1
+    },
     "v": {
       "type": "recovered",
-      "n_substates": 1}
+      "n_substates": 1
+    }
+  },
+  "transmission": {
+    "params": {
+      "non_infectious": {
+        "susceptibility": "susc"
+      },
+      "infectious": {
+        "infectivity": "beta"
+      }
     },
+    "transmission_rule": [
+      {
+        "nodes": {
+          "source": "s",
+          "target": "e"
+        },
+        "actors": [
+          "is",
+          "ia",
+          "ip"
+        ],
+        "params": {
+          "is": null,
+          "ip": null,
+          "ia": "inf_a"
+        }
+      }
+    ]
+  },
   "transitions": {
     "trans_0": {
       "source": "s",
@@ -45,7 +78,9 @@
       "source": "i",
       "target": "r",
       "param": "gamma",
-      "distr": ["h_"],
+      "distr": [
+        "h_"
+      ],
       "type": "basic"
     },
     "trans_2": {
@@ -59,14 +94,19 @@
       "source": "i",
       "target": "ic",
       "param": "gamma",
-      "distr": ["h", "xi"],
+      "distr": [
+        "h",
+        "xi"
+      ],
       "type": "basic"
     },
     "trans_4": {
       "source": "ic",
       "target": "d",
       "param": "gamma_c",
-      "distr": ["mu"],
+      "distr": [
+        "mu"
+      ],
       "type": "basic"
     },
     "trans_5": {
@@ -80,7 +120,10 @@
       "source": "i",
       "target": "h",
       "param": "gamma",
-      "distr": ["h", "xi_"],
+      "distr": [
+        "h",
+        "xi_"
+      ],
       "type": "basic"
     },
     "trans_7": {
@@ -94,7 +137,9 @@
       "source": "ic",
       "target": "icr",
       "param": "gamma_c",
-      "distr": ["mu_"],
+      "distr": [
+        "mu_"
+      ],
       "type": "basic"
     },
     "trans_9": {
