@@ -57,7 +57,8 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         mtx = torch.zeros((n_samples, n_eq, n_eq)).to(self.device)
         for idx in range(n_samples):
             # Select idx. value from lhs table for each parameter
-            row_dict = {key: value[idx] if len(value.size()) < 2 else value[idx, :]
+            row_dict = {key: value[idx] if len(value.size()) < 2
+                        else value[idx, :]  # Select column/columns based on tensor size
                         for key, value in lhs_dict.items()}
             self.matrix_generator.ps.update(row_dict)
 

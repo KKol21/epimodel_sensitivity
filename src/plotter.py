@@ -10,16 +10,7 @@ from matplotlib.tri import Triangulation
 from examples.contact_sensitivity.sensitivity_model_contact import get_rectangular_matrix_from_upper_triu
 
 
-def get_target(target_var):
-    if target_var == "i_max":
-        return "fertőzöttek száma a csúcson"
-    elif target_var == "ic_max":
-        return "intenzív betegek száma a csúcson"
-    elif target_var == "d_max":
-        return "halottak száma"
-
-
-def generate_prcc_plot(sim_obj, param_names, target_var, prcc: np.ndarray, p_val, filename: str, r0):
+def generate_tornado_plot(sim_obj, labels, title, target_var, prcc: np.ndarray, p_val, filename: str, r0):
     """
     Generate a tornado plot to visualize the Partial Rank Correlation Coefficient (PRCC) values.
 
@@ -34,12 +25,11 @@ def generate_prcc_plot(sim_obj, param_names, target_var, prcc: np.ndarray, p_val
         None
     """
     prcc = np.round(prcc, 3)
-    target_var = get_target(target_var)
-    plt.title(f"PRCC értékei a vakcinák elosztásának\n"
-              f"Célváltozó: {target_var}\n "
+    plt.title(f"{title}\n" if title is not None else ""
+              f"Target variable: {target_var}\n "
               r"$\mathcal{R}_0=$" + str(r0), fontsize=15, wrap=True)
 
-    ys = range(len(param_names))[::-1]
+    ys = range(len(labels))[::-1]
 
     p_val_colors = ['green', 'yellow', 'red']
     thresholds = [0, 0.01, 0.1, 1]
@@ -78,16 +68,12 @@ def generate_prcc_plot(sim_obj, param_names, target_var, prcc: np.ndarray, p_val
     axes.xaxis.set_ticks_position('top')
 
     # Display age groups next to y axis
-    def get_age_group(param):
-        age_start = int(param.split('_')[2]) * 5
-        return f'{age_start}-{age_start + 4} ' if age_start != 75 else '75+ '
 
-    labels = list(map(get_age_group, param_names))
     plt.yticks(ys, labels)
 
     # Set the portion of the x- and y-axes to show
     plt.xlim(-1.1, 1.1)
-    plt.ylim(-1, len(param_names))
+    plt.ylim(-1, len(labels))
     # plt.text()
     plt.savefig(f'{sim_obj.folder_name}/prcc_plots/prcc_tornado_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')

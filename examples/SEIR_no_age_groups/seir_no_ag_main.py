@@ -59,3 +59,6 @@ data = SimpleNamespace(**{"model_params": model_params,
 
 sim = SimulationSEIR(data)
 sim.run_sampling()
+sim.calculate_prcc_for_simulations()
+sim.calculate_all_p_values()
+sim.plot_prcc_for_simulations()

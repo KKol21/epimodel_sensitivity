@@ -14,8 +14,9 @@ class SimulationBase(ABC):
         self.data = data
         self.test = True
 
-        self.n_samples = 2000
+        self.n_samples = 5000
         self.batch_size = 500
+        self.target_var = None
 
         self._get_initial_config()
 
@@ -26,7 +27,7 @@ class SimulationBase(ABC):
         self.device = self.data.device
         self.population = self.data.age_data.flatten()
         self.age_vector = self.population.reshape((-1, 1))
-        self.folder_name = PROJECT_PATH
+        self.folder_name = PROJECT_PATH + "\sens_data"
 
     @abstractmethod
     def run_sampling(self):

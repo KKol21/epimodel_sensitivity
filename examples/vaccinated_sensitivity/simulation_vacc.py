@@ -4,11 +4,11 @@ import os
 import numpy as np
 import torch
 
+from examples.vaccinated_sensitivity.sampler_vaccinated import SamplerVaccinated
 from examples.vaccinated_sensitivity.sensitivity_model_vaccinated import VaccinatedModel
 from src.model.r0 import R0Generator
+from src.plotter import generate_tornado_plot, generate_epidemic_plot, generate_epidemic_plot_
 from src.simulation_base import SimulationBase
-from examples.vaccinated_sensitivity.sampler_vaccinated import SamplerVaccinated
-from src.plotter import generate_prcc_plot, generate_epidemic_plot, generate_epidemic_plot_
 
 
 class SimulationVaccinated(SimulationBase):
@@ -37,7 +37,7 @@ class SimulationVaccinated(SimulationBase):
         self.susceptibles = self.model.get_initial_values()[self.model.idx("s_0")]
 
         self.susc_choices = [1.0]
-        self.r0_choices = [1.8, 3]
+        self.r0_choices = [1.8]
         self.target_var_choices = ["d_max", "ic_max"]  # ["i_max", "ic_max", "d_max"]
         self.simulations = list(itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices))
 
@@ -138,13 +138,23 @@ class SimulationVaccinated(SimulationBase):
 
         """
         os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
+
+        def get_age_group(idx, bin_size):
+            age_start = idx * bin_size
+            max_age = bin_size * (self.n_age - 1)
+            return f'{age_start}-{age_start + bin_size - 1} ' if age_start != max_age else f'{max_age}+ '
+
+        labels = [get_age_group(idx, 5) for idx in range(self.n_age)]
+
         for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
             p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
 
-            generate_prcc_plot(sim_obj=self, param_names=[f'daily_vac_{i}' for i in range(self.n_age)],
-                               target_var=target_var, prcc=prcc, p_val=p_val, filename=filename, r0=base_r0)
+            generate_tornado_plot(sim_obj=self, labels=labels,
+                                  title="PRCC values based on vaccine distribution samples",
+                                  target_var=target_var, prcc=prcc, p_val=p_val,
+                                  filename=filename, r0=base_r0)
 
     def calculate_all_p_values(self):
         for susc, base_r0, target_var in self.simulations:
