@@ -1,10 +1,13 @@
 import itertools
+import os
 
+import numpy as np
 import torch
 
 from examples.SEIR_no_age_groups.model_seir import SEIRModel
 from examples.SEIR_no_age_groups.sampler_seir import SamplerSEIR
 from src.model.r0 import R0Generator
+from src.plotter import generate_tornado_plot
 from src.simulation_base import SimulationBase
 
 
@@ -16,6 +19,7 @@ class SimulationSEIR(SimulationBase):
         # Initalize model
         self.model = SEIRModel(sim_obj=self)
         self.susceptibles = self.model.get_initial_values()[self.model.idx("s_0")]
+        self.param_names = ['alpha', 'beta', 'gamma']
 
         # User-defined params
         self.susc_choices = [1.0]
@@ -54,7 +58,24 @@ class SimulationSEIR(SimulationBase):
                                           sim_obj=self)
             param_generator.run_sampling()
 
-    def plot_prcc_from_sim(self):
+    def calculate_prcc_for_simulations(self):
         for susc, base_r0, target_var in self.simulations:
             filename = f'{susc}-{base_r0}-{target_var}'
             self.calculate_prcc(filename=filename)
+
+    def calculate_all_p_values(self):
+        for susc, base_r0, target_var in self.simulations:
+            filename = f'{susc}-{base_r0}-{target_var}'
+            self.calculate_p_values(filename=filename)
+    def plot_prcc_from_sim(self):
+        os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
+        labels = self.param_names
+
+        for susc, base_r0, target_var in self.simulations:
+            filename = f'{susc}-{base_r0}-{target_var}'
+            prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
+            p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
+
+            generate_tornado_plot(sim_obj=self, labels=labels, title="",
+                                  target_var=target_var, prcc=prcc,
+                                  p_val=p_val, filename=filename, r0=base_r0)
