@@ -19,9 +19,9 @@ def generate_transition_block(transition_param: float, n_states: int) -> torch.T
     """
     trans_block = torch.zeros((n_states, n_states))
     # Outflow from states (diagonal elements)
-    trans_block = trans_block.fill_diagonal_(-transition_param)
+    trans_block = trans_block.fill_diagonal_(-transition_param * n_states)
     # Inflow to states (elements under the diagonal)
-    trans_block[:n_states - 1, 1:] = trans_block[:n_states - 1, 1:].fill_diagonal_(transition_param)
+    trans_block[:n_states - 1, 1:] = trans_block[:n_states - 1, 1:].fill_diagonal_(transition_param * n_states)
     return trans_block
 
 
@@ -185,24 +185,22 @@ class MatrixGenerator:
         for trans in trans_data.values():
             # Iterate over the linear transitions
             if trans["type"] == "basic":
-                source = end_state[trans["source"]]
-                target = f"{trans['target']}_0"
                 trans_param = ps[trans["param"]]
-                distr = trans["distr"]
-                if distr is not None:
+                if (distr := trans["distr"]) is not None:
                     # Multiply the transition parameter by the distribution(s) given
                     trans_param *= self.mul_distr(distr)
-                B[idx(source), idx(target)] = trans_param
+                source = end_state[trans["source"]]
+                target = f"{trans['target']}_0"
+                n_substates = state_data[trans["source"]]["n_substates"]
+                B[idx(source), idx(target)] = trans_param * n_substates
         return B
 
     def mul_distr(self, distr: List[str]):
         result = 1
         for distr_param in distr:
             if distr_param[-1] == "_":
-                # Multiply by 1 - distribution
                 result *= 1 - self.ps[distr_param[:-1]]
             else:
-                # Multiply by distribution
                 result *= self.ps[distr_param]
         return result
 

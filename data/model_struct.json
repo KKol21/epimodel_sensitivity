@@ -38,13 +38,8 @@
     }
   },
   "transmission": {
-    "params": {
-      "non_infectious": {
-        "susceptibility": "susc"
-      },
-      "infectious": {
-        "infectivity": "beta"
-      }
+    "global_params": {
+      "s": "susceptibility"
     },
     "transmission_rule": [
       {

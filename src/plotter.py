@@ -87,9 +87,8 @@ def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_
         compartments = sim_obj.target_var_choices
 
     if plot_title is None:
-        target = get_target(target_var)
         plot_title = "Járványgörbe korcsoportokra aggregálva \n" \
-                     f"Vakcinálás célváltozója: {target}\n" \
+                     f"Célváltozó: {target_var}\n" \
                      f"R0={r0}"
 
     comp_colors = ['orange', 'red', 'black']

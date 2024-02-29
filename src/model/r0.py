@@ -63,17 +63,20 @@ class R0Generator:
         trans_mtx = generate_transition_matrix(states_dict=self.inf_state_dict, trans_data=self.data.trans_data,
                                                parameters=self.data.model_params, n_age=self.n_age,
                                                n_comp=self.n_states, c_idx=self.i).to(self.device)
+
         end_state_dict = {state: f"{state}_{data['n_substates'] - 1}" for state, data in self.data.state_data.items()}
         basic_trans_dict = {trans: data for trans, data in self.data.trans_data.items()
                             if data['type'] == 'basic'
                             and isinf_state(data['source'])
                             and isinf_state(data['target'])}
 
+        idx = self._idx
         for trans, data in basic_trans_dict.items():
             param = self.data.model_params[data['param']]
-            source_idx = self._idx(end_state_dict[data['source']])
-            target_idx = self._idx(f"{data['target']}_0")
-            trans_mtx[source_idx, target_idx] = param
+            source = end_state_dict[data['source']]
+            target = f"{data['target']}_0"
+            n_substates = self.state_data[data['source']]["n_substates"]
+            trans_mtx[idx(source), idx(target)] = param * n_substates
         return torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
