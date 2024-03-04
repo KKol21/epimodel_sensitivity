@@ -1,3 +1,5 @@
+import itertools
+import json
 import os
 from abc import ABC, abstractmethod
 
@@ -12,19 +14,27 @@ class SimulationBase(ABC):
     def __init__(self, data):
         # Load data
         self.data = data
+        self.device = data.device
         self.test = True
 
-        self.n_samples = 500
-        self.batch_size = 500
-        self.target_var = None
+        self._load_config(PROJECT_PATH + "/data/sampling_config.json")
+        self._load_simulation_data()
 
-        self._get_initial_config()
+    def _load_config(self, path):
+        with open(path) as f:
+            config_dict = json.load(f)
+        self.target_vars = config_dict["target_vars"]
 
-    def _get_initial_config(self):
+        self.sim_options = config_dict["sim_options"]
+        self.sim_configs = list(itertools.product(*[option for option in self.sim_options.values()]))
+        self.sampled_params = config_dict["sampled_params"]
+        self.n_samples = config_dict["n_samples"]
+        self.batch_size = config_dict["batch_size"]
+
+    def _load_simulation_data(self):
         self.params = self.data.model_params
         self.n_age = self.data.n_age
         self.cm = self.data.cm
-        self.device = self.data.device
         self.population = self.data.age_data.flatten()
         self.age_vector = self.population.reshape((-1, 1))
         self.folder_name = PROJECT_PATH + "\sens_data"
@@ -32,6 +42,15 @@ class SimulationBase(ABC):
     @abstractmethod
     def run_sampling(self):
         pass
+
+    def run_func_for_all_configs(self, func):
+        for option in self.sim_configs:
+            filename = self.get_filename(option)
+            func(filename)
+
+    def get_filename(self, option):
+        return "-".join([f"{value}" for key, value in zip(self.sim_options.keys(),
+                                                          option)])
 
     def calculate_prcc(self, filename):
         """
