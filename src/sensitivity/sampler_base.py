@@ -22,7 +22,6 @@ class SamplerBase(ABC):
     Attributes:
         sim_obj: The simulation object representing the underlying simulation model.
         sim_state (dict): The state of the simulation as a dictionary containing relevant params.
-        base_r0 (float): The base reproduction number (R0) of the simulation.
         lhs_boundaries (dict): The boundaries for Latin Hypercube Sampling (LHS) parameter ranges.
 
     Methods:
@@ -30,11 +29,10 @@ class SamplerBase(ABC):
             and collect simulation results.
     """
 
-    def __init__(self, sim_state: dict, sim_obj):
+    def __init__(self, sim_obj, sim_option):
         self.sim_obj = sim_obj
-        self.sim_state = sim_state
         self.lhs_boundaries = None
-        self.target_var = None
+        self.sim_option = sim_option
         self.n_samples = sim_obj.n_samples
         self.batch_size = sim_obj.batch_size
 
@@ -42,44 +40,34 @@ class SamplerBase(ABC):
     def run_sampling(self):
         pass
 
-    @abstractmethod
-    def _get_variable_parameters(self):
-        pass
-
     def _get_lhs_table(self):
-        n_samples = self.n_samples
-        batch_size = self.batch_size
-
         bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
         sampling = LHS(xlimits=bounds)
-        lhs_table = sampling(n_samples)
-
-        print(f"\n Simulation for {n_samples} samples ({self._get_variable_parameters()})")
-        print(f"Batch size: {batch_size}\n")
-        return lhs_table
+        return sampling(self.n_samples)
 
     def _get_sim_output(self, lhs_table):
-        output_generator = OutputGenerator(self.sim_obj, self.target_var)
-        sim_output = output_generator.get_output(lhs_table=lhs_table)
-        # Sort tables by target values
-        sorted_idx = sim_output.argsort()
-        sim_output = sim_output[sorted_idx]
-        lhs_table = lhs_table[sorted_idx.cpu()]
+        print(f"\n Simulation for {self.n_samples} samples ({self.sim_obj.get_filename(self.sim_option)})")
+        print(f"Batch size: {self.batch_size}\n")
+
+        output_generator = OutputGenerator(self.sim_obj, self.sim_option)
+        sim_outputs = output_generator.get_output(lhs_table=lhs_table)
 
         time.sleep(0.3)
 
         # Save samples, target values
-        self._save_output(output=lhs_table, output_name='lhs')
-        self._save_output(output=sim_output.cpu(), output_name='simulations')
+        filename = self.sim_obj.get_filename(self.sim_option)
+        self.save_output(output=lhs_table, output_name='lhs', filename=filename)
+        for target_var, sim_output in sim_outputs.items():
+            self.save_output(output=sim_output.cpu(), output_name='simulations', filename=filename + target_var)
 
-    def _save_output(self, output, output_name):
+    def save_output(self, output, output_name, filename):
         # Create directories for saving calculation outputs
         folder_name = self.sim_obj.folder_name
         os.makedirs(folder_name, exist_ok=True)
 
         # Save LHS output
         os.makedirs(f"{folder_name}/{output_name}", exist_ok=True)
-        filename = f"{folder_name}/{output_name}/{output_name}_{self._get_variable_parameters()}"
+        filename = f"{folder_name}/{output_name}/{output_name}_{filename}"
         np.savetxt(fname=filename + ".csv", X=output, delimiter=";")
 
 
