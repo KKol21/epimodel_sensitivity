@@ -7,6 +7,7 @@ import numpy as np
 from scipy import stats as ss
 
 from src.dataloader import PROJECT_PATH
+from src.model.r0 import R0Generator
 from src.sensitivity.prcc import get_prcc_values
 
 
@@ -22,14 +23,19 @@ class SimulationBase(ABC):
 
     def _load_config(self, path):
         with open(path) as f:
-            config_dict = json.load(f)
-        self.target_vars = config_dict["target_vars"]
+            config = json.load(f)
+        self.target_vars = config["target_vars"]
 
-        self.sim_options = config_dict["sim_options"]
-        self.sim_configs = list(itertools.product(*[option for option in self.sim_options.values()]))
-        self.sampled_params = config_dict["sampled_params"]
-        self.n_samples = config_dict["n_samples"]
-        self.batch_size = config_dict["batch_size"]
+        self.sim_options_dict = config["sim_options"]
+
+        self.sim_options_prod = vals[0] \
+            if len(vals := list(self.sim_options_dict.values())) == 1 \
+            else list(itertools.product(*vals))
+
+        self.sampled_params = config["sampled_params"]
+        self.n_samples = config["n_samples"]
+        self.batch_size = config["batch_size"]
+        self.test = config["test"]
 
     def _load_simulation_data(self):
         self.params = self.data.model_params
@@ -38,19 +44,28 @@ class SimulationBase(ABC):
         self.population = self.data.age_data.flatten()
         self.age_vector = self.population.reshape((-1, 1))
         self.folder_name = PROJECT_PATH + "\sens_data"
+        self.susceptibles = None
 
     @abstractmethod
     def run_sampling(self):
         pass
 
     def run_func_for_all_configs(self, func):
-        for option in self.sim_configs:
+        for option in self.sim_options_prod:
             filename = self.get_filename(option)
             func(filename)
 
     def get_filename(self, option):
-        return "-".join([f"{value}" for key, value in zip(self.sim_options.keys(),
-                                                          option)])
+        return "_".join([f"{key}-{value}" for key, value in
+                         zip(self.sim_options_dict.keys(), option)])
+
+    def get_beta_from_r0(self, base_r0):
+        r0generator = R0Generator(self.data)
+        if isinstance(base_r0, tuple):
+            base_r0 = base_r0[0]
+        return base_r0 / r0generator.get_eig_val(contact_mtx=self.cm,
+                                                 susceptibles=self.susceptibles.reshape(1, -1),
+                                                 population=self.population)
 
     def calculate_prcc(self, filename):
         """

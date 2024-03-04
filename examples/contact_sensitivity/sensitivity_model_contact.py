@@ -1,11 +1,12 @@
 import numpy as np
 import torch
 
+from src.model.r0 import R0Generator
 from src.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 
 class ContactModel(SensitivityModelBase):
-    def __init__(self, sim_obj, sim_state):
+    def __init__(self, sim_obj, base_r0):
         """
         Initializes the VaccinatedModel class.
 
@@ -19,9 +20,9 @@ class ContactModel(SensitivityModelBase):
         """
         super().__init__(sim_obj=sim_obj)
 
+        self.base_r0 = base_r0
         self.s_mtx = self.n_age * self.n_comp
         self.upper_tri_size = sim_obj.upper_tri_size
-        self.sim_state = sim_state
 
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]
@@ -46,13 +47,10 @@ class ContactModel(SensitivityModelBase):
         return T
 
     def _get_betas_from_contacts(self, cm_samples):
-        if self.sim_state is None:
-            raise Exception('Simulation state must be provided!')
-        base_r0 = self.sim_state["base_r0"]
-        r0gen = self.sim_state["r0generator"]
-        betas = [base_r0 / r0gen.get_eig_val(contact_mtx=cm,
-                                             susceptibles=self.sim_obj.susceptibles.flatten(),
-                                             population=self.sim_obj.population)
+        r0gen = R0Generator(self.data)
+        betas = [self.base_r0 / r0gen.get_eig_val(contact_mtx=cm,
+                                                  susceptibles=self.sim_obj.susceptibles.flatten(),
+                                                  population=self.sim_obj.population)
                  for cm in cm_samples]
         return torch.tensor(betas, device=self.device)
 
