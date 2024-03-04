@@ -3,8 +3,9 @@ import time
 from abc import ABC, abstractmethod
 
 import numpy as np
-import torch
 from smt.sampling_methods import LHS
+
+from src.sensitivity.target_calc.output_generator import OutputGenerator
 
 
 class SamplerBase(ABC):
@@ -58,7 +59,8 @@ class SamplerBase(ABC):
         return lhs_table
 
     def _get_sim_output(self, lhs_table):
-        sim_output = self.calculate_target(lhs_table=lhs_table)
+        output_generator = OutputGenerator(self.sim_obj, self.target_var)
+        sim_output = output_generator.get_output(lhs_table=lhs_table)
         # Sort tables by target values
         sorted_idx = sim_output.argsort()
         sim_output = sim_output[sorted_idx]
@@ -69,25 +71,6 @@ class SamplerBase(ABC):
         # Save samples, target values
         self._save_output(output=lhs_table, output_name='lhs')
         self._save_output(output=sim_output.cpu(), output_name='simulations')
-
-    def calculate_target(self, lhs_table):
-        #  from src.sensitivity.target_calc.r0_calc import R0Calculator
-
-        #  if self.target_var == "r0":
-        #      r0_calculator = R0Calculator(self.sim_obj.model)
-        #      return r0_calculator.calculate_R0s(lhs_table=lhs_table)
-
-        from src.sensitivity.target_calc.peak_calc import PeakCalculator
-        from src.sensitivity.target_calc.final_size_calc import FinalSizeCalculator
-
-        if self.target_var in ["d_max", "r_max"]:
-            target_calculator = FinalSizeCalculator(self.sim_obj.model)
-        else:
-            target_calculator = PeakCalculator(self.sim_obj.model)
-        lhs = torch.from_numpy(lhs_table).float().to(self.sim_obj.device)
-        return target_calculator.get_output(lhs_table=lhs,
-                                            batch_size=self.batch_size,
-                                            target_var=self.target_var)
 
     def _save_output(self, output, output_name):
         # Create directories for saving calculation outputs
