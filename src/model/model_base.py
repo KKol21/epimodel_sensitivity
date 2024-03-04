@@ -25,7 +25,7 @@ class EpidemicModelBase(ABC):
 
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
         self.n_eq = self.n_age * self.n_comp
-        self.is_vaccinated = "vaccination" in [trans["type"] for trans in self.data.trans_data.values()]
+        self.is_vaccinated = "vaccination" in [trans["type"] for trans in self.data.trans_data]
 
         from src.model.matrix_generator import MatrixGenerator
         self.matrix_generator = MatrixGenerator(model=self, cm=data.cm)

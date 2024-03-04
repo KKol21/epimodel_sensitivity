@@ -20,14 +20,13 @@ class R0Generator:
         self._get_e()
         self.inf_state_dict = {state: data for state, data in self.state_data.items()
                                if data["type"] in ["infected", "infectious"]}
-        self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data.values()
+        self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data
                                  if trans["type"] == "infection"][0]
-        # Should there be multiple inflow states?
 
     def get_infected_states(self):
         from src.model.model_base import get_substates
         states = []
-        for state, data in self.data.state_data.items():
+        for state, data in self.state_data.items():
             if data["type"] in ["infected", "infectious"]:
                 states += get_substates(data["n_substates"], state)
         return states
@@ -61,21 +60,21 @@ class R0Generator:
             return self.state_data[state]['type'] in ['infected', 'infectious']
 
         trans_mtx = generate_transition_matrix(states_dict=self.inf_state_dict, trans_data=self.data.trans_data,
-                                               parameters=self.data.model_params, n_age=self.n_age,
+                                               parameters=self.params, n_age=self.n_age,
                                                n_comp=self.n_states, c_idx=self.i).to(self.device)
 
-        end_state_dict = {state: f"{state}_{data['n_substates'] - 1}" for state, data in self.data.state_data.items()}
-        basic_trans_dict = {trans: data for trans, data in self.data.trans_data.items()
-                            if data['type'] == 'basic'
-                            and isinf_state(data['source'])
-                            and isinf_state(data['target'])}
+        end_state_dict = {state: f"{state}_{data['n_substates'] - 1}" for state, data in self.state_data.items()}
+        basic_trans = [trans for trans in self.trans_data
+                       if trans['type'] == 'basic'
+                       and isinf_state(trans['source'])
+                       and isinf_state(trans['target'])]
 
         idx = self._idx
-        for trans, data in basic_trans_dict.items():
-            param = self.data.model_params[data['param']]
-            source = end_state_dict[data['source']]
-            target = f"{data['target']}_0"
-            n_substates = self.state_data[data['source']]["n_substates"]
+        for trans in basic_trans:
+            param = self.params[trans['param']]
+            source = end_state_dict[trans['source']]
+            target = f"{trans['target']}_0"
+            n_substates = self.state_data[trans['source']]["n_substates"]
             trans_mtx[idx(source), idx(target)] = param * n_substates
         return torch.linalg.inv(trans_mtx)
 
@@ -104,9 +103,13 @@ class R0Generator:
         right_mul = 1
         for inf_param in tms_params["infectious"].values():
             right_mul *= self.params[inf_param]
+                for tms in self.data.tms_data["transmission_rules"]:
+            for actor in tms.actors:
+                for substate in self.g  
         """
         # Transmission rate for every infectious state
         infectious_states = get_infectious_states(state_data=self.state_data)
+
         for inf_state in infectious_states:
             f[i[inf_state]:s_mtx:n_states, i[self.inf_inflow_state]:s_mtx:n_states] = torch.mul(susc_vec, contact_mtx.T)
         return f

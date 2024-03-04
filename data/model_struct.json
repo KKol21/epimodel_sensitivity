@@ -41,7 +41,7 @@
     "global_params": {
       "s": "susceptibility"
     },
-    "transmission_rule": [
+    "transmission_rules": [
       {
         "nodes": {
           "source": "s",
@@ -60,16 +60,15 @@
       }
     ]
   },
-  "transitions": {
-    "trans_0": {
+  "transitions": [
+    {
       "source": "s",
       "target": "e",
       "param": "beta",
       "distr": null,
-      "type": "infection",
-      "actor": "i"
+      "type": "infection"
     },
-    "trans_1": {
+    {
       "source": "i",
       "target": "r",
       "param": "gamma",
@@ -78,14 +77,14 @@
       ],
       "type": "basic"
     },
-    "trans_2": {
+    {
       "source": "icr",
       "target": "r",
       "param": "gamma_cr",
       "distr": null,
       "type": "basic"
     },
-    "trans_3": {
+    {
       "source": "i",
       "target": "ic",
       "param": "gamma",
@@ -95,7 +94,7 @@
       ],
       "type": "basic"
     },
-    "trans_4": {
+    {
       "source": "ic",
       "target": "d",
       "param": "gamma_c",
@@ -104,14 +103,14 @@
       ],
       "type": "basic"
     },
-    "trans_5": {
+    {
       "source": "s",
       "target": "v",
       "param": null,
       "distr": null,
       "type": "vaccination"
     },
-    "trans_6": {
+    {
       "source": "i",
       "target": "h",
       "param": "gamma",
@@ -121,14 +120,14 @@
       ],
       "type": "basic"
     },
-    "trans_7": {
+    {
       "source": "h",
       "target": "r",
       "param": "gamma_h",
       "distr": null,
       "type": "basic"
     },
-    "trans_8": {
+    {
       "source": "ic",
       "target": "icr",
       "param": "gamma_c",
@@ -137,12 +136,12 @@
       ],
       "type": "basic"
     },
-    "trans_9": {
+    {
       "source": "e",
       "target": "i",
       "param": "alpha",
       "distr": null,
       "type": "basic"
     }
-  }
+  ]
 }

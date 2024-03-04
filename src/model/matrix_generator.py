@@ -26,9 +26,9 @@ def generate_transition_block(transition_param: float, n_states: int) -> torch.T
 
 
 def get_trans_param(state: str, trans_data: dict):
-    for data in trans_data.values():
-        if data["source"] == state:
-            return data["param"]
+    for trans in trans_data:
+        if trans["source"] == state:
+            return trans["param"]
     raise Exception(f"No transition parameter was provided for state {state}")
 
 
@@ -123,7 +123,7 @@ class MatrixGenerator:
         self.device = model.device
         self.idx = model.idx
         self.c_idx = model.c_idx
-        self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data.values()
+        self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data
                                  if trans["type"] == "infection"][0]
         self.infectious_states = get_infectious_states(self.state_data)
 
@@ -182,17 +182,16 @@ class MatrixGenerator:
         # Fill in the rest of the first-order terms
         idx = self.idx
         end_state = {state: f"{state}_{data['n_substates'] - 1}" for state, data in state_data.items()}
-        for trans in trans_data.values():
+        for trans in [trans for trans in trans_data if trans["type"] == "basic"]:
             # Iterate over the linear transitions
-            if trans["type"] == "basic":
-                trans_param = ps[trans["param"]]
-                if (distr := trans["distr"]) is not None:
-                    # Multiply the transition parameter by the distribution(s) given
-                    trans_param *= self.mul_distr(distr)
-                source = end_state[trans["source"]]
-                target = f"{trans['target']}_0"
-                n_substates = state_data[trans["source"]]["n_substates"]
-                B[idx(source), idx(target)] = trans_param * n_substates
+            trans_param = ps[trans["param"]]
+            if (distr := trans["distr"]) is not None:
+                # Multiply the transition parameter by the distribution(s) given
+                trans_param *= self.mul_distr(distr)
+            source = end_state[trans["source"]]
+            target = f"{trans['target']}_0"
+            n_substates = state_data[trans["source"]]["n_substates"]
+            B[idx(source), idx(target)] = trans_param * n_substates
         return B
 
     def mul_distr(self, distr: List[str]):

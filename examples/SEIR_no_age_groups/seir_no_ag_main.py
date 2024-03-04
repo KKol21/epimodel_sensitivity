@@ -1,7 +1,8 @@
 from types import SimpleNamespace
-from examples.SEIR_no_age_groups.simulation_seir import SimulationSEIR
 
 import torch
+
+from examples.SEIR_no_age_groups.simulation_seir import SimulationSEIR
 
 model_params = {"gamma": 0.2, "beta": 0.2, "alpha": 0.3}
 
@@ -25,8 +26,7 @@ state_data = {
         "n_substates": 1}
 }
 
-trans_data = {
-    "trans_0": {
+trans_data = [{
         "source": "s",
         "target": "e",
         "param": "beta",
@@ -34,20 +34,19 @@ trans_data = {
         "type": "infection",
         "actor": "i"
     },
-    "trans_1": {
+    {
         "source": "i",
         "target": "r",
         "param": "gamma",
         "distr": None,
         "type": "basic"},
-    "trans_2": {
+    {
         "source": "e",
         "target": "i",
         "param": "alpha",
         "distr": None,
         "type": "basic"
-    }
-}
+    }]
 
 data = SimpleNamespace(**{"model_params": model_params,
                           "cm": contact_data,
