@@ -1,10 +1,9 @@
-import itertools
+from itertools import product
 import os
 
 import numpy as np
 
 from examples.contact_sensitivity.sensitivity_model_contact import ContactModel
-from src.model.r0 import R0Generator
 from examples.contact_sensitivity.sampler_contact import SamplerContact
 from src.simulation_base import SimulationBase
 from src.plotter import plot_prcc_p_values_as_heatmap
@@ -48,20 +47,25 @@ class SimulationContact(SimulationBase):
         'sens_data_contact/simulations' directories, respectively.
 
         """
-        for base_r0 in self.sim_options_prod:
+        for sim_opt in self.sim_options_prod:
+            base_r0 = sim_opt["r0"]
             beta = self.get_beta_from_r0(base_r0)
             self.params.update({"beta": beta})
             # Generate matrices used in model representation
             self.model = ContactModel(sim_obj=self, base_r0=base_r0)
             self.model.initialize_matrices()
 
-            param_generator = SamplerContact(sim_obj=self, sim_option=[base_r0])
+            param_generator = SamplerContact(sim_obj=self, sim_option=sim_opt)
             param_generator.run_sampling()
 
     def calculate_prcc_for_simulations(self):
-        for option, target_var in zip(self.sim_options_prod, self.target_vars):
-            filename = self.get_filename(option) + f"-{target_var}"
-            self.calculate_prcc(filename=filename)
+        for option, target_var in product(self.sim_options_prod, self.target_vars):
+            self.calculate_prcc(option, target_var)
+
+    def calculate_all_p_values(self):
+        for option, target in product():
+            filename = self.get_filename(option, target)
+            self.calculate_p_values(filename=filename)
 
     def plot_prcc_and_p_values(self):
         """
@@ -85,8 +89,3 @@ class SimulationContact(SimulationBase):
                                           p_values=p_val,
                                           filename_to_save=f"{self.folder_name}/prcc_p_val_plots/{filename}.pdf",
                                           plot_title="test")
-
-    def calculate_all_p_values(self):
-        for susc, base_r0, target_var in self.simulations:
-            filename = f'{susc}-{base_r0}-{target_var}'
-            self.calculate_p_values(filename=filename)

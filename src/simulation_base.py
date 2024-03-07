@@ -28,14 +28,38 @@ class SimulationBase(ABC):
 
         self.sim_options_dict = config["sim_options"]
 
-        self.sim_options_prod = vals[0] \
-            if len(vals := list(self.sim_options_dict.values())) == 1 \
-            else list(itertools.product(*vals))
+        self.sim_options_prod = self.process_sim_options()
 
         self.sampled_params = config["sampled_params"]
         self.n_samples = config["n_samples"]
         self.batch_size = config["batch_size"]
         self.test = config["test"]
+
+    def process_sim_options(self):
+        sim_opt = self.sim_options_dict
+
+        def merge_dicts(ds):
+            d_out = {key: value for d in ds for key, value in d.items()}
+            return d_out
+
+        if len(sim_opt) == 1:
+            key = next(iter(sim_opt))
+            return self.flatten_list_in_dict(sim_opt, key)
+        flattened_options = [self.flatten_dict(sim_opt, key) for key in sim_opt.keys()]
+        options_product = list(itertools.product(*flattened_options))
+        return [merge_dicts(option) for option in options_product]
+
+    def flatten_dict(self, d, key):
+        if isinstance(d[key], dict):
+            return self.flatten_dict_in_dict(d, key)
+        else:
+            return self.flatten_list_in_dict(d, key)
+
+    def flatten_list_in_dict(self, d, key):
+        return [{key: value} for value in d[key]]
+
+    def flatten_dict_in_dict(self, d, key):
+        return [{key: {subkey: value}} for subkey, value in d[key].items()]
 
     def _load_simulation_data(self):
         self.params = self.data.model_params
@@ -56,8 +80,15 @@ class SimulationBase(ABC):
             func(filename)
 
     def get_filename(self, option):
-        return "_".join([f"{key}-{value}" for key, value in
-                         zip(self.sim_options_dict.keys(), option)])
+        return "_".join([self.parse_param_name(option, key) for key in option.keys()])
+
+    def parse_param_name(self, option, key):
+        if isinstance(option[key], dict):
+            subkey = next(iter(option[key]))
+            return f"{key}-{subkey}"
+        else:
+            return f"{key}-{option[key]}"
+
 
     def get_beta_from_r0(self, base_r0):
         r0generator = R0Generator(self.data)

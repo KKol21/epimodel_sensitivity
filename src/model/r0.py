@@ -35,7 +35,7 @@ class R0Generator:
         return torch.arange(self.n_age * self.n_states) % self.n_states == self.i[state]
 
     def get_eig_val(self, susceptibles: torch.Tensor, population: torch.Tensor,
-                    contact_mtx: torch.Tensor = None) -> float:
+                    contact_mtx: torch.Tensor) -> float:
         # contact matrix needed for effective reproduction number: [c_{j,i} * S_i(t) / N_i(t)]
         cm = contact_mtx / population.reshape((-1, 1))
         cm = cm * susceptibles

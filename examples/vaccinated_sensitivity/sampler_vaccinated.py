@@ -41,7 +41,7 @@ class SamplerVaccinated(SamplerBase):
         optimal_vacc = lhs_table[0]
 
         # Save the most optimal vaccination strategy found with sampling
-        self._save_output(output=optimal_vacc, output_name='optimal_vaccination')
+        self.save_output(output=optimal_vacc, output_name='optimal_vaccination')
 
     def _get_variable_parameters(self):
         return f'{self.susc}-{self.base_r0}-{self.target_var}'

@@ -58,7 +58,7 @@ class SamplerBase(ABC):
         filename = self.sim_obj.get_filename(self.sim_option)
         self.save_output(output=lhs_table, output_name='lhs', filename=filename)
         for target_var, sim_output in sim_outputs.items():
-            self.save_output(output=sim_output.cpu(), output_name='simulations', filename=filename + target_var)
+            self.save_output(output=sim_output.cpu(), output_name='simulations', filename=filename + f"_{target_var}")
 
     def save_output(self, output, output_name, filename):
         # Create directories for saving calculation outputs
