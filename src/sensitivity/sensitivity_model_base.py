@@ -64,3 +64,6 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
 
             mtx[idx, :, :] = self.matrix_generator.generate_matrix(matrix_name)
         return mtx
+
+    def get_initial_values(self):
+        return self.get_initial_values_from_dict(self.sim_obj.init_vals)

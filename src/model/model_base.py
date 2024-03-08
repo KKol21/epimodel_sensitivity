@@ -65,7 +65,7 @@ class EpidemicModelBase(ABC):
             compartments += get_substates(data["n_substates"], name)
         return compartments
 
-    def get_initial_values(self):
+    def get_initial_values_from_dict(self, init_val_dict) -> torch.FloatTensor:
         """
 
         This method retrieves the initial values for the model. It sets the initial value for the infected compartment
@@ -77,13 +77,14 @@ class EpidemicModelBase(ABC):
 
         """
         iv = torch.zeros(self.n_eq).to(self.device)
-        age_group = self.n_age // 4
-        iv[age_group + self.c_idx['i_0']] = 1
         iv[self.idx('s_0')] = self.population
-        iv[age_group * self.n_comp + self.c_idx['s_0']] -= 1
+        for comp, comp_iv in init_val_dict.items():
+            comp_iv = torch.FloatTensor(comp_iv, device=self.device)
+            iv[self.idx(f"{comp}_0")] = comp_iv
+            iv[self.idx('s_0')] -= comp_iv
         return iv
 
-    def idx(self, state: str) -> bool:
+    def idx(self, state: str) -> torch.BoolTensor:
         return torch.arange(self.n_eq) % self.n_comp == self.c_idx[state]
 
     def aggregate_by_age(self, solution, comp):
