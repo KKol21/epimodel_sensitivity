@@ -5,7 +5,7 @@ import numpy as np
 
 from examples.contact_sensitivity.sensitivity_model_contact import ContactModel
 from examples.contact_sensitivity.sampler_contact import SamplerContact
-from src.simulation_base import SimulationBase
+from src.simulation_base import SimulationBase, PROJECT_PATH
 from src.plotter import plot_prcc_p_values_as_heatmap
 
 
@@ -31,11 +31,10 @@ class SimulationContact(SimulationBase):
         self.upper_tri_size = int((self.n_age + 1) * self.n_age / 2)
         self.folder_name += "/sens_data_contact"
 
-        # Initalize model
+        self._load_config(PROJECT_PATH + "/examples/contact_sensitivity/contact_sampling_config.json")
+
         self.model = ContactModel(sim_obj=self, base_r0=None)
         self.susceptibles = self.model.get_initial_values()[self.model.idx("s_0")]
-
-        self.simulations = None
 
     def run_sampling(self):
         """
@@ -59,12 +58,13 @@ class SimulationContact(SimulationBase):
             param_generator.run_sampling()
 
     def calculate_prcc_for_simulations(self):
-        for option, target_var in product(self.sim_options_prod, self.target_vars):
-            self.calculate_prcc(option, target_var)
+        for option, target in product(self.sim_options_prod, self.target_vars):
+            filename = self.get_filename(option) + f"_{target}"
+            self.calculate_prcc(filename)
 
     def calculate_all_p_values(self):
-        for option, target in product():
-            filename = self.get_filename(option, target)
+        for option, target in product(self.sim_options_prod, self.target_vars):
+            filename = self.get_filename(option) + f"_{target}"
             self.calculate_p_values(filename=filename)
 
     def plot_prcc_and_p_values(self):
@@ -79,8 +79,8 @@ class SimulationContact(SimulationBase):
 
         """
         os.makedirs(f'{self.folder_name}/prcc_p_val_plots', exist_ok=True)
-        for susc, base_r0, target_var in self.simulations:
-            filename = f'{susc}-{base_r0}-{target_var}'
+        for option, target in product(self.sim_options_prod, self.target_vars):
+            filename = self.get_filename(option) + f"_{target}"
             prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
             p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
 

@@ -18,8 +18,16 @@ class SimulationBase(ABC):
         self.device = data.device
         self.test = True
 
-        self._load_config(PROJECT_PATH + "/data/sampling_config.json")
         self._load_simulation_data()
+
+    def _load_simulation_data(self):
+        self.params = self.data.model_params
+        self.n_age = self.data.n_age
+        self.cm = self.data.cm
+        self.population = self.data.age_data.flatten()
+        self.age_vector = self.population.reshape((-1, 1))
+        self.folder_name = PROJECT_PATH + "\sens_data"
+        self.susceptibles = None
 
     def _load_config(self, path):
         with open(path) as f:
@@ -34,17 +42,19 @@ class SimulationBase(ABC):
         self.n_samples = config["n_samples"]
         self.batch_size = config["batch_size"]
         self.test = config["test"]
+        self.init_vals = config["init_vals"]
 
     def process_sim_options(self):
         sim_opt = self.sim_options_dict
+
+        if len(sim_opt) == 1:
+            key = next(iter(sim_opt))
+            return self.flatten_list_in_dict(sim_opt, key)
 
         def merge_dicts(ds):
             d_out = {key: value for d in ds for key, value in d.items()}
             return d_out
 
-        if len(sim_opt) == 1:
-            key = next(iter(sim_opt))
-            return self.flatten_list_in_dict(sim_opt, key)
         flattened_options = [self.flatten_dict(sim_opt, key) for key in sim_opt.keys()]
         options_product = list(itertools.product(*flattened_options))
         return [merge_dicts(option) for option in options_product]
@@ -55,28 +65,21 @@ class SimulationBase(ABC):
         else:
             return self.flatten_list_in_dict(d, key)
 
-    def flatten_list_in_dict(self, d, key):
+    @staticmethod
+    def flatten_list_in_dict(d, key):
         return [{key: value} for value in d[key]]
 
-    def flatten_dict_in_dict(self, d, key):
+    @staticmethod
+    def flatten_dict_in_dict(d, key):
         return [{key: {subkey: value}} for subkey, value in d[key].items()]
-
-    def _load_simulation_data(self):
-        self.params = self.data.model_params
-        self.n_age = self.data.n_age
-        self.cm = self.data.cm
-        self.population = self.data.age_data.flatten()
-        self.age_vector = self.population.reshape((-1, 1))
-        self.folder_name = PROJECT_PATH + "\sens_data"
-        self.susceptibles = None
 
     @abstractmethod
     def run_sampling(self):
         pass
 
     def run_func_for_all_configs(self, func):
-        for option in self.sim_options_prod:
-            filename = self.get_filename(option)
+        for option, target in itertools.product(self.sim_options_prod, self.target_vars):
+            filename = self.get_filename(option) + f"_{target}"
             func(filename)
 
     def get_filename(self, option):
@@ -88,7 +91,6 @@ class SimulationBase(ABC):
             return f"{key}-{subkey}"
         else:
             return f"{key}-{option[key]}"
-
 
     def get_beta_from_r0(self, base_r0):
         r0generator = R0Generator(self.data)
@@ -109,7 +111,8 @@ class SimulationBase(ABC):
         """
         folder_name = self.folder_name
         os.makedirs(f"{folder_name}/prcc", exist_ok=True)
-        lhs_table = np.loadtxt(f'{folder_name}/lhs/lhs_{filename}.csv', delimiter=';')
+        filename_without_target = filename[:filename[:filename.rfind("_")].rfind("_")]
+        lhs_table = np.loadtxt(f'{folder_name}/lhs/lhs_{filename_without_target}.csv', delimiter=';')
         sim_output = np.loadtxt(f'{folder_name}/simulations/simulations_{filename}.csv', delimiter=';')
 
         prcc = get_prcc_values(np.c_[lhs_table, sim_output.T])
