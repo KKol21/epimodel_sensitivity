@@ -10,54 +10,14 @@ contact_data = torch.tensor([[1]])
 
 age_data = torch.tensor([[10000]])
 
-state_data = {
-    "s": {
-        "type": "susceptible",
-        "n_substates": 1},
-    "e": {
-        "type": "infected",
-        "n_substates": 1
-    },
-    "i": {
-        "type": "infectious",
-        "n_substates": 1},
-    "r": {
-        "type": "recovered",
-        "n_substates": 1}
-}
-
-trans_data = [{
-        "source": "s",
-        "target": "e",
-        "param": "beta",
-        "distr": None,
-        "type": "infection",
-        "actor": "i"
-    },
-    {
-        "source": "i",
-        "target": "r",
-        "param": "gamma",
-        "distr": None,
-        "type": "basic"},
-    {
-        "source": "e",
-        "target": "i",
-        "param": "alpha",
-        "distr": None,
-        "type": "basic"
-    }]
-
 data = SimpleNamespace(**{"model_params": model_params,
                           "cm": contact_data,
                           "age_data": age_data,
-                          "state_data": state_data,
-                          "trans_data": trans_data,
                           "n_age": 1,
                           "device": "cpu"})
 
 sim = SimulationSEIR(data)
 sim.run_sampling()
-sim.calculate_prcc_for_simulations()
+sim.calculate_all_prcc()
 sim.calculate_all_p_values()
-sim.plot_prcc_for_simulations()
+sim.run_func_for_all_configs(sim.plot_prcc_for_simulations)

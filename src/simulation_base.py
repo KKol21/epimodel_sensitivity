@@ -39,7 +39,7 @@ class SimulationBase(ABC):
             model_structure = json.load(f)
 
         self.state_data = model_structure["states"]
-        self.trans_data = model_structure["transitions"]
+        self.trans_data = model_structure["transition"]
         self.tms_data = model_structure["transmission"]
         self.model_struct = {
             "state_data": self.state_data,

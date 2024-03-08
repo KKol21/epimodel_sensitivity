@@ -1,4 +1,3 @@
-import itertools
 import os
 
 import numpy as np
@@ -6,26 +5,20 @@ import torch
 
 from examples.SEIR_no_age_groups.model_seir import SEIRModel
 from examples.SEIR_no_age_groups.sampler_seir import SamplerSEIR
-from src.model.r0 import R0Generator
 from src.plotter import generate_tornado_plot
 from src.simulation_base import SimulationBase
+from src.dataloader import PROJECT_PATH
 
 
 class SimulationSEIR(SimulationBase):
     def __init__(self, data):
-        super().__init__(data)
+        model_struct_path = PROJECT_PATH + "/examples/SEIR_no_age_groups/model_struct.json"
+        config_path = PROJECT_PATH + "/examples/SEIR_no_age_groups/sampling_config.json"
+        super().__init__(data, model_struct_path=model_struct_path, config_path=config_path)
         self.folder_name += "/sens_data_SEIR_no_ag"
 
         # Initalize model
         self.model = SEIRModel(sim_obj=self)
-        self.susceptibles = self.model.get_initial_values()[self.model.idx("s_0")]
-
-        # User-defined params
-        self.susc_choices = [1.0]
-        self.r0_choices = [1.8]
-        self.param_names = ['alpha', 'beta', 'gamma']
-        self.target_var_choices = ["i_max", "r_max"]  # ["i_max", "ic_max", "d_max"]
-        self.simulations = list(itertools.product(self.susc_choices, self.r0_choices, self.target_var_choices))
 
     def run_sampling(self):
         """
@@ -37,46 +30,26 @@ class SimulationSEIR(SimulationBase):
         'sens_data_contact/simulations' directories, respectively.
 
         """
-        susceptibility = torch.ones(self.n_age).to(self.data.device)
-        for susc, base_r0, target_var in self.simulations:
-            susceptibility[:4] = susc
-            self.params.update({"susc": susceptibility})
-            r0generator = R0Generator(self.data)
-            # Calculate base transmission rate
-            beta = base_r0 / r0generator.get_eig_val(contact_mtx=self.cm,
-                                                     susceptibles=self.susceptibles.reshape(1, -1),
-                                                     population=self.population)
-            self.params.update({"beta": beta})
-            # Generate matrices used in model representation
+        for option in self.sim_options_prod:
+            susc = torch.Tensor(next(iter(option["susc"].values())), device=self.device)
+            self.params.update({"susc": susc})
+            base_r0 = option["r0"]
+            beta = self.get_beta_from_r0(base_r0)
+            self.params["beta"] = beta
+
             self.model.initialize_matrices()
-            sim_state = {"base_r0": base_r0,
-                         "susc": susc,
-                         "r0generator": r0generator,
-                         "target_var": target_var}
-            self.model.sim_state = sim_state
-            param_generator = SamplerSEIR(sim_state=sim_state,
-                                          sim_obj=self)
+
+            param_generator = SamplerSEIR(sim_obj=self, sim_option=option)
             param_generator.run_sampling()
 
-    def calculate_prcc_for_simulations(self):
-        for susc, base_r0, target_var in self.simulations:
-            filename = f'{susc}-{base_r0}-{target_var}'
-            self.calculate_prcc(filename=filename)
-
-    def calculate_all_p_values(self):
-        for susc, base_r0, target_var in self.simulations:
-            filename = f'{susc}-{base_r0}-{target_var}'
-            self.calculate_p_values(filename=filename)
-
-    def plot_prcc_for_simulations(self):
+    def plot_prcc_for_simulations(self, filename):
         os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
-        labels = self.param_names
+        labels = ["alpha", "beta", "gamma"]
+        prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
+        p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
 
-        for susc, base_r0, target_var in self.simulations:
-            filename = f'{susc}-{base_r0}-{target_var}'
-            prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
-            p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
-
-            generate_tornado_plot(sim_obj=self, labels=labels, title="",
-                                  target_var=target_var, prcc=prcc,
-                                  p_val=p_val, filename=filename, r0=base_r0)
+        generate_tornado_plot(sim_obj=self,
+                              labels=labels,
+                              prcc=prcc,
+                              p_val=p_val,
+                              filename=filename)

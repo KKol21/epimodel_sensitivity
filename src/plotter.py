@@ -10,25 +10,11 @@ from matplotlib.tri import Triangulation
 from examples.contact_sensitivity.sensitivity_model_contact import get_rectangular_matrix_from_upper_triu
 
 
-def generate_tornado_plot(sim_obj, labels, title, target_var, prcc: np.ndarray, p_val, filename: str, r0):
+def generate_tornado_plot(sim_obj, labels, prcc: np.ndarray, p_val, filename: str, title=None):
     """
     Generate a tornado plot to visualize the Partial Rank Correlation Coefficient (PRCC) values.
-
-    Args:
-        param_names (List): The list of parameter names.
-        target_var (str): The target variable.
-        prcc (np.ndarray): The PRCC values.
-        filename (str): The filename for saving the plot.
-        r0: The value of R0.
-
-    Returns:
-        None
     """
     prcc = np.round(prcc, 3)
-    plt.title(f"{title}\n" if title is not None else ""
-              f"Target variable: {target_var}\n "
-              r"$\mathcal{R}_0=$" + str(r0), fontsize=15, wrap=True)
-
     ys = range(len(labels))[::-1]
 
     p_val_colors = ['green', 'yellow', 'red']
@@ -74,7 +60,9 @@ def generate_tornado_plot(sim_obj, labels, title, target_var, prcc: np.ndarray, 
     # Set the portion of the x- and y-axes to show
     plt.xlim(-1.1, 1.1)
     plt.ylim(-1, len(labels))
-    # plt.text()
+
+    if title is not None:
+        plt.title(title)
     plt.savefig(f'{sim_obj.folder_name}/prcc_plots/prcc_tornado_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()
@@ -133,9 +121,8 @@ def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, tar
         compartments = sim_obj.target_var_choices
 
     if plot_title is None:
-        target = get_target(target_var)
         plot_title = "Járványgörbe korcsoportokra aggregálva \n" \
-                     f"Vakcinálás célváltozója: {target}\n" \
+                     f"Vakcinálás célváltozója: {target_var}\n" \
                      r"Szimuláció $\mathcal{R}_0=$" + str(r0)
 
     comp = 'ic'
