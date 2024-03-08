@@ -7,7 +7,7 @@ from src.model.model_base import EpidemicModelBase
 
 class SensitivityModelBase(EpidemicModelBase, ABC):
     def __init__(self, sim_obj):
-        super().__init__(sim_obj.data)
+        super().__init__(data=sim_obj.data, **sim_obj.model_struct)
         self.sim_obj = sim_obj
         self.test = sim_obj.test
         self.sim_state = None
@@ -39,6 +39,7 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
                                  v_div)
                 return base_result + vacc
             return base_result
+
         return odefun
 
     @staticmethod

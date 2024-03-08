@@ -1,12 +1,11 @@
-from itertools import product
 import os
 
 import numpy as np
 
-from examples.contact_sensitivity.sensitivity_model_contact import ContactModel
 from examples.contact_sensitivity.sampler_contact import SamplerContact
-from src.simulation_base import SimulationBase, PROJECT_PATH
+from examples.contact_sensitivity.sensitivity_model_contact import ContactModel
 from src.plotter import plot_prcc_p_values_as_heatmap
+from src.simulation_base import SimulationBase, PROJECT_PATH
 
 
 class SimulationContact(SimulationBase):
@@ -27,14 +26,16 @@ class SimulationContact(SimulationBase):
     """
 
     def __init__(self, data):
-        super().__init__(data)
+        config_path = PROJECT_PATH + "/examples/contact_sensitivity/contact_sampling_config.json"
+        model_struct_path = PROJECT_PATH + "/examples/contact_sensitivity/model_struct.json"
+        super().__init__(data=data,
+                         config_path=config_path,
+                         model_struct_path=model_struct_path)
+
         self.upper_tri_size = int((self.n_age + 1) * self.n_age / 2)
         self.folder_name += "/sens_data_contact"
 
-        self._load_config(PROJECT_PATH + "/examples/contact_sensitivity/contact_sampling_config.json")
-
         self.model = ContactModel(sim_obj=self, base_r0=None)
-        self.susceptibles = self.model.get_initial_values()[self.model.idx("s_0")]
 
     def run_sampling(self):
         """

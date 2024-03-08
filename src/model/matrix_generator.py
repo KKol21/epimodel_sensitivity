@@ -114,8 +114,8 @@ class MatrixGenerator:
         self.cm = cm
         self.ps = model.ps
         self.data = model.data
-        self.state_data = model.data.state_data
-        self.trans_data = model.data.trans_data
+        self.state_data = model.state_data
+        self.trans_data = model.trans_data
         self.n_eq = model.n_eq
         self.n_age = model.n_age
         self.n_comp = model.n_comp

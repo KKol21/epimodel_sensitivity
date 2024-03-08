@@ -5,7 +5,7 @@ import torchode as to
 
 
 class EpidemicModelBase(ABC):
-    def __init__(self, data):
+    def __init__(self, data, state_data, trans_data, tms_data):
         """
         Initialises Abstract base class for epidemic models.
 
@@ -16,6 +16,10 @@ class EpidemicModelBase(ABC):
             None
         """
         self.data = data
+        self.state_data = state_data
+        self.trans_data = trans_data
+        self.tms_data = tms_data
+
         self.n_age = data.n_age
         self.population = data.age_data.flatten()
         self.compartments = self.get_compartments()
@@ -23,9 +27,10 @@ class EpidemicModelBase(ABC):
         self.ps = data.model_params
         self.device = data.device
 
+
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
         self.n_eq = self.n_age * self.n_comp
-        self.is_vaccinated = "vaccination" in [trans["type"] for trans in self.data.trans_data]
+        self.is_vaccinated = "vaccination" in [trans["type"] for trans in self.trans_data]
 
         from src.model.matrix_generator import MatrixGenerator
         self.matrix_generator = MatrixGenerator(model=self, cm=data.cm)
@@ -59,13 +64,13 @@ class EpidemicModelBase(ABC):
 
         return solver.solve(problem, dt0=dt0)
 
-    def get_compartments(self):
+    def get_compartments(self) -> list:
         compartments = []
-        for name, data in self.data.state_data.items():
+        for name, data in self.state_data.items():
             compartments += get_substates(data["n_substates"], name)
         return compartments
 
-    def get_initial_values_from_dict(self, init_val_dict) -> torch.FloatTensor:
+    def get_initial_values_from_dict(self, init_val_dict: dict) -> torch.FloatTensor:
         """
 
         This method retrieves the initial values for the model. It sets the initial value for the infected compartment
@@ -94,7 +99,7 @@ class EpidemicModelBase(ABC):
         values of individual substates for each age group.
 
         """
-        substates = get_substates(n_substates=self.data.state_data[comp]["n_substates"], comp_name=comp)
+        substates = get_substates(n_substates=self.state_data[comp]["n_substates"], comp_name=comp)
         substate_indices = [self.idx(state) for state in substates]
         substate_sums = torch.stack([solution[:, idx].sum(dim=1) for idx in substate_indices], dim=0)
         return substate_sums.sum(dim=0)

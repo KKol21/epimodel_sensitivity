@@ -17,7 +17,6 @@ class DataLoader(DataLoaderBase):
         self._get_age_data()
         self._get_model_parameters_data()
         self._get_contact_mtx()
-        self._load_model_structure()
 
     def _get_age_data(self):
         wb = xlrd.open_workbook(self._age_data_file)
@@ -80,11 +79,3 @@ class DataLoader(DataLoaderBase):
         # Divide by age group sizes
         output /= age_distribution
         return output
-
-    def _load_model_structure(self):
-        with open(self._model_structure_file) as f:
-            model_structure = json.load(f)
-
-        self.state_data = model_structure["states"]
-        self.trans_data = model_structure["transitions"]
-        self.tms_data = model_structure["transmission"]

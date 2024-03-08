@@ -2,28 +2,10 @@
   "sim_options": {
     "r0": [
       1.8,
-      2
+      3
     ],
     "susc": {
       "even": [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1
-      ],
-      "odd": [
         1,
         1,
         1,
@@ -47,13 +29,17 @@
     "d_max",
     "r_max"
   ],
-  "sampled_params": {
-    "infectivity": [
-      0.1,
-      0.5
-    ]
-  },
+  "sampled_params": null,
   "batch_size": 500,
-  "n_samples": 100,
-  "test": true
+  "n_samples": 5000,
+  "test": true,
+  "init_vals": {
+    "ia_1": [
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  }
 }

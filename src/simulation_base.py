@@ -12,13 +12,19 @@ from src.sensitivity.prcc import get_prcc_values
 
 
 class SimulationBase(ABC):
-    def __init__(self, data):
+    def __init__(self, data, model_struct_path, config_path):
         # Load data
         self.data = data
         self.device = data.device
-        self.test = True
+        self.model = None
 
         self._load_simulation_data()
+        self._load_config(config_path)
+        self._load_model_structure(model_struct_path)
+
+    @property
+    def susceptibles(self):
+        return self.model.get_initial_values()[self.model.idx("s_0")]
 
     def _load_simulation_data(self):
         self.params = self.data.model_params
@@ -27,10 +33,22 @@ class SimulationBase(ABC):
         self.population = self.data.age_data.flatten()
         self.age_vector = self.population.reshape((-1, 1))
         self.folder_name = PROJECT_PATH + "\sens_data"
-        self.susceptibles = None
 
-    def _load_config(self, path):
-        with open(path) as f:
+    def _load_model_structure(self, model_struct_path):
+        with open(model_struct_path) as f:
+            model_structure = json.load(f)
+
+        self.state_data = model_structure["states"]
+        self.trans_data = model_structure["transitions"]
+        self.tms_data = model_structure["transmission"]
+        self.model_struct = {
+            "state_data": self.state_data,
+            "trans_data": self.trans_data,
+            "tms_data": self.tms_data
+        }
+
+    def _load_config(self, config_path):
+        with open(config_path) as f:
             config = json.load(f)
         self.target_vars = config["target_vars"]
 
@@ -93,7 +111,7 @@ class SimulationBase(ABC):
             return f"{key}-{option[key]}"
 
     def get_beta_from_r0(self, base_r0):
-        r0generator = R0Generator(self.data)
+        r0generator = R0Generator(self.data, **self.model_struct)
         if isinstance(base_r0, tuple):
             base_r0 = base_r0[0]
         return base_r0 / r0generator.get_eig_val(contact_mtx=self.cm,
