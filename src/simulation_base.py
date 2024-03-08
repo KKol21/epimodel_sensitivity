@@ -18,8 +18,16 @@ class SimulationBase(ABC):
         self.device = data.device
         self.test = True
 
-        self._load_config(PROJECT_PATH + "/data/sampling_config.json")
         self._load_simulation_data()
+
+    def _load_simulation_data(self):
+        self.params = self.data.model_params
+        self.n_age = self.data.n_age
+        self.cm = self.data.cm
+        self.population = self.data.age_data.flatten()
+        self.age_vector = self.population.reshape((-1, 1))
+        self.folder_name = PROJECT_PATH + "\sens_data"
+        self.susceptibles = None
 
     def _load_config(self, path):
         with open(path) as f:
@@ -34,6 +42,7 @@ class SimulationBase(ABC):
         self.n_samples = config["n_samples"]
         self.batch_size = config["batch_size"]
         self.test = config["test"]
+        self.init_vals = config["init_vals"]
 
     def process_sim_options(self):
         sim_opt = self.sim_options_dict
@@ -61,22 +70,13 @@ class SimulationBase(ABC):
     def flatten_dict_in_dict(self, d, key):
         return [{key: {subkey: value}} for subkey, value in d[key].items()]
 
-    def _load_simulation_data(self):
-        self.params = self.data.model_params
-        self.n_age = self.data.n_age
-        self.cm = self.data.cm
-        self.population = self.data.age_data.flatten()
-        self.age_vector = self.population.reshape((-1, 1))
-        self.folder_name = PROJECT_PATH + "\sens_data"
-        self.susceptibles = None
-
     @abstractmethod
     def run_sampling(self):
         pass
 
     def run_func_for_all_configs(self, func):
-        for option in self.sim_options_prod:
-            filename = self.get_filename(option)
+        for option, target in itertools.product(self.sim_options_prod, self.target_vars):
+            filename = self.get_filename(option) + f"_{target}"
             func(filename)
 
     def get_filename(self, option):
@@ -109,7 +109,8 @@ class SimulationBase(ABC):
         """
         folder_name = self.folder_name
         os.makedirs(f"{folder_name}/prcc", exist_ok=True)
-        lhs_table = np.loadtxt(f'{folder_name}/lhs/lhs_{filename}.csv', delimiter=';')
+        filename_without_target = filename[:filename[:filename.rfind("_")].rfind("_")]
+        lhs_table = np.loadtxt(f'{folder_name}/lhs/lhs_{filename_without_target}.csv', delimiter=';')
         sim_output = np.loadtxt(f'{folder_name}/simulations/simulations_{filename}.csv', delimiter=';')
 
         prcc = get_prcc_values(np.c_[lhs_table, sim_output.T])
