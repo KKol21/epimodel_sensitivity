@@ -57,17 +57,7 @@ class SimulationContact(SimulationBase):
             param_generator = SamplerContact(sim_obj=self, sim_option=sim_opt)
             param_generator.run_sampling()
 
-    def calculate_prcc_for_simulations(self):
-        for option, target in product(self.sim_options_prod, self.target_vars):
-            filename = self.get_filename(option) + f"_{target}"
-            self.calculate_prcc(filename)
-
-    def calculate_all_p_values(self):
-        for option, target in product(self.sim_options_prod, self.target_vars):
-            filename = self.get_filename(option) + f"_{target}"
-            self.calculate_p_values(filename=filename)
-
-    def plot_prcc_and_p_values(self):
+    def plot_prcc_and_p_values(self, filename):
         """
 
         Generates and saves PRCC plots based on the calculated PRCC values.
@@ -79,13 +69,11 @@ class SimulationContact(SimulationBase):
 
         """
         os.makedirs(f'{self.folder_name}/prcc_p_val_plots', exist_ok=True)
-        for option, target in product(self.sim_options_prod, self.target_vars):
-            filename = self.get_filename(option) + f"_{target}"
-            prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
-            p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
+        prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
+        p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
 
-            plot_prcc_p_values_as_heatmap(n_age=self.n_age,
-                                          prcc_vector=prcc,
-                                          p_values=p_val,
-                                          filename_to_save=f"{self.folder_name}/prcc_p_val_plots/{filename}.pdf",
-                                          plot_title="test")
+        plot_prcc_p_values_as_heatmap(n_age=self.n_age,
+                                      prcc_vector=prcc,
+                                      p_values=p_val,
+                                      filename_to_save=f"{self.folder_name}/prcc_p_val_plots/{filename}.pdf",
+                                      plot_title="test")

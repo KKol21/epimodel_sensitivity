@@ -134,3 +134,9 @@ class SimulationBase(ABC):
                         print("\nInsignificant p-values in ", filename, " case: \n")
                         is_first = False
                     print(f"\t {idx}. p-val: ", p_val)
+
+    def calculate_all_prcc(self):
+        self.run_func_for_all_configs(self.calculate_prcc)
+
+    def calculate_all_p_values(self):
+        self.run_func_for_all_configs(self.calculate_p_values)
