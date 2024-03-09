@@ -7,9 +7,6 @@ class SamplerSEIR(SamplerBase):
         self.sim_obj = sim_obj
         self.susc = next(iter(sim_option["susc"].values()))
         self.base_r0 = sim_option["r0"]
-        self.lhs_boundaries = {"lower": [0.1, 0.2, 0.1],  # alpha, beta, gamma
-                               "upper": [0.4, 0.4, 0.4],
-                               }
 
     def run_sampling(self):
         lhs_table = self._get_lhs_table()

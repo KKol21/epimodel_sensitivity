@@ -41,10 +41,11 @@ class SimulationBase(ABC):
         self.state_data = model_structure["states"]
         self.trans_data = model_structure["transition"]
         self.tms_data = model_structure["transmission"]
+
         self.model_struct = {
             "state_data": self.state_data,
             "trans_data": self.trans_data,
-            "tms_data": self.tms_data
+            "tms_data": self.tms_data,
         }
 
     def _load_config(self, config_path):
@@ -56,7 +57,7 @@ class SimulationBase(ABC):
 
         self.sim_options_prod = self.process_sim_options()
 
-        self.sampled_params = config["sampled_params"]
+        self.sampled_params_boundaries = config["sampled_params_boundaries"]
         self.n_samples = config["n_samples"]
         self.batch_size = config["batch_size"]
         self.test = config["test"]

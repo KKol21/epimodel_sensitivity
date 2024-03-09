@@ -31,17 +31,24 @@ class SamplerBase(ABC):
 
     def __init__(self, sim_obj, sim_option):
         self.sim_obj = sim_obj
-        self.lhs_boundaries = None
         self.sim_option = sim_option
+        self._process_sampling_config()
+
+    def _process_sampling_config(self):
+        sim_obj = self.sim_obj
         self.n_samples = sim_obj.n_samples
         self.batch_size = sim_obj.batch_size
+
+        params_bounds = sim_obj.sampled_params_boundaries
+        if all([param in sim_obj.params for param in params_bounds.keys()]):
+            self.lhs_boundaries = params_bounds
 
     @abstractmethod
     def run_sampling(self):
         pass
 
     def _get_lhs_table(self):
-        bounds = np.array([bounds for bounds in self.lhs_boundaries.values()]).T
+        bounds = np.array([bounds for bounds in self.lhs_boundaries.values()])
         sampling = LHS(xlimits=bounds)
         return sampling(self.n_samples)
 

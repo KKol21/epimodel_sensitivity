@@ -14,18 +14,18 @@
     "i_max",
     "r_max"
   ],
-  "sampled_params": {
+  "sampled_params_boundaries": {
     "alpha": [
       0.2,
-      1.0
+      0.4
     ],
     "beta": [
       0.2,
-      1.0
+      0.4
     ],
     "gamma": [
       0.2,
-      1.0
+      0.4
     ]
   },
   "batch_size": 500,
