@@ -19,8 +19,8 @@ class SEIRModel(SensitivityModelBase):
 
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]
-        self.A = self._get_A_from_betas(lhs_table)
-        self.B = self._get_B_from_lhs(lhs_table)
+        #self.A = self._get_A_from_betas(lhs_table)
+        #self.B = self._get_B_from_lhs(lhs_table)
         if self.is_vaccinated:
             odefun = self.get_vaccinated_ode(lhs_table.shape[0])
         else:
@@ -37,8 +37,8 @@ class SEIRModel(SensitivityModelBase):
 
     def _get_A_from_betas(self, lhs):
         lhs_dict = {"beta": lhs[:, 1]}
-        return self._get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="A")
+        return self.get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="A")
 
     def _get_B_from_lhs(self, lhs):
         lhs_dict = {"alpha": lhs[:, 0], "gamma": lhs[:, 2]}
-        return self._get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="B")
+        return self.get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="B")

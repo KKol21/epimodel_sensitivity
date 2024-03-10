@@ -37,6 +37,8 @@ class TargetCalcBase(ABC):
                 curr_indices = indices[batch_slice]
                 batch = lhs_table[curr_indices]
 
+                # Solve for the current batch
+                self.model.generate_3D_matrices(samples=batch)
                 solutions = self.get_batch_solution(y0=y0[curr_indices], t_eval=t_eval[batch_slice], samples=batch)
                 # Check which simulations have finished
                 finished, last_val = self.stopping_condition(solutions=solutions, comp=comp)

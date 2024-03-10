@@ -9,9 +9,9 @@ class SamplerContact(SamplerBase):
         self.sim_obj = sim_obj
 
         self.lhs_boundaries = {
-            "lower": np.full(fill_value=0.1, shape=self.sim_obj.upper_tri_size),
-            "upper": np.ones(self.sim_obj.upper_tri_size)
-                               }
+            "contacts": np.array([np.full(fill_value=0.1, shape=self.sim_obj.upper_tri_size),
+                                  np.full(fill_value=1, shape=self.sim_obj.upper_tri_size)]),
+        }
 
     def run_sampling(self):
         lhs_table = self._get_lhs_table()

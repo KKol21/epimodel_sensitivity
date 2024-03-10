@@ -14,7 +14,6 @@ class ContactModel(SensitivityModelBase):
         constructor, and instantiating the matrix generator used in solving the model.
 
         Args:
-            sim_state:
             sim_obj (SimulationContact): Simulation object
 
         """
@@ -38,7 +37,7 @@ class ContactModel(SensitivityModelBase):
 
     def _get_A_from_betas(self, betas):
         lhs_dict = {"beta": betas}
-        return self._get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="A")
+        return self.get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="A")
 
     def _get_T_from_contacts(self, cm_samples: torch.Tensor):
         T = torch.zeros((cm_samples.size(0), self.s_mtx, self.s_mtx)).to(self.device)

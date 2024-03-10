@@ -26,4 +26,4 @@ class VaccinatedModel(SensitivityModelBase):
     def _get_V_1_from_lhs(self, lhs_table):
         daily_vacc = (lhs_table * self.ps['total_vaccines'] / self.ps["T"]).to(self.device)
         lhs_dict = {"daily_vac": daily_vacc}
-        return self._get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="V_1")
+        return self.get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="V_1")

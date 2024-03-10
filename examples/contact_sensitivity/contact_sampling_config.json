@@ -29,7 +29,7 @@
     "d_max",
     "r_max"
   ],
-  "sampled_params": null,
+  "sampled_params_boundaries": null,
   "batch_size": 500,
   "n_samples": 50,
   "test": true,

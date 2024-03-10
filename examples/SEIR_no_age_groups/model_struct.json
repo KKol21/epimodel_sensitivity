@@ -41,5 +41,16 @@
       "type": "basic"
     }
   ],
-  "transmission": null
+  "transmission": {
+    "global_params": null,
+    "transmission_rules": [
+      {
+        "source": "s",
+        "target": "e",
+        "actors-params": {
+          "i": "beta"
+        }
+      }
+    ]
+  }
 }

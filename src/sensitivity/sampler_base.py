@@ -16,12 +16,10 @@ class SamplerBase(ABC):
     parameter combinations and collect simulation results.
 
     Args:
-        sim_state (dict): The state of the simulation as a dictionary containing relevant params.
         sim_obj: The simulation object representing the underlying simulation model.
 
     Attributes:
         sim_obj: The simulation object representing the underlying simulation model.
-        sim_state (dict): The state of the simulation as a dictionary containing relevant params.
         lhs_boundaries (dict): The boundaries for Latin Hypercube Sampling (LHS) parameter ranges.
 
     Methods:
@@ -39,18 +37,33 @@ class SamplerBase(ABC):
         self.n_samples = sim_obj.n_samples
         self.batch_size = sim_obj.batch_size
 
-        params_bounds = sim_obj.sampled_params_boundaries
-        if all([param in sim_obj.params for param in params_bounds.keys()]):
-            self.lhs_boundaries = params_bounds
+        spm = sim_obj.sampled_params_boundaries
+        if spm is not None and all([param in sim_obj.params for param in spm.keys()]):
+            self.lhs_boundaries = {param: np.array(spm[param]) for param in spm}
 
     @abstractmethod
     def run_sampling(self):
         pass
 
     def _get_lhs_table(self):
-        bounds = np.array([bounds for bounds in self.lhs_boundaries.values()])
+        bounds = np.array([bound for bound in self.lhs_boundaries.values()
+                           if len(bound.shape) == 1])
+        age_spec_bounds = self._get_age_spec_bounds()
+
+        if age_spec_bounds.shape[0] == 0:
+            bounds = bounds
+        elif bounds.shape[0] == 0:
+            bounds = age_spec_bounds
+        else:
+            np.concatenate((bounds, age_spec_bounds), axis=0)
         sampling = LHS(xlimits=bounds)
         return sampling(self.n_samples)
+
+    def _get_age_spec_bounds(self):
+        age_spec_bounds = [bounds for param in self.lhs_boundaries
+                           for bounds in self.lhs_boundaries[param]
+                           if len(self.lhs_boundaries[param].shape) == 2]
+        return np.array(age_spec_bounds).T
 
     def _get_sim_output(self, lhs_table):
         print(f"\n Simulation for {self.n_samples} samples ({self.sim_obj.get_filename(self.sim_option)})")
@@ -68,11 +81,9 @@ class SamplerBase(ABC):
             self.save_output(output=sim_output.cpu(), output_name='simulations', filename=filename + f"_{target_var}")
 
     def save_output(self, output, output_name, filename):
-        # Create directories for saving calculation outputs
         folder_name = self.sim_obj.folder_name
         os.makedirs(folder_name, exist_ok=True)
 
-        # Save LHS output
         os.makedirs(f"{folder_name}/{output_name}", exist_ok=True)
         filename = f"{folder_name}/{output_name}/{output_name}_{filename}"
         np.savetxt(fname=filename + ".csv", X=output, delimiter=";")
