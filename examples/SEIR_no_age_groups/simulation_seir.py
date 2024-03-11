@@ -44,7 +44,7 @@ class SimulationSEIR(SimulationBase):
 
     def plot_prcc_for_simulations(self, filename):
         os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
-        labels = ["alpha", "beta", "gamma"]
+        labels = list(self.sampled_params_boundaries.keys())
         prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
         p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
 
