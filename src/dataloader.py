@@ -17,4 +17,4 @@ class DataLoaderBase(ABC):
         self.trans_data = None
         self.tms_data = None
 
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cpu'#'cuda' if torch.cuda.is_available() else 'cpu'

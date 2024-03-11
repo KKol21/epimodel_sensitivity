@@ -12,8 +12,8 @@ from src.dataloader import PROJECT_PATH
 
 class SimulationSEIR(SimulationBase):
     def __init__(self, data):
-        model_struct_path = PROJECT_PATH + "/examples/SEIR_no_age_groups/model_struct.json"
-        config_path = PROJECT_PATH + "/examples/SEIR_no_age_groups/sampling_config.json"
+        model_struct_path = PROJECT_PATH + "/examples/structures/SEIR_model_struct.json"
+        config_path = PROJECT_PATH + "/examples/configs/SEIR_sampling_config.json"
         super().__init__(data, model_struct_path=model_struct_path, config_path=config_path)
         self.folder_name += "/sens_data_SEIR_no_ag"
 

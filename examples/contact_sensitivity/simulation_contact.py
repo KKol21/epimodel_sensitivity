@@ -26,8 +26,8 @@ class SimulationContact(SimulationBase):
     """
 
     def __init__(self, data):
-        config_path = PROJECT_PATH + "/examples/contact_sensitivity/contact_sampling_config.json"
-        model_struct_path = PROJECT_PATH + "/examples/contact_sensitivity/model_struct.json"
+        config_path = PROJECT_PATH + "/examples/configs/contact_sampling_config.json"
+        model_struct_path = PROJECT_PATH + "/examples/structures/contact_model_struct.json"
         super().__init__(data=data,
                          config_path=config_path,
                          model_struct_path=model_struct_path)
