@@ -44,7 +44,7 @@ class R0Generator:
         f = self._get_f(cm)
         v_inv = self._get_v()
         ngm_large = v_inv @ f
-        ngm = self.e @ ngm_large @ self.e.T
+        ngm = self.e @ ngm_large @ self.e.T if self.n_age > 1 else self.e @ ngm_large @ self.e
 
         if len(ngm.shape) == 0:
             dom_eig_val = torch.abs(ngm)
