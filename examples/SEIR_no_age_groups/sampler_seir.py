@@ -8,7 +8,7 @@ class SamplerSEIR(SamplerBase):
         self.susc = next(iter(sim_option["susc"].values()))
         self.base_r0 = sim_option["r0"]
 
-    def run_sampling(self):
+    def run(self):
         lhs_table = self._get_lhs_table()
 
         self._get_sim_output(lhs_table)

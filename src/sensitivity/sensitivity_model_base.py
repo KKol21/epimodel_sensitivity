@@ -100,9 +100,9 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
 
     def get_params_col_idx(self):
         params_col_idx = {}
-        last_idx = -1
+        last_idx = 0
         for param, bound in self.sim_obj.sampled_params_boundaries.items():
             param_dim = self.sim_obj.n_age if isinstance(bound[0], list) else 1
-            params_col_idx[param] = (param_idx := (last_idx + param_dim))
-            last_idx = param_idx
+            params_col_idx[param] = last_idx
+            last_idx += param_dim
         return params_col_idx

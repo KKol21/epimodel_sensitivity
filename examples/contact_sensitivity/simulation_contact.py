@@ -26,8 +26,8 @@ class SimulationContact(SimulationBase):
     """
 
     def __init__(self, data):
-        config_path = PROJECT_PATH + "/examples/configs/contact_sampling_config.json"
-        model_struct_path = PROJECT_PATH + "/examples/structures/contact_model_struct.json"
+        config_path = PROJECT_PATH + "/examples/contact_sensitivity/configs/contact_sampling_config.json"
+        model_struct_path = PROJECT_PATH + "/examples/contact_sensitivity/configs/contact_model_struct.json"
         super().__init__(data=data,
                          config_path=config_path,
                          model_struct_path=model_struct_path)
@@ -56,7 +56,7 @@ class SimulationContact(SimulationBase):
             self.model.initialize_matrices()
 
             param_generator = SamplerContact(sim_obj=self, sim_option=sim_opt)
-            param_generator.run_sampling()
+            param_generator.run()
 
     def plot_prcc_and_p_values(self, filename):
         """

@@ -56,7 +56,7 @@ class SimulationSEIR(SimulationBase):
             self.model.sim_state = sim_state
             param_generator = SamplerSEIR(sim_state=sim_state,
                                           sim_obj=self)
-            param_generator.run_sampling()
+            param_generator.run()
 
     def calculate_prcc_for_simulations(self):
         for susc, base_r0, target_var in self.simulations:

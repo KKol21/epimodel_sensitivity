@@ -16,7 +16,7 @@ class SamplerVaccinated(SamplerBase):
                                "upper": np.ones(sim_obj.n_age)
                                }
 
-    def run_sampling(self):
+    def run(self):
         """
         Runs the sampling-based simulation to explore different parameter combinations and
         collect simulation results for analysis.

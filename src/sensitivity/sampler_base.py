@@ -42,7 +42,7 @@ class SamplerBase(ABC):
             self.lhs_boundaries = {param: np.array(spm[param]) for param in spm}
 
     @abstractmethod
-    def run_sampling(self):
+    def run(self):
         pass
 
     def _get_lhs_table(self):

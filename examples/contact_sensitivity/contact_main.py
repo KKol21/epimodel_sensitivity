@@ -1,5 +1,5 @@
 from examples.contact_sensitivity.simulation_contact import SimulationContact
-from examples.dataloader_16_ag import DataLoader
+from examples.utils.dataloader_16_ag import DataLoader
 
 
 def main():
