@@ -9,8 +9,7 @@ class SamplerSEIR(SamplerBase):
         self.base_r0 = sim_option["r0"]
 
     def run(self):
-        lhs_table = self._get_lhs_table()
-
+        lhs_table = self._get_lhs_table(bounds=self.get_lhs_bounds())
         self._get_sim_output(lhs_table)
         self.calculate_r0s(lhs_table)
 

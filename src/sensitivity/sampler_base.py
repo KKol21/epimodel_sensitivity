@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from smt.sampling_methods import LHS
 
+from src.sensitivity.sensitivity_model_base import get_params_col_idx
 from src.sensitivity.target_calc.output_generator import OutputGenerator
 
 
@@ -20,7 +21,7 @@ class SamplerBase(ABC):
 
     Attributes:
         sim_obj: The simulation object representing the underlying simulation model.
-        lhs_boundaries (dict): The boundaries for Latin Hypercube Sampling (LHS) parameter ranges.
+        lhs_bounds_dict (dict): The boundaries for Latin Hypercube Sampling (LHS) parameter ranges.
 
     Methods:
         run_sampling(): Runs the sampling-based simulation to explore different parameter combinations
@@ -30,6 +31,7 @@ class SamplerBase(ABC):
     def __init__(self, sim_obj, sim_option):
         self.sim_obj = sim_obj
         self.sim_option = sim_option
+        self.sampled_params_boundaries = sim_obj.sampled_params_boundaries
         self._process_sampling_config()
 
     def _process_sampling_config(self):
@@ -37,33 +39,50 @@ class SamplerBase(ABC):
         self.n_samples = sim_obj.n_samples
         self.batch_size = sim_obj.batch_size
 
-        spm = sim_obj.sampled_params_boundaries
-        if spm is not None and all([param in sim_obj.params for param in spm.keys()]):
-            self.lhs_boundaries = {param: np.array(spm[param]) for param in spm}
+        if (spb := self.sampled_params_boundaries) is not None:
+            self.lhs_bounds_dict = {param: np.array(spb[param]) for param in spb}
+            self.pci = get_params_col_idx(spb)
 
     @abstractmethod
     def run(self):
         pass
 
     def _get_lhs_table(self):
-        bounds = np.array([bound for bound in self.lhs_boundaries.values()
-                           if len(bound.shape) == 1])
-        age_spec_bounds = self._get_age_spec_bounds()
-
-        if age_spec_bounds.shape[0] == 0:
-            bounds = bounds
-        elif bounds.shape[0] == 0:
-            bounds = age_spec_bounds
-        else:
-            np.concatenate((bounds, age_spec_bounds), axis=0)
+        bounds = self.get_lhs_bounds()
         sampling = LHS(xlimits=bounds)
         return sampling(self.n_samples)
 
-    def _get_age_spec_bounds(self):
-        age_spec_bounds = [bounds for param in self.lhs_boundaries
-                           for bounds in self.lhs_boundaries[param]
-                           if len(self.lhs_boundaries[param].shape) == 2]
+    def get_lhs_bounds(self):
+        non_spec_bounds = self._get_general_param_bounds()
+        age_spec_bounds = self._get_age_spec_param_bounds()
+
+        if age_spec_bounds.shape[0] == 0:
+            return non_spec_bounds
+        elif non_spec_bounds.shape[0] == 0:
+            return age_spec_bounds
+        else:
+            return self._concat_bounds(non_spec_bounds=non_spec_bounds,
+                                       age_spec_bounds=age_spec_bounds)
+
+    def _get_general_param_bounds(self):
+        return np.array([bound for bound in self.lhs_bounds_dict.values()
+                         if len(bound.shape) == 1])
+
+    def _get_age_spec_param_bounds(self):
+        age_spec_bounds = [bounds for param in self.lhs_bounds_dict
+                           for bounds in self.lhs_bounds_dict[param]
+                           if len(self.lhs_bounds_dict[param].shape) == 2]
         return np.array(age_spec_bounds).T
+
+    def _concat_bounds(self, non_spec_bounds, age_spec_bounds):
+        n_cols = non_spec_bounds.shape[1] + age_spec_bounds.shape[1]
+        bounds = np.zeros(shape=(2, n_cols))
+        bounds_dict = self.lhs_bounds_dict
+        for param, idx in self.pci.items():
+            param_bounds = bounds_dict[param]
+            param_cols = idx if len(param_bounds.shape) == 1 else slice(idx, idx + len(param_bounds[0]))
+            bounds[:, param_cols] = param_bounds
+        return bounds
 
     def _get_sim_output(self, lhs_table):
         print(f"\n Simulation for {self.n_samples} samples ({self.sim_obj.get_filename(self.sim_option)})")

@@ -11,6 +11,11 @@ from src.model.r0 import R0Generator
 from src.sensitivity.prcc import get_prcc_values
 
 
+def merge_dicts(ds):
+    d_out = {key: value for d in ds for key, value in d.items()}
+    return d_out
+
+
 class SimulationBase(ABC):
     def __init__(self, data, model_struct_path, config_path):
         # Load data
@@ -57,7 +62,8 @@ class SimulationBase(ABC):
 
         self.sim_options_prod = self.process_sim_options()
 
-        self.sampled_params_boundaries = config["sampled_params_boundaries"]
+        spb = config["sampled_params_boundaries"]
+        self.sampled_params_boundaries = spb
         self.n_samples = config["n_samples"]
         self.batch_size = config["batch_size"]
         self.test = config["test"]
@@ -69,10 +75,6 @@ class SimulationBase(ABC):
         if len(sim_opt) == 1:
             key = next(iter(sim_opt))
             return self.flatten_list_in_dict(sim_opt, key)
-
-        def merge_dicts(ds):
-            d_out = {key: value for d in ds for key, value in d.items()}
-            return d_out
 
         flattened_options = [self.flatten_dict(sim_opt, key) for key in sim_opt.keys()]
         options_product = list(itertools.product(*flattened_options))

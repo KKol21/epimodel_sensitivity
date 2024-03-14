@@ -6,6 +6,16 @@ from src.model.model_base import EpidemicModelBase
 from src.simulation_base import SimulationBase
 
 
+def get_params_col_idx(sampled_params_boundaries: dict):
+    params_col_idx = {}
+    last_idx = 0
+    for param, bound in sampled_params_boundaries.items():
+        param_dim = len(bound[0]) if isinstance(bound[0], list) else 1
+        params_col_idx[param] = last_idx
+        last_idx += param_dim
+    return params_col_idx
+
+
 class SensitivityModelBase(EpidemicModelBase, ABC):
     def __init__(self, sim_obj: SimulationBase):
         super().__init__(data=sim_obj.data, **sim_obj.model_struct)
@@ -72,20 +82,20 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         return self.get_initial_values_from_dict(self.sim_obj.init_vals)
 
     def generate_3D_matrices(self, samples: torch.Tensor):
-        spm = self.sim_obj.sampled_params_boundaries
-        if spm is None:
+        spb = self.sim_obj.sampled_params_boundaries
+        if spb is None:
             return
-        linear_params = [param for param in spm
+        linear_params = [param for param in spb
                          if param in [trans["param"] for trans in self.trans_data]]
-        transmission_params_left = [param for param in spm
+        transmission_params_left = [param for param in spb
                                     if param in global_params.values()] \
             if (global_params := self.tms_data["global_params"]) is not None else []
-        transmission_params_right = [param for param in spm
+        transmission_params_right = [param for param in spb
                                      if param in
                                      [param for tms_rule in self.tms_data["transmission_rules"]
                                       for param in tms_rule["actors-params"].values()]]
 
-        params_col_idx = self.get_params_col_idx()
+        params_col_idx = get_params_col_idx(sampled_params_boundaries=spb)
         def get_lhs_dict(params, lhs_table):
             return {param: lhs_table[:, params_col_idx[param]] for param in params}
 
@@ -97,12 +107,3 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         self.A = self.get_matrix_from_lhs(tpl_lhs, "A") if len(tpl_lhs) > 0 else self.A
         self.T = self.get_matrix_from_lhs(tpr_lhs, "T") if len(tpr_lhs) > 0 else self.T
         self.B = self.get_matrix_from_lhs(lp_lhs, "B") if len(lp_lhs) > 0 else self.B
-
-    def get_params_col_idx(self):
-        params_col_idx = {}
-        last_idx = 0
-        for param, bound in self.sim_obj.sampled_params_boundaries.items():
-            param_dim = self.sim_obj.n_age if isinstance(bound[0], list) else 1
-            params_col_idx[param] = last_idx
-            last_idx += param_dim
-        return params_col_idx
