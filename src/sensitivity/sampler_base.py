@@ -74,7 +74,7 @@ class SamplerBase(ABC):
                            if len(self.lhs_bounds_dict[param].shape) == 2]
         return np.array(age_spec_bounds).T
 
-    def _concat_bounds(self, non_spec_bounds, age_spec_bounds):
+    def _concat_bounds(self, non_spec_bounds: np.ndarray, age_spec_bounds: np.ndarray):
         n_cols = non_spec_bounds.shape[1] + age_spec_bounds.shape[1]
         bounds = np.zeros(shape=(2, n_cols))
         bounds_dict = self.lhs_bounds_dict
@@ -84,7 +84,7 @@ class SamplerBase(ABC):
             bounds[:, param_cols] = param_bounds
         return bounds
 
-    def _get_sim_output(self, lhs_table):
+    def _get_sim_output(self, lhs_table: np.ndarray):
         print(f"\n Simulation for {self.n_samples} samples ({self.sim_obj.get_filename(self.sim_option)})")
         print(f"Batch size: {self.batch_size}\n")
 
@@ -99,7 +99,7 @@ class SamplerBase(ABC):
         for target_var, sim_output in sim_outputs.items():
             self.save_output(output=sim_output.cpu(), output_name='simulations', filename=filename + f"_{target_var}")
 
-    def save_output(self, output, output_name, filename):
+    def save_output(self, output, output_name: str, filename: str):
         folder_name = self.sim_obj.folder_name
         os.makedirs(folder_name, exist_ok=True)
 

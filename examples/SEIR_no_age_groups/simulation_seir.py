@@ -21,15 +21,6 @@ class SimulationSEIR(SimulationBase):
         self.model = SEIRModel(sim_obj=self)
 
     def run_sampling(self):
-        """
-
-        Runs the sampling-based simulation with different parameter combinations.
-
-        This method generates Latin Hypercube Sampling (LHS) samples of vaccine distributions for each parameter
-        combination. The LHS tables and simulation results are saved in separate files in the 'sens_data_contact/lhs' and
-        'sens_data_contact/simulations' directories, respectively.
-
-        """
         for option in self.sim_options_prod:
             susc = torch.Tensor(list(option["susc"].values())[0], device=self.device)
             self.params.update({"susc": susc})
@@ -41,15 +32,3 @@ class SimulationSEIR(SimulationBase):
 
             param_generator = SamplerSEIR(sim_obj=self, sim_option=option)
             param_generator.run()
-
-    def plot_prcc_for_simulations(self, filename):
-        os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
-        labels = list(self.sampled_params_boundaries.keys())
-        prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
-        p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
-
-        generate_tornado_plot(sim_obj=self,
-                              labels=labels,
-                              prcc=prcc,
-                              p_val=p_val,
-                              filename=filename)

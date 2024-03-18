@@ -3,7 +3,6 @@ from abc import ABC
 import torch
 
 from src.model.model_base import EpidemicModelBase
-from src.simulation_base import SimulationBase
 
 
 def get_params_col_idx(sampled_params_boundaries: dict):
@@ -17,7 +16,7 @@ def get_params_col_idx(sampled_params_boundaries: dict):
 
 
 class SensitivityModelBase(EpidemicModelBase, ABC):
-    def __init__(self, sim_obj: SimulationBase):
+    def __init__(self, sim_obj):
         super().__init__(data=sim_obj.data, **sim_obj.model_struct)
         self.sim_obj = sim_obj
         self.test = sim_obj.test
@@ -70,8 +69,8 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         for idx in range(n_samples):
             # Select idx. value from lhs table for each parameter
             row_dict = {key: value[idx]
-                        if len(value.size()) < 2
-                        else value[idx, :]  # Select column/columns based on tensor size
+            if len(value.size()) < 2
+            else value[idx, :]  # Select column/columns based on tensor size
                         for key, value in lhs_dict.items()}
             self.matrix_generator.ps.update(row_dict)
 
@@ -96,13 +95,14 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
                                       for param in tms_rule["actors-params"].values()]]
 
         params_col_idx = get_params_col_idx(sampled_params_boundaries=spb)
+
         def get_lhs_dict(params, lhs_table):
             return {param: lhs_table[:, params_col_idx[param]] for param in params}
 
         tpl_lhs = get_lhs_dict(transmission_params_left, samples)
         tpr_lhs = get_lhs_dict(transmission_params_right, samples)
-        tpl_lhs.update(**tpr_lhs) # This is not the proper way,
-                                  # but it works until new transmission rules are added
+        tpl_lhs.update(**tpr_lhs)  # This is not the proper way,
+        # but it works until new transmission rules are added
         lp_lhs = get_lhs_dict(linear_params, samples)
         self.A = self.get_matrix_from_lhs(tpl_lhs, "A") if len(tpl_lhs) > 0 else self.A
         self.T = self.get_matrix_from_lhs(tpr_lhs, "T") if len(tpr_lhs) > 0 else self.T

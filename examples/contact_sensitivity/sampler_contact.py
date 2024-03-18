@@ -13,6 +13,5 @@ class SamplerContact(SamplerBase):
         }
 
     def run(self):
-        bounds = self.get_lhs_bounds()
-        lhs_table = self._get_lhs_table(bounds)
+        lhs_table = self._get_lhs_table()
         self._get_sim_output(lhs_table)

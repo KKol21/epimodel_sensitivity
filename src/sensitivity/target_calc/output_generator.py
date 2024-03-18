@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from src.sensitivity.target_calc.final_size_calc import FinalSizeCalculator
@@ -10,14 +11,14 @@ class OutputGenerator:
         self.sim_obj = sim_obj
         self.sim_option = sim_option
 
-    def get_output(self, lhs_table):
-        lhs_np = torch.from_numpy(lhs_table).float().to(self.sim_obj.device)
+    def get_output(self, lhs_table: np.ndarray) -> dict:
+        lhs = torch.from_numpy(lhs_table).float().to(self.sim_obj.device)
         results = {}
         for target in self.sim_obj.target_vars:
-            results[target] = self.calculate_target(lhs_np, target)
+            results[target] = self.calculate_target(lhs, target)
         return results
 
-    def calculate_target(self, lhs_table, target_var):
+    def calculate_target(self, lhs_table: torch.Tensor, target_var: str) -> torch.Tensor:
         if target_var in ["d_max", "r_max"]:
             target_calculator = FinalSizeCalculator(self.sim_obj.model)
         else:

@@ -9,6 +9,7 @@ from scipy import stats as ss
 from src.dataloader import PROJECT_PATH
 from src.model.r0 import R0Generator
 from src.sensitivity.prcc import get_prcc_values
+from src.plotter import generate_tornado_plot
 
 
 def merge_dicts(ds):
@@ -156,8 +157,24 @@ class SimulationBase(ABC):
                         is_first = False
                     print(f"\t {idx}. p-val: ", p_val)
 
+    def plot_prcc(self, filename: str):
+        labels = list(self.sampled_params_boundaries.keys())
+
+        os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
+        prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
+        p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
+
+        generate_tornado_plot(sim_obj=self,
+                              labels=labels,
+                              prcc=prcc,
+                              p_val=p_val,
+                              filename=filename)
+
     def calculate_all_prcc(self):
         self.run_func_for_all_configs(self.calculate_prcc)
 
     def calculate_all_p_values(self):
         self.run_func_for_all_configs(self.calculate_p_values)
+
+    def plot_all_prcc(self):
+        self.run_func_for_all_configs(self.plot_prcc)
