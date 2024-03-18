@@ -75,14 +75,13 @@ class SamplerBase(ABC):
         return np.array(age_spec_bounds).T
 
     def _concat_bounds(self, non_spec_bounds: np.ndarray, age_spec_bounds: np.ndarray):
-        n_cols = non_spec_bounds.shape[1] + age_spec_bounds.shape[1]
+        n_cols = non_spec_bounds.shape[0] + age_spec_bounds.shape[1]
         bounds = np.zeros(shape=(2, n_cols))
         bounds_dict = self.lhs_bounds_dict
         for param, idx in self.pci.items():
             param_bounds = bounds_dict[param]
-            param_cols = idx if len(param_bounds.shape) == 1 else slice(idx, idx + len(param_bounds[0]))
-            bounds[:, param_cols] = param_bounds
-        return bounds
+            bounds[:, idx] = param_bounds
+        return bounds.T
 
     def _get_sim_output(self, lhs_table: np.ndarray):
         print(f"\n Simulation for {self.n_samples} samples ({self.sim_obj.get_filename(self.sim_option)})")

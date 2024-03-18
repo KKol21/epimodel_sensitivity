@@ -10,7 +10,7 @@ def get_params_col_idx(sampled_params_boundaries: dict):
     last_idx = 0
     for param, bound in sampled_params_boundaries.items():
         param_dim = len(bound[0]) if isinstance(bound[0], list) else 1
-        params_col_idx[param] = last_idx
+        params_col_idx[param] = last_idx if param_dim == 1 else slice(last_idx, last_idx + param_dim)
         last_idx += param_dim
     return params_col_idx
 
@@ -68,9 +68,7 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         mtx = torch.zeros((n_samples, n_eq, n_eq)).to(self.device)
         for idx in range(n_samples):
             # Select idx. value from lhs table for each parameter
-            row_dict = {key: value[idx]
-            if len(value.size()) < 2
-            else value[idx, :]  # Select column/columns based on tensor size
+            row_dict = {key: value[idx] if len(value.size()) < 2 else value[idx, :]
                         for key, value in lhs_dict.items()}
             self.matrix_generator.ps.update(row_dict)
 
@@ -85,14 +83,15 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         if spb is None:
             return
         linear_params = [param for param in spb
-                         if param in [trans["param"] for trans in self.trans_data]]
+                         if param in [trans["param"] for trans in self.trans_data]
+                         or param in [trans["distr"][0] if trans["distr"] is not None else [] for trans in
+                                      self.trans_data]]
         transmission_params_left = [param for param in spb
                                     if param in global_params.values()] \
             if (global_params := self.tms_data["global_params"]) is not None else []
         transmission_params_right = [param for param in spb
-                                     if param in
-                                     [param for tms_rule in self.tms_data["transmission_rules"]
-                                      for param in tms_rule["actors-params"].values()]]
+                                     if param in [param for tms_rule in self.tms_data["transmission_rules"] for param in
+                                                  tms_rule["actors-params"].values()]]
 
         params_col_idx = get_params_col_idx(sampled_params_boundaries=spb)
 

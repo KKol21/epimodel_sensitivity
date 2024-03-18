@@ -1,0 +1,51 @@
+{
+  "sim_options": {
+    "r0": [
+      1.8,
+      3
+    ],
+    "susc": {
+      "odd": [
+        0.5,
+        1
+      ]
+    }
+  },
+  "target_vars": [
+    "i_max",
+    "r_max"
+  ],
+  "sampled_params_boundaries": {
+    "alpha": [
+      0.2,
+      0.4
+    ],
+    "beta": [
+      0.2,
+      0.4
+    ],
+    "gamma": [
+      0.2,
+      0.4
+    ],
+    "eta": [
+      [
+        0.01,
+        0.01
+      ],
+      [
+        0.9,
+        0.9
+      ]
+    ]
+  },
+  "batch_size": 500,
+  "n_samples": 500,
+  "test": true,
+  "init_vals": {
+    "e": [
+      10,
+      0
+    ]
+  }
+}

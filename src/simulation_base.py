@@ -8,8 +8,8 @@ from scipy import stats as ss
 
 from src.dataloader import PROJECT_PATH
 from src.model.r0 import R0Generator
-from src.sensitivity.prcc import get_prcc_values
 from src.plotter import generate_tornado_plot
+from src.sensitivity.prcc import get_prcc_values
 
 
 def merge_dicts(ds):
@@ -158,7 +158,20 @@ class SimulationBase(ABC):
                     print(f"\t {idx}. p-val: ", p_val)
 
     def plot_prcc(self, filename: str):
-        labels = list(self.sampled_params_boundaries.keys())
+        spb = self.sampled_params_boundaries
+        from src.sensitivity.sensitivity_model_base import get_params_col_idx
+
+        def get_aged_param_labels(aged_param):
+            return [f"{aged_param}_{ag}" for ag in range(self.n_age)]
+
+        pci = get_params_col_idx(sampled_params_boundaries=spb)
+        labels = []
+        for param, idx in pci.items():
+            param_label = get_aged_param_labels(param) if isinstance(spb[param][0], list) else param
+            if isinstance(param_label, list):
+                labels += param_label
+            else:
+                labels.append(param_label)
 
         os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
         prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')

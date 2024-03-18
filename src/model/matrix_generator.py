@@ -187,7 +187,7 @@ class MatrixGenerator:
             trans_param = ps[trans["param"]]
             if (distr := trans["distr"]) is not None:
                 # Multiply the transition parameter by the distribution(s) given
-                trans_param *= self.mul_distr(distr)
+                trans_param = trans_param * self.mul_distr(distr)  # Doesn't support *=
             source = end_state[trans["source"]]
             target = f"{trans['target']}_0"
             n_substates = state_data[trans["source"]]["n_substates"]
