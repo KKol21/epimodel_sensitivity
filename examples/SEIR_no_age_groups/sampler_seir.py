@@ -18,7 +18,7 @@ class SamplerSEIR(SamplerBase):
 
         r0s = []
         r0gen = R0Generator(self.sim_obj.data, **self.sim_obj.model_struct)
-        for beta in lhs_table[:, 1]:
+        for beta in lhs_table[:, self.pci["beta"]]:
             r0gen.params.update({"beta": beta})
             r0s.append(r0gen.get_eig_val(susceptibles=self.sim_obj.susceptibles,
                                          population=self.sim_obj.data.age_data,

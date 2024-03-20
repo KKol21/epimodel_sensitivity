@@ -84,14 +84,14 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
             return
         linear_params = [param for param in spb
                          if param in [trans["param"] for trans in self.trans_data]
-                         or param in [trans["distr"][0] if trans["distr"] is not None else [] for trans in
-                                      self.trans_data]]
+                         or param in [trans["distr"][0] if trans["distr"] is not None else []
+                                      for trans in self.trans_data]]
         transmission_params_left = [param for param in spb
                                     if param in global_params.values()] \
             if (global_params := self.tms_data["global_params"]) is not None else []
         transmission_params_right = [param for param in spb
-                                     if param in [param for tms_rule in self.tms_data["transmission_rules"] for param in
-                                                  tms_rule["actors-params"].values()]]
+                                     if param in [param for tms_rule in self.tms_data["transmission_rules"]
+                                                  for param in tms_rule["actors-params"].values()]]
 
         params_col_idx = get_params_col_idx(sampled_params_boundaries=spb)
 
