@@ -196,12 +196,12 @@ def construct_triangle_grids_prcc_p_value(n_age):
 
 
 def get_mask_and_values(n_age, prcc_vector, p_values):
-    prcc_mtx = get_rectangular_matrix_from_upper_triu(
+    prcc_mtx = np.array(get_rectangular_matrix_from_upper_triu(
         rvector=prcc_vector,
-        matrix_size=n_age)
-    p_values_mtx = get_rectangular_matrix_from_upper_triu(
+        matrix_size=n_age))
+    p_values_mtx = np.array(get_rectangular_matrix_from_upper_triu(
         rvector=p_values,
-        matrix_size=n_age)
+        matrix_size=n_age))
     values_all = [prcc_mtx, p_values_mtx]
     values = np.triu(values_all, k=0)
 
@@ -243,10 +243,11 @@ def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save
     ax.set(frame_on=False)
     plt.gca().grid(which='minor', color='gray', linestyle='-', linewidth=1)
     ax.margins(x=0, y=0)
-    ax.set_aspect('equal', 'box')  # square cells
+    ax.set_aspect('equal', 'box')
     plt.tight_layout()
     plt.title(plot_title, y=1.03, fontsize=25)
     plt.title(plot_title, y=1.03, fontsize=25)
     plt.savefig(filename_to_save, format="pdf",
                 bbox_inches='tight')
+    plt.show()
     plt.close()
