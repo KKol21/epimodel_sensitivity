@@ -157,21 +157,31 @@ class SimulationBase(ABC):
                         is_first = False
                     print(f"\t {idx}. p-val: ", p_val)
 
-    def plot_prcc(self, filename: str):
+    def plot_prcc(self, filename: str, labels=None):
+        """
+
+        Args:
+            filename:
+            labels:
+
+        Returns: None
+
+        """
         spb = self.sampled_params_boundaries
         from src.sensitivity.sensitivity_model_base import get_params_col_idx
 
         def get_aged_param_labels(aged_param):
             return [f"{aged_param}_{ag}" for ag in range(self.n_age)]
 
-        pci = get_params_col_idx(sampled_params_boundaries=spb)
-        labels = []
-        for param, idx in pci.items():
-            param_label = get_aged_param_labels(param) if isinstance(spb[param][0], list) else param
-            if isinstance(param_label, list):
-                labels += param_label
-            else:
-                labels.append(param_label)
+        if labels is None:
+            labels = []
+            pci = get_params_col_idx(sampled_params_boundaries=spb)
+            for param, idx in pci.items():
+                param_label = get_aged_param_labels(param) if isinstance(spb[param][0], list) else param
+                if isinstance(param_label, list):
+                    labels += param_label
+                else:
+                    labels.append(param_label)
 
         os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
         prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')

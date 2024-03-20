@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import seaborn
-import torch
 from matplotlib import pyplot as plt, colors
 from matplotlib.cm import ScalarMappable
 from matplotlib.ticker import LogLocator, LogFormatter
@@ -66,100 +65,6 @@ def generate_tornado_plot(sim_obj, labels, prcc: np.ndarray, p_val, filename: st
     plt.savefig(f'{sim_obj.folder_name}/prcc_plots/prcc_tornado_plot_{filename}.pdf',
                 format="pdf", bbox_inches='tight')
     plt.show()
-
-
-def generate_epidemic_plot(sim_obj, vaccination, filename, target_var, r0, plot_title=None, compartments=None):
-    from src.model.r0 import R0Generator
-
-    if compartments is None:
-        compartments = sim_obj.target_var_choices
-
-    if plot_title is None:
-        plot_title = "Járványgörbe korcsoportokra aggregálva \n" \
-                     f"Célváltozó: {target_var}\n" \
-                     f"R0={r0}"
-
-    comp_colors = ['orange', 'red', 'black']
-
-    model = sim_obj.model
-    sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
-    r0generator = R0Generator(sim_obj.data, **sim_obj.model_struct)
-    # Calculate base transmission rate
-    beta = r0 / r0generator.get_eig_val(contact_mtx=sim_obj.cm,
-                                        susceptibles=sim_obj.susceptibles.reshape(1, -1),
-                                        population=sim_obj.population)
-    sim_obj.params["beta"] = beta
-    model.initialize_matrices()
-
-    t_eval = torch.linspace(1, 1200, 1200).to(sim_obj.device)
-    sol = sim_obj.model.get_solution(y0=sim_obj.model.get_initial_values()[None, :], t_eval=t_eval[None, :],
-                                     lhs_table=vaccination[None, :]).ys[0, :, :]
-    mask = torch.cat((torch.full((100,), True).to(sim_obj.device),
-                      sol[100:, model.idx('ic_0')].sum(axis=1) > 1))
-    sol = sol[mask, :].cpu()
-    t = t_eval[mask].cpu()
-
-    for idx, comp in enumerate(compartments):
-        comp_sol = model.aggregate_by_age(sol, comp)
-        plt.plot(t, comp_sol, label=comp.upper(), color=comp_colors[idx], linewidth=2)
-
-    plt.legend()
-    plt.gca().set_xlabel('Napok')
-    plt.gca().set_ylabel('Kompartmentek méretei')
-    plt.title(plot_title, y=1.03, fontsize=12)
-    plt.savefig(f'{sim_obj.folder_name}/epidemic_plots/epidemic_plot_{filename}.pdf',
-                format="pdf", bbox_inches='tight')
-    plt.show()
-    plt.close()
-
-
-def generate_epidemic_plot_(sim_obj, vaccination, vaccination_opt, filename, target_var, r0, r0_bad, plot_title=None,
-                            compartments=None):
-    from src.model.r0 import R0Generator
-
-    if compartments is None:
-        compartments = sim_obj.target_var_choices
-
-    if plot_title is None:
-        plot_title = "Járványgörbe korcsoportokra aggregálva \n" \
-                     f"Vakcinálás célváltozója: {target_var}\n" \
-                     r"Szimuláció $\mathcal{R}_0=$" + str(r0)
-
-    comp = 'ic'
-    colors = ['orange', 'red']
-
-    model = sim_obj.model
-    sim_obj.params["susc"] = torch.ones(sim_obj.n_age).to(sim_obj.device)
-
-    r0generator = R0Generator(sim_obj.data)
-    ngm_ev = r0generator.get_eig_val(contact_mtx=sim_obj.cm,
-                                     susceptibles=sim_obj.susceptibles.reshape(1, -1),
-                                     population=sim_obj.population)
-    # Calculate base transmission rate
-    beta = r0 / ngm_ev
-    sim_obj.params["beta"] = beta
-    model._get_constant_matrices()
-
-    t = torch.linspace(1, 1000, 1000).to(sim_obj.device)
-    sol_real = sim_obj.model.get_solution(t=t, cm=sim_obj.cm,
-                                          daily_vac=torch.tensor(vaccination_opt).float())
-    sol_bad = sim_obj.model.get_solution(t=t, cm=sim_obj.cm,
-                                         daily_vac=torch.tensor(vaccination).float())
-
-    comp_sol = model.aggregate_by_age(sol_real, comp)
-    comp_sol_bad = model.aggregate_by_age(sol_bad, comp)
-    plt.plot(t, comp_sol_bad, color=colors[1], linewidth=2)
-    plt.plot(t, comp_sol, '--', color=colors[0], linewidth=2)
-
-    plt.legend([r'Optimális vakcinálás $\mathcal{R}_0 = 1.8$ esetén',
-                r'Optimális vakcinálás $\mathcal{R}_0 = 3$ esetén'], fontsize=8)
-    plt.gca().set_xlabel('Napok')
-    plt.gca().set_ylabel('Intenzív betegek száma')
-    plt.title(plot_title, y=1.03, fontsize=12)
-    plt.savefig(f'{sim_obj.folder_name}/epidemic_plots_/epidemic_plot_{filename}_{r0}.pdf',
-                format="pdf", bbox_inches='tight')
-    plt.show()
-    plt.close()
 
 
 def get_age_groups():

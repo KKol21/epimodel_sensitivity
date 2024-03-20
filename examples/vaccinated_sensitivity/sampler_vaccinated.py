@@ -1,20 +1,17 @@
 import numpy as np
 import torch
 
-
 from src.sensitivity.sampler_base import SamplerBase
 
 
 class SamplerVaccinated(SamplerBase):
-    def __init__(self, sim_state: dict, sim_obj):
-        super().__init__(sim_state, sim_obj)
+    def __init__(self, sim_obj, sim_option):
+        super().__init__(sim_obj, sim_option)
         self.sim_obj = sim_obj
-        self.susc = sim_state["susc"]
-        self.base_r0 = sim_state["base_r0"]
-        self.target_var = sim_state["target_var"]
-        self.lhs_boundaries = {"lower": np.zeros(sim_obj.n_age),  # Ratio of daily vaccines given to each age group
-                               "upper": np.ones(sim_obj.n_age)
-                               }
+        self.lhs_bounds_dict = {
+            "vaccines": np.array([np.zeros(sim_obj.n_age),  # Ratio of daily vaccines given to each age group
+                                  np.ones(sim_obj.n_age)])
+        }
 
     def run(self):
         """
@@ -36,15 +33,7 @@ class SamplerVaccinated(SamplerBase):
         # Make sure that total vaccines given to an age group
         # doesn't exceed the population of that age group
         lhs_table = self.allocate_vaccines(lhs_table)
-
         self._get_sim_output(lhs_table)
-        optimal_vacc = lhs_table[0]
-
-        # Save the most optimal vaccination strategy found with sampling
-        self.save_output(output=optimal_vacc, output_name='optimal_vaccination')
-
-    def _get_variable_parameters(self):
-        return f'{self.susc}-{self.base_r0}-{self.target_var}'
 
     @staticmethod
     def norm_table_rows(table: np.ndarray):
