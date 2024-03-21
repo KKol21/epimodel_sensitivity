@@ -23,7 +23,7 @@ def generate_tornado_plot(sim_obj, labels, prcc: np.ndarray, p_val, filename: st
 
     sm = ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
-    cbar = plt.colorbar(sm, orientation='vertical', shrink=0.7, pad=0.02)
+    cbar = plt.colorbar(sm, orientation='vertical', shrink=0.7, pad=0.02, ax=plt.gca())
     cbar.set_label('p-values')
 
     # Plot the bars one by one
