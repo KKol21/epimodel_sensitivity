@@ -17,14 +17,14 @@ class SimulationSEIR(SimulationBase):
         self.model = SEIRModel(sim_obj=self)
 
     def run_sampling(self):
-        for option in self.sim_options_prod:
-            susc = torch.Tensor(list(option["susc"].values())[0], device=self.device)
+        for variable_params in self.variable_param_combinations:
+            susc = torch.Tensor(list(variable_params["susc"].values())[0], device=self.device)
             self.params.update({"susc": susc})
-            base_r0 = option["r0"]
+            base_r0 = variable_params["r0"]
             beta = self.get_beta_from_r0(base_r0)
             self.params["beta"] = beta
 
             self.model.initialize_matrices()
 
-            param_generator = SamplerSEIR(sim_obj=self, sim_option=option)
+            param_generator = SamplerSEIR(sim_obj=self, variable_params=variable_params)
             param_generator.run()

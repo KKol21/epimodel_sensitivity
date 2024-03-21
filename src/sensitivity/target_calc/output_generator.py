@@ -6,10 +6,10 @@ from src.sensitivity.target_calc.peak_calc import PeakCalculator
 
 
 class OutputGenerator:
-    def __init__(self, sim_obj, sim_option):
+    def __init__(self, sim_obj, variable_params):
         self.batch_size = sim_obj.batch_size
         self.sim_obj = sim_obj
-        self.sim_option = sim_option
+        self.variable_params = variable_params
 
     def get_output(self, lhs_table: np.ndarray) -> dict:
         lhs = torch.from_numpy(lhs_table).float().to(self.sim_obj.device)

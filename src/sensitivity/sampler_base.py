@@ -28,9 +28,9 @@ class SamplerBase(ABC):
             and collect simulation results.
     """
 
-    def __init__(self, sim_obj, sim_option):
+    def __init__(self, sim_obj, variable_params):
         self.sim_obj = sim_obj
-        self.sim_option = sim_option
+        self.variable_params = variable_params
         self.sampled_params_boundaries = sim_obj.sampled_params_boundaries
         self._process_sampling_config()
 
@@ -84,16 +84,16 @@ class SamplerBase(ABC):
         return bounds.T
 
     def _get_sim_output(self, lhs_table: np.ndarray):
-        print(f"\n Simulation for {self.n_samples} samples ({self.sim_obj.get_filename(self.sim_option)})")
+        print(f"\n Simulation for {self.n_samples} samples ({self.sim_obj.get_filename(self.variable_params)})")
         print(f"Batch size: {self.batch_size}\n")
 
-        output_generator = OutputGenerator(self.sim_obj, self.sim_option)
+        output_generator = OutputGenerator(self.sim_obj, self.variable_params)
         sim_outputs = output_generator.get_output(lhs_table=lhs_table)
 
         time.sleep(0.3)
 
         # Save samples, target values
-        filename = self.sim_obj.get_filename(self.sim_option)
+        filename = self.sim_obj.get_filename(self.variable_params)
         self.save_output(output=lhs_table, output_name='lhs', filename=filename)
         for target_var, sim_output in sim_outputs.items():
             self.save_output(output=sim_output.cpu(), output_name='simulations', filename=filename + f"_{target_var}")

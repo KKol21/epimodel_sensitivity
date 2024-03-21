@@ -6,11 +6,15 @@ from examples.SEIHR_2_age_group.simulation_seir import SimulationSEIR
 
 
 def main():
-    model_params = {"gamma": 0.2, "beta": 0.2, "alpha": 0.3}
+    model_params = {"gamma": 0.2,
+                    "beta": 0.2,
+                    "alpha": 0.3}
 
-    contact_data = torch.tensor([[1, 2], [0.5, 1]])
+    contact_data = torch.tensor([[1, 2],
+                                 [0.5, 1]])
 
-    age_data = torch.tensor([[1E5, 2E5]])
+    age_data = torch.tensor([[1E5,
+                              2E5]])
 
     data = SimpleNamespace(**{"model_params": model_params,
                               "cm": contact_data,
@@ -27,4 +31,3 @@ def main():
 
 if __name__ == "main":
     main()
-    

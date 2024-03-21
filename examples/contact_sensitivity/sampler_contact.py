@@ -4,8 +4,8 @@ from src.sensitivity.sampler_base import SamplerBase
 
 
 class SamplerContact(SamplerBase):
-    def __init__(self, sim_obj, sim_option):
-        super().__init__(sim_obj, sim_option)
+    def __init__(self, sim_obj, variable_params):
+        super().__init__(sim_obj, variable_params)
 
         self.lhs_bounds_dict = {
             "contacts": np.array([np.full(fill_value=0.1, shape=self.sim_obj.upper_tri_size),

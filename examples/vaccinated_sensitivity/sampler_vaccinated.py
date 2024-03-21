@@ -5,8 +5,8 @@ from src.sensitivity.sampler_base import SamplerBase
 
 
 class SamplerVaccinated(SamplerBase):
-    def __init__(self, sim_obj, sim_option):
-        super().__init__(sim_obj, sim_option)
+    def __init__(self, sim_obj, variable_params):
+        super().__init__(sim_obj, variable_params)
         self.sim_obj = sim_obj
         self.lhs_bounds_dict = {
             "vaccines": np.array([np.zeros(sim_obj.n_age),  # Ratio of daily vaccines given to each age group

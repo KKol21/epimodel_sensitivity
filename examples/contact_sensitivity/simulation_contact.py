@@ -47,15 +47,15 @@ class SimulationContact(SimulationBase):
         'sens_data_contact/simulations' directories, respectively.
 
         """
-        for sim_opt in self.sim_options_prod:
-            base_r0 = sim_opt["r0"]
+        for variable_params in self.variable_param_combinations:
+            base_r0 = variable_params["r0"]
             beta = self.get_beta_from_r0(base_r0)
             self.params.update({"beta": beta})
             # Generate matrices used in model representation
             self.model = ContactModel(sim_obj=self, base_r0=base_r0)
             self.model.initialize_matrices()
 
-            param_generator = SamplerContact(sim_obj=self, sim_option=sim_opt)
+            param_generator = SamplerContact(sim_obj=self, variable_params=variable_params)
             param_generator.run()
 
     def plot_prcc_and_p_values(self, filename):

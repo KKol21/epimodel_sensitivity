@@ -42,14 +42,14 @@ class SimulationVaccinated(SimulationBase):
         'sens_data_vacc/simulations' directories, respectively.
 
         """
-        for sim_opt in self.sim_options_prod:
-            base_r0 = sim_opt["r0"]
+        for variable_params in self.variable_param_combinations:
+            base_r0 = variable_params["r0"]
             beta = self.get_beta_from_r0(base_r0)
             self.params.update({"beta": beta})
             # Generate matrices used in model representation
             self.model.initialize_matrices()
 
-            param_generator = SamplerVaccinated(sim_obj=self, sim_option=sim_opt)
+            param_generator = SamplerVaccinated(sim_obj=self, variable_params=variable_params)
             param_generator.run()
 
     def plot_prcc_tornado_with_p_values(self):
@@ -71,6 +71,6 @@ class SimulationVaccinated(SimulationBase):
             return f'{age_start}-{age_start + bin_size - 1} ' if age_start != max_age else f'{max_age}+ '
 
         labels = [get_age_group(idx, 5) for idx in range(self.n_age)]
-        for option, target in itertools.product(self.sim_options_prod, self.target_vars):
-            filename = self.get_filename(option) + f"_{target}"
+        for variable_params, target in itertools.product(self.variable_param_combinations, self.target_vars):
+            filename = self.get_filename(variable_params) + f"_{target}"
             self.plot_prcc(filename, labels)

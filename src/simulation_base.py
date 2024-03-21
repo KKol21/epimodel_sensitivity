@@ -59,9 +59,9 @@ class SimulationBase(ABC):
             config = json.load(f)
         self.target_vars = config["target_vars"]
 
-        self.sim_options_dict = config["sim_options"]
+        self.variable_params_dict = config["variable_params"]
 
-        self.sim_options_prod = self.process_sim_options()
+        self.variable_param_combinations = self.process_variable_params()
 
         spb = config["sampled_params_boundaries"]
         self.sampled_params_boundaries = spb
@@ -70,16 +70,16 @@ class SimulationBase(ABC):
         self.test = config["test"]
         self.init_vals = config["init_vals"]
 
-    def process_sim_options(self):
-        sim_opt = self.sim_options_dict
+    def process_variable_params(self):
+        vpd = self.variable_params_dict
 
-        if len(sim_opt) == 1:
-            key = next(iter(sim_opt))
-            return self.flatten_list_in_dict(sim_opt, key)
+        if len(vpd) == 1:
+            key = next(iter(vpd))
+            return self.flatten_list_in_dict(vpd, key)
 
-        flattened_options = [self.flatten_dict(sim_opt, key) for key in sim_opt.keys()]
-        options_product = list(itertools.product(*flattened_options))
-        return [merge_dicts(option) for option in options_product]
+        flattened_vpd = [self.flatten_dict(vpd, key) for key in vpd.keys()]
+        variable_params_product = list(itertools.product(*flattened_vpd))
+        return [merge_dicts(variable_params) for variable_params in variable_params_product]
 
     def flatten_dict(self, d, key):
         if isinstance(d[key], dict):
@@ -100,19 +100,20 @@ class SimulationBase(ABC):
         pass
 
     def run_func_for_all_configs(self, func):
-        for option, target in itertools.product(self.sim_options_prod, self.target_vars):
-            filename = self.get_filename(option) + f"_{target}"
+        for variable_params, target in itertools.product(self.variable_param_combinations, self.target_vars):
+            filename = self.get_filename(variable_params) + f"_{target}"
             func(filename)
 
-    def get_filename(self, option):
-        return "_".join([self.parse_param_name(option, key) for key in option.keys()])
+    def get_filename(self, variable_params):
+        return "_".join([self.parse_param_name(variable_params, key) for key in variable_params.keys()])
 
-    def parse_param_name(self, option, key):
-        if isinstance(option[key], dict):
-            subkey = next(iter(option[key]))
+    @staticmethod
+    def parse_param_name(variable_params: dict, key):
+        if isinstance(variable_params[key], dict):
+            subkey = next(iter(variable_params[key]))
             return f"{key}-{subkey}"
         else:
-            return f"{key}-{option[key]}"
+            return f"{key}-{variable_params[key]}"
 
     def get_beta_from_r0(self, base_r0):
         r0generator = R0Generator(self.data, **self.model_struct)

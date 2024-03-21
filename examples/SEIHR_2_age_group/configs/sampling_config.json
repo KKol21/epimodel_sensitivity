@@ -1,5 +1,5 @@
 {
-  "sim_options": {
+  "variable_params": {
     "r0": [
       1.8
     ],

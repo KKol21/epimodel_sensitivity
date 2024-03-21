@@ -2,11 +2,11 @@ from src.sensitivity.sampler_base import SamplerBase
 
 
 class SamplerSEIR(SamplerBase):
-    def __init__(self, sim_obj, sim_option):
-        super().__init__(sim_obj, sim_option)
+    def __init__(self, sim_obj, variable_params):
+        super().__init__(sim_obj, variable_params)
         self.sim_obj = sim_obj
-        self.susc = next(iter(sim_option["susc"].values()))
-        self.base_r0 = sim_option["r0"]
+        self.susc = next(iter(variable_params["susc"].values()))
+        self.base_r0 = variable_params["r0"]
 
     def run(self):
         lhs_table = self._get_lhs_table()
