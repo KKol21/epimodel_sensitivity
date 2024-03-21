@@ -100,19 +100,15 @@ def construct_triangle_grids_prcc_p_value(n_age):
     return triang
 
 
-def get_mask_and_values(n_age, prcc_vector, p_values):
+def get_values(n_age, prcc_vector, p_values):
     prcc_mtx = np.array(get_rectangular_matrix_from_upper_triu(
         rvector=prcc_vector,
         matrix_size=n_age))
     p_values_mtx = np.array(get_rectangular_matrix_from_upper_triu(
         rvector=p_values,
         matrix_size=n_age))
-    values_all = [prcc_mtx, p_values_mtx]
-    values = np.triu(values_all, k=0)
-
-    # get the masked values
-    mask = np.where(values[0] == 0, np.nan, values_all)
-    return mask
+    values = np.array([prcc_mtx, p_values_mtx])
+    return values
 
 
 def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save, plot_title):
@@ -124,7 +120,7 @@ def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save
 
     fig, ax = plt.subplots()
     triang = construct_triangle_grids_prcc_p_value(n_age=n_age)
-    mask = get_mask_and_values(n_age=n_age, prcc_vector=prcc_vector, p_values=p_values)
+    mask = get_values(n_age=n_age, prcc_vector=prcc_vector, p_values=p_values)
     images = [ax.tripcolor(t, np.ravel(val), cmap=cmap, ec="white")
               for t, val, cmap in zip(triang,
                                       mask, cmaps)]
