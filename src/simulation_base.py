@@ -37,8 +37,7 @@ class SimulationBase(ABC):
         self.n_age = self.data.n_age
         self.cm = self.data.cm
         self.population = self.data.age_data.flatten()
-        self.age_vector = self.population.reshape((-1, 1))
-        self.folder_name = PROJECT_PATH + "\sens_data"
+        self.folder_name = os.path.join(PROJECT_PATH, "sens_data")
 
     def _load_model_structure(self, model_struct_path):
         with open(model_struct_path) as f:
@@ -75,7 +74,7 @@ class SimulationBase(ABC):
 
         if len(vpd) == 1:
             key = next(iter(vpd))
-            return self.flatten_list_in_dict(vpd, key)
+            return self.flatten_dict(vpd, key)
 
         flattened_vpd = [self.flatten_dict(vpd, key) for key in vpd.keys()]
         variable_params_product = list(itertools.product(*flattened_vpd))

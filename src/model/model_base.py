@@ -27,7 +27,6 @@ class EpidemicModelBase(ABC):
         self.ps = data.model_params
         self.device = data.device
 
-
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
         self.n_eq = self.n_age * self.n_comp
         self.is_vaccinated = "vaccination" in [trans["type"] for trans in self.trans_data]

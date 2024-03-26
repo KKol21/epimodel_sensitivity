@@ -1,3 +1,5 @@
+import os
+
 import torch
 
 from examples.SEIR_no_age_groups.model_seir import SEIRModel
@@ -6,10 +8,10 @@ from src.dataloader import PROJECT_PATH
 from src.simulation_base import SimulationBase
 
 
-class SimulationSEIR(SimulationBase):
+class SimulationSEIHR(SimulationBase):
     def __init__(self, data):
-        model_struct_path = PROJECT_PATH + "/examples/SEIHR_2_age_group/configs/SEIHR_model_struct.json"
-        config_path = PROJECT_PATH + "/examples/SEIHR_2_age_group/configs/sampling_config.json"
+        model_struct_path = os.path.join(PROJECT_PATH, "examples/SEIHR_2_age_group/configs/SEIHR_model_struct.json")
+        config_path = os.path.join(PROJECT_PATH, "examples/SEIHR_2_age_group/configs/sampling_config.json")
         super().__init__(data=data, model_struct_path=model_struct_path, config_path=config_path)
         self.folder_name += "/sens_data_SEIR_2_ag"
 
@@ -22,8 +24,8 @@ class SimulationSEIR(SimulationBase):
         Runs the sampling-based simulation with different parameter combinations.
 
         This method generates Latin Hypercube Sampling (LHS) samples of vaccine distributions for each parameter
-        combination. The LHS tables and simulation results are saved in separate files in the 'sens_data_contact/lhs' and
-        'sens_data_contact/simulations' directories, respectively.
+        combination. The LHS tables and simulation results are saved in separate files in the 'sens_data_contact/lhs'
+        and 'sens_data_contact/simulations' directories, respectively.
 
         """
         for variable_params in self.variable_param_combinations:

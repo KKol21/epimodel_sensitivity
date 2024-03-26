@@ -22,5 +22,5 @@ def main():
     sim.plot_all_prcc()
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     main()

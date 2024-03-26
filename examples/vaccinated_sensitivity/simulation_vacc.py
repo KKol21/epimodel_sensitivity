@@ -25,11 +25,13 @@ class SimulationVaccinated(SimulationBase):
     """
 
     def __init__(self, data):
-        struct_path = PROJECT_PATH + "/examples/vaccinated_sensitivity/configs/vaccinated_model_struct.json"
-        config_path = PROJECT_PATH + "/examples/vaccinated_sensitivity/configs/vaccinated_sampling_config.json"
+        struct_path = os.path.join(PROJECT_PATH,
+                                   "examples/vaccinated_sensitivity/configs/vaccinated_model_struct.json")
+        config_path = os.path.join(PROJECT_PATH,
+                                   "examples/vaccinated_sensitivity/configs/vaccinated_sampling_config.json")
         super().__init__(data, model_struct_path=struct_path, config_path=config_path)
 
-        self.folder_name += "/sens_data_vacc"
+        self.folder_name = os.path.join(self.folder_name, "/sens_data_vacc")
         self.model = VaccinatedModel(sim_obj=self)
 
     def run_sampling(self):

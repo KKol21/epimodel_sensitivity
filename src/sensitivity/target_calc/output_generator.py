@@ -19,7 +19,7 @@ class OutputGenerator:
         return results
 
     def calculate_target(self, lhs_table: torch.Tensor, target_var: str) -> torch.Tensor:
-        if target_var in ["d_max", "r_max"]:
+        if target_var.split('_')[1] == "sup":
             target_calculator = FinalSizeCalculator(self.sim_obj.model)
         else:
             target_calculator = PeakCalculator(self.sim_obj.model)

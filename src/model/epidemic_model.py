@@ -4,8 +4,8 @@ from src.model.model_base import EpidemicModelBase
 
 
 class EpidemicModel(EpidemicModelBase):
-    def __init__(self, data):
-        super().__init__(data)
+    def __init__(self, data, model_struct):
+        super().__init__(data, **model_struct)
 
     def get_solution(self, y0, t_eval, **kwargs):
         return self.get_sol_from_ode(y0=y0,

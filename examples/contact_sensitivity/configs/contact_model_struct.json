@@ -38,24 +38,26 @@
     }
   },
   "transmission": {
-    "global_params": {
-      "s": "susceptibility"
-    },
     "transmission_rules": [
       {
         "nodes": {
-          "source": "s",
+          "source": {
+            "name": "s",
+            "params": [
+              "susc"
+            ]
+          },
           "target": "e"
         },
-        "actors": [
-          "is",
-          "ia",
-          "ip"
-        ],
-        "params": {
-          "is": null,
-          "ip": null,
-          "ia": "inf_a"
+        "infecfion": {
+          "actors-params": {
+            "is": null,
+            "ip": null,
+            "ia": "inf_a"
+          },
+          "infection_params": [
+            "infectivity"
+          ]
         }
       }
     ]

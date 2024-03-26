@@ -1,5 +1,3 @@
-import torch
-
 from src.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 

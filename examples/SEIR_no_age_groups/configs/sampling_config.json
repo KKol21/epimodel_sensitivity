@@ -12,7 +12,7 @@
   },
   "target_vars": [
     "i_max",
-    "r_max"
+    "r_sup"
   ],
   "sampled_params_boundaries": {
     "alpha": [

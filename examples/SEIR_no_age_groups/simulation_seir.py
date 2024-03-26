@@ -1,4 +1,5 @@
 import torch
+import os
 
 from examples.SEIR_no_age_groups.model_seir import SEIRModel
 from examples.SEIR_no_age_groups.sampler_seir import SamplerSEIR
@@ -8,10 +9,10 @@ from src.simulation_base import SimulationBase
 
 class SimulationSEIR(SimulationBase):
     def __init__(self, data):
-        model_struct_path = PROJECT_PATH + "/examples/SEIR_no_age_groups/configs/SEIR_model_struct.json"
-        config_path = PROJECT_PATH + "/examples/SEIR_no_age_groups/configs/sampling_config.json"
+        model_struct_path = os.path.join(PROJECT_PATH, "examples/SEIR_no_age_groups/configs/SEIR_model_struct.json")
+        config_path = os.path.join(PROJECT_PATH, "examples/SEIR_no_age_groups/configs/sampling_config.json")
         super().__init__(data, model_struct_path=model_struct_path, config_path=config_path)
-        self.folder_name += "/sens_data_SEIR_no_ag"
+        self.folder_name_extension = "/sens_data_SEIR_no_ag"
 
         # Initalize model
         self.model = SEIRModel(sim_obj=self)

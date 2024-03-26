@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import torch
 
-from examples.SEIHR_2_age_group.simulation_seir import SimulationSEIR
+from examples.SEIHR_2_age_group.simulation_seihr import SimulationSEIHR
 
 
 def main():
@@ -22,12 +22,12 @@ def main():
                               "n_age": len(age_data[0]),
                               "device": "cpu"})
 
-    sim = SimulationSEIR(data)
+    sim = SimulationSEIHR(data)
     sim.run_sampling()
     sim.calculate_all_prcc()
     sim.calculate_all_p_values()
     sim.plot_all_prcc()
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     main()

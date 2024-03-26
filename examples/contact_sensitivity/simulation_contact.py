@@ -26,8 +26,8 @@ class SimulationContact(SimulationBase):
     """
 
     def __init__(self, data):
-        config_path = PROJECT_PATH + "/examples/contact_sensitivity/configs/contact_sampling_config.json"
-        model_struct_path = PROJECT_PATH + "/examples/contact_sensitivity/configs/contact_model_struct.json"
+        config_path = os.path.join(PROJECT_PATH, "examples/contact_sensitivity/configs/contact_sampling_config.json")
+        model_struct_path = os.path.join(PROJECT_PATH, "examples/contact_sensitivity/configs/contact_model_struct.json")
         super().__init__(data=data,
                          config_path=config_path,
                          model_struct_path=model_struct_path)
@@ -43,8 +43,8 @@ class SimulationContact(SimulationBase):
         Runs the sampling-based simulation with different parameter combinations.
 
         This method generates Latin Hypercube Sampling (LHS) samples of vaccine distributions for each parameter
-        combination. The LHS tables and simulation results are saved in separate files in the 'sens_data_contact/lhs' and
-        'sens_data_contact/simulations' directories, respectively.
+        combination. The LHS tables and simulation results are saved in separate files in the 'sens_data_contact/lhs'
+        and 'sens_data_contact/simulations' directories, respectively.
 
         """
         for variable_params in self.variable_param_combinations:
@@ -77,4 +77,4 @@ class SimulationContact(SimulationBase):
                                       prcc_vector=prcc,
                                       p_values=p_val,
                                       filename_to_save=f"{self.folder_name}/prcc_p_val_plots/{filename}.pdf",
-                                      plot_title="test")
+                                      plot_title=f"Contact sensitivity values ({filename})")
