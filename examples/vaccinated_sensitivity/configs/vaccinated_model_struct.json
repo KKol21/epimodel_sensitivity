@@ -37,29 +37,23 @@
       "n_substates": 1
     }
   },
-  "transmission": {
-    "global_params": {
-      "s": "susceptibility"
-    },
-    "transmission_rules": [
-      {
-        "nodes": {
-          "source": "s",
-          "target": "e"
+  "transmission_rules": [
+    {
+      "source": {
+        "name": "s",
+        "params": [
+          "susc"
+        ]
+      },
+      "target": "e",
+      "infection": {
+        "actors-params": {
+          "i": null
         },
-        "actors": [
-          "is",
-          "ia",
-          "ip"
-        ],
-        "params": {
-          "is": null,
-          "ip": null,
-          "ia": "inf_a"
-        }
+        "infection_params": []
       }
-    ]
-  },
+    }
+  ],
   "transition": [
     {
       "source": "s",
@@ -145,3 +139,4 @@
     }
   ]
 }
+

@@ -45,12 +45,12 @@ class SimulationBase(ABC):
 
         self.state_data = model_structure["states"]
         self.trans_data = model_structure["transition"]
-        self.tms_data = model_structure["transmission"]
+        self.tms_rules = model_structure["transmission_rules"]
 
         self.model_struct = {
             "state_data": self.state_data,
             "trans_data": self.trans_data,
-            "tms_data": self.tms_data,
+            "tms_rules": self.tms_rules,
         }
 
     def _load_config(self, config_path):

@@ -4,12 +4,12 @@ from src.model.matrix_generator import generate_transition_matrix, get_infectiou
 
 
 class R0Generator:
-    def __init__(self, data, state_data, trans_data, tms_data):
+    def __init__(self, data, state_data, trans_data, tms_rules):
         self.data = data
         self.device = data.device
         self.state_data = state_data
         self.trans_data = trans_data
-        self.tms_data = tms_data
+        self.tms_rules = tms_rules
 
         self.inf_states = self.get_infected_states()
         self.n_comp = len(self.inf_states)
@@ -20,8 +20,6 @@ class R0Generator:
         self.s_mtx = self.n_age * self.n_states
 
         self._get_e()
-        self.inf_state_dict = {state: data for state, data in self.state_data.items()
-                               if data["type"] in ["infected", "infectious"]}
         self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data
                                  if trans["type"] == "infection"][0]
 
@@ -46,7 +44,7 @@ class R0Generator:
         ngm_large = v_inv @ f
         ngm = self.e @ ngm_large @ self.e.T if self.n_age > 1 else self.e @ ngm_large @ self.e
 
-        if len(ngm.shape) == 0:
+        if self.n_age == 1:
             dom_eig_val = torch.abs(ngm)
         else:
             dom_eig_val = torch.sort(torch.abs(torch.linalg.eigvals(ngm)))[0][-1]
@@ -59,23 +57,28 @@ class R0Generator:
         """
 
         def isinf_state(state):
-            return self.state_data[state]['type'] in ['infected', 'infectious']
-
-        trans_mtx = generate_transition_matrix(states_dict=self.inf_state_dict, trans_data=self.trans_data,
+            for tms_rule in self.tms_rules:
+                for actor in tms_rule["infection"]["actors-params"].keys():
+                    if actor == state:
+                        return True
+                if tms_rule["target"] == state:
+                    return True
+            return False
+        inf_state_dict = {state: data for state, data in self.state_data.items() if isinf_state(state)}
+        trans_mtx = generate_transition_matrix(states_dict=inf_state_dict, trans_data=self.trans_data,
                                                parameters=self.params, n_age=self.n_age,
                                                n_comp=self.n_states, c_idx=self.i).to(self.device)
 
-        end_state_dict = {state: f"{state}_{data['n_substates'] - 1}" for state, data in self.state_data.items()}
-        basic_trans = [trans for trans in self.trans_data
-                       if trans['type'] == 'basic'
-                       and isinf_state(trans['source'])
-                       and isinf_state(trans['target'])]
-
+        end_state_dict = {state: f"{state}_{data['n_substates'] - 1}"
+                          for state, data in self.state_data.items()}
+        basic_trans = [trans for trans in self.trans_data if
+                       isinf_state(trans['source']) and isinf_state(trans['target'])]
         idx = self._idx
+
         for trans in basic_trans:
-            param = self.params[trans['param']]
             source = end_state_dict[trans['source']]
             target = f"{trans['target']}_0"
+            param = self.params[trans['param']]
             n_substates = self.state_data[trans['source']]["n_substates"]
             trans_mtx[idx(source), idx(target)] = param * n_substates
         return torch.linalg.inv(trans_mtx)
@@ -97,7 +100,7 @@ class R0Generator:
         f = torch.zeros((s_mtx, s_mtx)).to(self.device)
         susc_vec = self.params["susc"].reshape((-1, 1))
         """
-        tms_params = self.data.tms_data["params"]
+        tms_params = self.data.tms_rules["params"]
 
         left_mul = 1
         for non_inf_param in tms_params["non_infectious"].values():
@@ -105,7 +108,7 @@ class R0Generator:
         right_mul = 1
         for inf_param in tms_params["infectious"].values():
             right_mul *= self.params[inf_param]
-                for tms in self.data.tms_data["transmission_rules"]:
+                for tms in self.data.tms_rules["transmission_rules"]:
             for actor in tms.actors:
                 for substate in self.g  
         """
