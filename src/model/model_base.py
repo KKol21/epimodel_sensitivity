@@ -5,7 +5,7 @@ import torchode as to
 
 
 class EpidemicModelBase(ABC):
-    def __init__(self, data, state_data, trans_data, tms_data):
+    def __init__(self, data, state_data, trans_data, tms_rules):
         """
         Initialises Abstract base class for epidemic models.
 
@@ -18,7 +18,7 @@ class EpidemicModelBase(ABC):
         self.data = data
         self.state_data = state_data
         self.trans_data = trans_data
-        self.tms_data = tms_data
+        self.tms_data = tms_rules
 
         self.n_age = data.n_age
         self.population = data.age_data.flatten()
@@ -72,9 +72,8 @@ class EpidemicModelBase(ABC):
     def get_initial_values_from_dict(self, init_val_dict: dict) -> torch.FloatTensor:
         """
 
-        This method retrieves the initial values for the model. It sets the initial value for the infected compartment
-        of the 3rd age group (i_0^3) to 1 and subtracts 1 from the susceptible (s_0^3) compartment for the appropriate
-        age group.
+        This method retrieves the initial values for the model based
+        on the provided values in the corresponding configuration json.
 
         Returns:
             torch.Tensor: Initial values of the model.
@@ -99,8 +98,7 @@ class EpidemicModelBase(ABC):
 
         """
         substates = get_substates(n_substates=self.state_data[comp]["n_substates"], comp_name=comp)
-        substate_indices = [self.idx(state) for state in substates]
-        substate_sums = torch.stack([solution[:, idx].sum(dim=1) for idx in substate_indices], dim=0)
+        substate_sums = torch.stack([solution[:, self.idx(state)].sum(dim=1) for state in substates], dim=0)
         return substate_sums.sum(dim=0)
 
 

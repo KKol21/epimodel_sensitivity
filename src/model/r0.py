@@ -1,6 +1,7 @@
 import torch
 
 from src.model.matrix_generator import generate_transition_matrix, get_infectious_states
+from src.model.model_base import get_substates
 
 
 class R0Generator:
@@ -24,7 +25,6 @@ class R0Generator:
                                  if trans["type"] == "infection"][0]
 
     def get_infected_states(self):
-        from src.model.model_base import get_substates
         states = []
         for state, data in self.state_data.items():
             if data["type"] in ["infected", "infectious"]:
@@ -96,27 +96,24 @@ class R0Generator:
         i = self.i
         s_mtx = self.s_mtx
         n_states = self.n_states
-
         f = torch.zeros((s_mtx, s_mtx)).to(self.device)
-        susc_vec = self.params["susc"].reshape((-1, 1))
-        """
-        tms_params = self.data.tms_rules["params"]
 
-        left_mul = 1
-        for non_inf_param in tms_params["non_infectious"].values():
-            left_mul *= self.params[non_inf_param]
-        right_mul = 1
-        for inf_param in tms_params["infectious"].values():
-            right_mul *= self.params[inf_param]
-                for tms in self.data.tms_rules["transmission_rules"]:
-            for actor in tms.actors:
-                for substate in self.g  
-        """
-        # Transmission rate for every infectious state
-        infectious_states = get_infectious_states(state_data=self.state_data)
+        def get_tms_multipliers(tms_rule):
+            susc_mul = torch.ones(self.n_age).to(self.device)
+            inf_mul = torch.ones(self.n_age).to(self.device)
+            for susc_param in tms_rule["source"]["params"]:
+                susc_mul *= self.params[susc_param]
+            for inf_param in tms_rule["infection"]["infection_params"]:
+                inf_mul *= self.params[inf_param]
+            return susc_mul, inf_mul
 
-        for inf_state in infectious_states:
-            f[i[inf_state]:s_mtx:n_states, i[self.inf_inflow_state]:s_mtx:n_states] = torch.mul(susc_vec, contact_mtx.T)
+        for tms in self.tms_rules:
+            susc_mul, inf_mul = get_tms_multipliers(tms)
+            for actor in tms["infection"]["actors-params"]:
+                for substate in get_substates(n_substates=self.state_data[actor]["n_substates"],
+                                              comp_name=actor):
+                    f[i[substate]:s_mtx:n_states, i[f"{tms['target']}_0"]:s_mtx:n_states] =\
+                        susc_mul * contact_mtx.T * inf_mul.unsqueeze(0)
         return f
 
     def _get_e(self):
