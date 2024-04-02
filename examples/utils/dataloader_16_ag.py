@@ -30,13 +30,13 @@ class DataLoader(DataLoaderBase):
         # Load model param_names
         with open(self._model_parameters_data_file) as f:
             parameters = json.load(f)
-        self.model_params = dict()
+        self.params = dict()
         for param in parameters.keys():
             param_value = parameters[param]["value"]
             if isinstance(param_value, list):
-                self.model_params.update({param: torch.Tensor(param_value).to(self.device)})
+                self.params.update({param: torch.Tensor(param_value).to(self.device)})
             else:
-                self.model_params.update({param: param_value})
+                self.params.update({param: param_value})
 
     def _get_contact_mtx(self):
         wb = xlrd.open_workbook(self._contact_data_file)

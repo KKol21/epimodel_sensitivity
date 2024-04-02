@@ -6,7 +6,7 @@ from examples.SEIHR_2_age_group.simulation_seihr import SimulationSEIHR
 
 
 def main():
-    model_params = {"gamma": 0.2,
+    params = {"gamma": 0.2,
                     "beta": 0.2,
                     "alpha": 0.3}
 
@@ -16,7 +16,7 @@ def main():
     age_data = torch.tensor([[1E5,
                               2E5]])
 
-    data = SimpleNamespace(**{"model_params": model_params,
+    data = SimpleNamespace(**{"params": params,
                               "cm": contact_data,
                               "age_data": age_data,
                               "n_age": len(age_data[0]),

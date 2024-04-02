@@ -1,6 +1,6 @@
 import torch
 
-from src.model.matrix_generator import generate_transition_matrix, get_infectious_states
+from src.model.matrix_generator import generate_transition_matrix, get_tms_multipliers
 from src.model.model_base import get_substates
 
 
@@ -16,7 +16,7 @@ class R0Generator:
         self.n_comp = len(self.inf_states)
         self.n_age = data.n_age
         self.n_states = len(self.inf_states)
-        self.params = data.model_params
+        self.params = data.params
         self.i = {self.inf_states[index]: index for index in torch.arange(0, self.n_states)}
         self.s_mtx = self.n_age * self.n_states
 
@@ -98,17 +98,8 @@ class R0Generator:
         n_states = self.n_states
         f = torch.zeros((s_mtx, s_mtx)).to(self.device)
 
-        def get_tms_multipliers(tms_rule):
-            susc_mul = torch.ones(self.n_age).to(self.device)
-            inf_mul = torch.ones(self.n_age).to(self.device)
-            for susc_param in tms_rule["source"]["params"]:
-                susc_mul *= self.params[susc_param]
-            for inf_param in tms_rule["infection"]["infection_params"]:
-                inf_mul *= self.params[inf_param]
-            return susc_mul, inf_mul
-
         for tms in self.tms_rules:
-            susc_mul, inf_mul = get_tms_multipliers(tms)
+            susc_mul, inf_mul = get_tms_multipliers(tms_rule=tms, data=self.data)
             for actor in tms["infection"]["actors-params"]:
                 for substate in get_substates(n_substates=self.state_data[actor]["n_substates"],
                                               comp_name=actor):

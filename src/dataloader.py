@@ -10,7 +10,7 @@ class DataLoaderBase(ABC):
         self.n_age = None
         self.age_data = None
         self.cm = None
-        self.model_params = None
+        self.params = None
         self.state_data = None
         self.trans_data = None
         self.tms_data = None

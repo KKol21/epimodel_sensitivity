@@ -18,13 +18,13 @@ class EpidemicModelBase(ABC):
         self.data = data
         self.state_data = state_data
         self.trans_data = trans_data
-        self.tms_data = tms_rules
+        self.tms_rules = tms_rules
 
         self.n_age = data.n_age
         self.population = data.age_data.flatten()
         self.compartments = self.get_compartments()
         self.n_comp = len(self.compartments)
-        self.ps = data.model_params
+        self.ps = data.params
         self.device = data.device
 
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}

@@ -33,7 +33,7 @@ class SimulationBase(ABC):
         return self.model.get_initial_values()[self.model.idx("s_0")]
 
     def _load_simulation_data(self):
-        self.params = self.data.model_params
+        self.params = self.data.params
         self.n_age = self.data.n_age
         self.cm = self.data.cm
         self.population = self.data.age_data.flatten()

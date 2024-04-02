@@ -32,6 +32,16 @@ def get_trans_param(state: str, trans_data: dict):
     raise Exception(f"No transition parameter was provided for state {state}")
 
 
+def get_tms_multipliers(tms_rule, data):
+    susc_mul = torch.ones(data.n_age).to(data.device)
+    inf_mul = torch.ones(data.n_age).to(data.device)
+    for susc_param in tms_rule["source"]["params"]:
+        susc_mul *= data.params[susc_param]
+    for inf_param in tms_rule["infection"]["infection_params"]:
+        inf_mul *= data.params[inf_param]
+    return susc_mul, inf_mul
+
+
 def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: dict,
                                n_age: int, n_comp: int, c_idx: dict) -> torch.Tensor:
     """
@@ -116,6 +126,7 @@ class MatrixGenerator:
         self.data = model.data
         self.state_data = model.state_data
         self.trans_data = model.trans_data
+        self.tms_rules = model.tms_rules
         self.n_eq = model.n_eq
         self.n_age = model.n_age
         self.n_comp = model.n_comp
@@ -146,24 +157,34 @@ class MatrixGenerator:
             Torch.Tensor: When multiplied with y, the resulting tensor contains the rate of transmission for
             the susceptibles of age group i at the indices of compartments s^i and e_0^i
         """
-        ps = self.ps
         A = torch.zeros((self.n_eq, self.n_eq)).to(self.device)
-        transmission_rate = ps["beta"] * ps["susc"] / self.population
+        ps = self.ps
         idx = self.idx
 
-        A[idx('s_0'), idx('s_0')] = - transmission_rate
-        A[idx('s_0'), idx(self.inf_inflow_state)] = transmission_rate
+        for tms in self.tms_rules:
+            source = f"{tms['source']['name']}_0"
+            target = f"{tms['target']}_0"
+            susc_mul, inf_mul = get_tms_multipliers(tms, self.data)
+            transmission_rate = susc_mul * ps["beta"] / self.population  # TODO: Add inf_mul
+            A[idx(source), idx(source)] = - transmission_rate
+            A[idx(source), idx(target)] = transmission_rate
         return A
 
     def get_T(self, cm=None) -> torch.Tensor:
         T = torch.zeros((self.n_eq, self.n_eq)).to(self.device)
         if cm is None:
             cm = self.cm
-        # Multiplied with y, the resulting 1D tensor contains the sum of all contacts with infecteds of
-        # age group i at indices of compartments s_i and e_i^0
-        for i_state in self.infectious_states:
-            T[self._get_comp_slice(i_state), self._get_comp_slice('s_0')] = cm.T
-            T[self._get_comp_slice(i_state), self._get_comp_slice(self.inf_inflow_state)] = cm.T
+        for tms in self.tms_rules:
+            source = f"{tms['source']['name']}_0"
+            target = f"{tms['target']}_0"
+            susc_mul, inf_mul = get_tms_multipliers(tms, self.data)
+            infection_spread_rate = susc_mul * cm.T * inf_mul.unsqueeze(
+                0)  # Broadcast susc_mul to rows and inf_mul to columns
+            for actor in tms["infection"]["actors-params"].keys():
+                for substate in get_substates(n_substates=self.state_data[actor]["n_substates"],
+                                              comp_name=actor):
+                    T[self._get_comp_slice(substate), self._get_comp_slice(source)] = infection_spread_rate
+                    T[self._get_comp_slice(substate), self._get_comp_slice(target)] = infection_spread_rate
         return T
 
     def get_B(self) -> torch.Tensor:
