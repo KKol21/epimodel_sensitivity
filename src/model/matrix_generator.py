@@ -32,16 +32,6 @@ def get_trans_param(state: str, trans_data: dict):
     raise Exception(f"No transition parameter was provided for state {state}")
 
 
-def get_tms_multipliers(tms_rule, data):
-    susc_mul = torch.ones(data.n_age).to(data.device)
-    inf_mul = torch.ones(data.n_age).to(data.device)
-    for susc_param in tms_rule["source"]["params"]:
-        susc_mul *= data.params[susc_param]
-    for inf_param in tms_rule["infection"]["infection_params"]:
-        inf_mul *= data.params[inf_param]
-    return susc_mul, inf_mul
-
-
 def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: dict,
                                n_age: int, n_comp: int, c_idx: dict) -> torch.Tensor:
     """
@@ -68,12 +58,14 @@ def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: 
     return trans_matrix
 
 
-def get_infectious_states(state_data):
-    infectious_states = []
-    for state, data in state_data.items():
-        if data["type"] == "infectious":
-            infectious_states += get_substates(data["n_substates"], state)
-    return infectious_states
+def get_tms_multipliers(tms_rule, data):
+    susc_mul = torch.ones(data.n_age).to(data.device)
+    inf_mul = torch.ones(data.n_age).to(data.device)
+    for susc_param in tms_rule["source"]["params"]:
+        susc_mul *= data.params[susc_param]
+    for inf_param in tms_rule["infection"]["infection_params"]:
+        inf_mul *= data.params[inf_param]
+    return susc_mul, inf_mul
 
 
 class MatrixGenerator:
@@ -134,9 +126,6 @@ class MatrixGenerator:
         self.device = model.device
         self.idx = model.idx
         self.c_idx = model.c_idx
-        self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data
-                                 if trans["type"] == "infection"][0]
-        self.infectious_states = get_infectious_states(self.state_data)
 
     def generate_matrix(self, matrix_name):
         matrix_methods = {
@@ -165,7 +154,7 @@ class MatrixGenerator:
             source = f"{tms['source']['name']}_0"
             target = f"{tms['target']}_0"
             susc_mul, inf_mul = get_tms_multipliers(tms, self.data)
-            transmission_rate = susc_mul * ps["beta"] / self.population  # TODO: Add inf_mul
+            transmission_rate = susc_mul * ps["beta"] / self.population
             A[idx(source), idx(source)] = - transmission_rate
             A[idx(source), idx(target)] = transmission_rate
         return A
@@ -178,8 +167,7 @@ class MatrixGenerator:
             source = f"{tms['source']['name']}_0"
             target = f"{tms['target']}_0"
             susc_mul, inf_mul = get_tms_multipliers(tms, self.data)
-            infection_spread_rate = susc_mul * cm.T * inf_mul.unsqueeze(
-                0)  # Broadcast susc_mul to rows and inf_mul to columns
+            infection_spread_rate = cm.T * inf_mul.unsqueeze(0)  # Broadcast susc_mul to rows and inf_mul to columns
             for actor in tms["infection"]["actors-params"].keys():
                 for substate in get_substates(n_substates=self.state_data[actor]["n_substates"],
                                               comp_name=actor):
@@ -208,7 +196,7 @@ class MatrixGenerator:
             trans_param = ps[trans["param"]]
             if (distr := trans["distr"]) is not None:
                 # Multiply the transition parameter by the distribution(s) given
-                trans_param = trans_param * self.mul_distr(distr)  # Doesn't support *=
+                trans_param *= self.mul_distr(distr)
             source = end_state[trans["source"]]
             target = f"{trans['target']}_0"
             n_substates = state_data[trans["source"]]["n_substates"]

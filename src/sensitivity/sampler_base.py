@@ -96,14 +96,17 @@ class SamplerBase(ABC):
         filename = self.sim_obj.get_filename(self.variable_params)
         self.save_output(output=lhs_table, output_name='lhs', filename=filename)
         for target_var, sim_output in sim_outputs.items():
-            self.save_output(output=sim_output.cpu(), output_name='simulations', filename=filename + f"_{target_var}")
+            self.save_output(output=sim_output.cpu(),
+                             output_name='simulations',
+                             filename=filename + f"_{target_var}")
 
     def save_output(self, output, output_name: str, filename: str):
         folder_name = self.sim_obj.folder_name
         os.makedirs(folder_name, exist_ok=True)
 
-        os.makedirs(f"{folder_name}/{output_name}", exist_ok=True)
-        filename = f"{folder_name}/{output_name}/{output_name}_{filename}"
+        dirname = os.path.join(folder_name, output_name)
+        filename = os.path.join(dirname, f"{output_name}_{filename}")
+        os.makedirs(dirname, exist_ok=True)
         np.savetxt(fname=filename + ".csv", X=output, delimiter=";")
 
 

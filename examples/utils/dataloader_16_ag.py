@@ -1,4 +1,5 @@
 import json
+from os.path import join
 
 import torch
 import xlrd
@@ -9,10 +10,10 @@ from src.dataloader import DataLoaderBase
 class DataLoader(DataLoaderBase):
     def __init__(self):
         super().__init__()
-        self._model_parameters_data_file = self.project_path + "/data/model_parameters.json"
-        self._contact_data_file = self.project_path + "/data/contact_matrices.xls"
-        self._age_data_file = self.project_path + "/data/age_distribution.xls"
-        self._model_structure_file = self.project_path + "/data/model_struct.json"
+        self._model_parameters_data_file = join(self.project_path, "data/model_parameters.json")
+        self._contact_data_file = join(self.project_path, "data/contact_matrices.xls")
+        self._age_data_file = join(self.project_path, "data/age_distribution.xls")
+        self._model_structure_file = join(self.project_path, "data/model_struct.json")
 
         self._get_age_data()
         self._get_model_parameters_data()

@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pandas as pd
 import seaborn
@@ -62,8 +64,8 @@ def generate_tornado_plot(sim_obj, labels, prcc: np.ndarray, p_val, filename: st
 
     if title is not None:
         plt.title(title)
-    plt.savefig(f'{sim_obj.folder_name}/prcc_plots/prcc_tornado_plot_{filename}.pdf',
-                format="pdf", bbox_inches='tight')
+    plot_path = os.path.join(sim_obj.folder_name, f"prcc_plots/prcc_tornado_plot_{filename}.pdf")
+    plt.savefig(plot_path, format="pdf", bbox_inches='tight')
     plt.show()
 
 

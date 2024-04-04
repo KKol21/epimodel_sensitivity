@@ -6,7 +6,6 @@
     ]
   },
   "target_vars": [
-    "ic_max",
     "d_sup"
   ],
   "sampled_params_boundaries": null,
