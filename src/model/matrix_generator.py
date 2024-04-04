@@ -68,6 +68,18 @@ def get_tms_multipliers(tms_rule, data):
     return susc_mul, inf_mul
 
 
+def get_distr_mul(distr: List[str], params: dict):
+    if distr is None:
+        return 1
+    result = 1
+    for distr_param in distr:
+        if distr_param[-1] == "_":
+            result *= 1 - params[distr_param[:-1]]
+        else:
+            result *= params[distr_param]
+    return result
+
+
 class MatrixGenerator:
     """
     Class responsible for generating the matrices used in the model.
@@ -167,7 +179,7 @@ class MatrixGenerator:
             source = f"{tms['source']['name']}_0"
             target = f"{tms['target']}_0"
             susc_mul, inf_mul = get_tms_multipliers(tms, self.data)
-            infection_spread_rate = cm.T * inf_mul.unsqueeze(0)  # Broadcast susc_mul to rows and inf_mul to columns
+            infection_spread_rate = cm.T * inf_mul.unsqueeze(0)  # Broadcast inf_mul to columns
             for actor in tms["infection"]["actors-params"].keys():
                 for substate in get_substates(n_substates=self.state_data[actor]["n_substates"],
                                               comp_name=actor):
@@ -194,23 +206,13 @@ class MatrixGenerator:
         for trans in [trans for trans in trans_data if trans["type"] == "basic"]:
             # Iterate over the linear transitions
             trans_param = ps[trans["param"]]
-            if (distr := trans["distr"]) is not None:
-                # Multiply the transition parameter by the distribution(s) given
-                trans_param *= self.mul_distr(distr)
+            # Multiply the transition parameter by the distribution(s) given
+            trans_param *= get_distr_mul(trans["distr"], self.ps)
             source = end_state[trans["source"]]
             target = f"{trans['target']}_0"
             n_substates = state_data[trans["source"]]["n_substates"]
             B[idx(source), idx(target)] = trans_param * n_substates
         return B
-
-    def mul_distr(self, distr: List[str]):
-        result = 1
-        for distr_param in distr:
-            if distr_param[-1] == "_":
-                result *= 1 - self.ps[distr_param[:-1]]
-            else:
-                result *= self.ps[distr_param]
-        return result
 
     def get_V_1(self, daily_vac=None) -> torch.Tensor:
         if daily_vac is None:

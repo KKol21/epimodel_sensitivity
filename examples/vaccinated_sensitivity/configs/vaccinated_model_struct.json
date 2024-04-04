@@ -56,13 +56,6 @@
   ],
   "transition": [
     {
-      "source": "s",
-      "target": "e",
-      "param": "beta",
-      "distr": null,
-      "type": "infection"
-    },
-    {
       "source": "i",
       "target": "r",
       "param": "gamma",

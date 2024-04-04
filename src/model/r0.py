@@ -1,6 +1,6 @@
 import torch
 
-from src.model.matrix_generator import generate_transition_matrix, get_tms_multipliers
+from src.model.matrix_generator import generate_transition_matrix, get_tms_multipliers, get_distr_mul
 from src.model.model_base import get_substates
 
 
@@ -21,8 +21,6 @@ class R0Generator:
         self.s_mtx = self.n_age * self.n_states
 
         self._get_e()
-        self.inf_inflow_state = [f"{trans['target']}_0" for trans in self.trans_data
-                                 if trans["type"] == "infection"][0]
 
     def get_infected_states(self):
         states = []
@@ -57,13 +55,9 @@ class R0Generator:
         """
 
         def isinf_state(state):
-            for tms_rule in self.tms_rules:
-                for actor in tms_rule["infection"]["actors-params"].keys():
-                    if actor == state:
-                        return True
-                if tms_rule["target"] == state:
-                    return True
-            return False
+            return state in [state for state, data in self.state_data.items() if
+                             data["type"] in ["infected", "infectious"]]
+
         inf_state_dict = {state: data for state, data in self.state_data.items() if isinf_state(state)}
         trans_mtx = generate_transition_matrix(states_dict=inf_state_dict, trans_data=self.trans_data,
                                                parameters=self.params, n_age=self.n_age,
@@ -80,7 +74,8 @@ class R0Generator:
             target = f"{trans['target']}_0"
             param = self.params[trans['param']]
             n_substates = self.state_data[trans['source']]["n_substates"]
-            trans_mtx[idx(source), idx(target)] = param * n_substates
+            distr = get_distr_mul(distr=trans["distr"], params=self.params)
+            trans_mtx[idx(source), idx(target)] = param * distr * n_substates
         return torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
