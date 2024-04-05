@@ -98,8 +98,9 @@ class EpidemicModelBase(ABC):
 
         """
         substates = get_substates(n_substates=self.state_data[comp]["n_substates"], comp_name=comp)
-        substate_sums = torch.stack([solution[:, self.idx(state)].sum(dim=1) for state in substates], dim=0)
-        return substate_sums.sum(dim=0)
+        return torch.stack(
+            tensors=[solution[:, self.idx(state)].sum(dim=1) for state in substates],
+            dim=0).sum(dim=0)
 
 
 def get_substates(n_substates, comp_name):

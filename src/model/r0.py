@@ -22,10 +22,14 @@ class R0Generator:
 
         self._get_e()
 
+    def isinf_state(self, state):
+        return state in [state for state, data in self.state_data.items() if
+                         data["type"] in ["infected", "infectious"]]
+
     def get_infected_states(self):
         states = []
         for state, data in self.state_data.items():
-            if data["type"] in ["infected", "infectious"]:
+            if self.isinf_state(state):
                 states += get_substates(data["n_substates"], state)
         return states
 
@@ -53,23 +57,19 @@ class R0Generator:
         Compute and store the inverse of the transition matrix.
 
         """
-
-        def isinf_state(state):
-            return state in [state for state, data in self.state_data.items() if
-                             data["type"] in ["infected", "infectious"]]
-
-        inf_state_dict = {state: data for state, data in self.state_data.items() if isinf_state(state)}
+        isinf = self.isinf_state
+        inf_state_dict = {state: data for state, data in self.state_data.items() if isinf(state=state)}
         trans_mtx = generate_transition_matrix(states_dict=inf_state_dict, trans_data=self.trans_data,
                                                parameters=self.params, n_age=self.n_age,
                                                n_comp=self.n_states, c_idx=self.i).to(self.device)
 
         end_state_dict = {state: f"{state}_{data['n_substates'] - 1}"
                           for state, data in self.state_data.items()}
-        basic_trans = [trans for trans in self.trans_data if
-                       isinf_state(trans['source']) and isinf_state(trans['target'])]
+        inf_trans = [trans for trans in self.trans_data if
+                     isinf(state=trans['source']) and isinf(state=trans['target'])]
         idx = self._idx
 
-        for trans in basic_trans:
+        for trans in inf_trans:
             source = end_state_dict[trans['source']]
             target = f"{trans['target']}_0"
             param = self.params[trans['param']]

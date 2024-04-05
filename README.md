@@ -1,7 +1,7 @@
 # Sensitivity analysis of epidemic models
 This repository was created during the making of the Bsc thesis ["Sensitivity analysis of
 age-specific vaccination in epidemic modelling"](https://drive.google.com/file/d/1ICZ_JTFdJ_zOCKJDFukfIcOrxkguWCFT/view?usp=sharing)(Hungarian) by K. Kovács, Zs. Vizi and B. Péter. It serves as a
-starting point for the sensitivity analysis of epidemic models.
+starting point for the sensitivity analysis of epidemic models. Colab notebook with examples can be found [here](https://drive.google.com/file/d/1JpfBjiywkaVfUW8NWO7YCb95ZAxBGWZ7/view?usp=sharing)
 
 ## Introduction
 The purpose of this project is to provide a general framework for the sensitivity
