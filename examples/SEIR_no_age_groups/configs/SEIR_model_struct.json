@@ -41,16 +41,19 @@
       "type": "basic"
     }
   ],
-  "transmission": {
-    "global_params": null,
-    "transmission_rules": [
-      {
-        "source": "s",
-        "target": "e",
+  "transmission_rules": [
+    {
+      "source": {
+        "name": "s",
+        "params": []
+      },
+      "target": "e",
+      "infection": {
         "actors-params": {
-          "i": "beta"
-        }
+          "i": null
+        },
+        "infection_params": []
       }
-    ]
-  }
+    }
+  ]
 }

@@ -58,14 +58,18 @@ def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: 
     return trans_matrix
 
 
-def get_tms_multipliers(tms_rule, data):
+def get_susc_mul(tms_rule, data):
     susc_mul = torch.ones(data.n_age).to(data.device)
-    inf_mul = torch.ones(data.n_age).to(data.device)
     for susc_param in tms_rule["source"]["params"]:
-        susc_mul *= data.params[susc_param]
+        susc_mul *= data["params"][susc_param]
+    return susc_mul
+
+
+def get_inf_mul(tms_rule, data):
+    inf_mul = torch.ones(data.n_age).to(data.device)
     for inf_param in tms_rule["infection"]["infection_params"]:
-        inf_mul *= data.params[inf_param]
-    return susc_mul, inf_mul
+        inf_mul *= data["params"][inf_param]
+    return inf_mul
 
 
 def get_distr_mul(distr: List[str], params: dict):
@@ -159,14 +163,13 @@ class MatrixGenerator:
             the susceptibles of age group i at the indices of compartments s^i and e_0^i
         """
         A = torch.zeros((self.n_eq, self.n_eq)).to(self.device)
-        ps = self.ps
         idx = self.idx
 
         for tms in self.tms_rules:
             source = f"{tms['source']['name']}_0"
             target = f"{tms['target']}_0"
-            susc_mul, inf_mul = get_tms_multipliers(tms, self.data)
-            transmission_rate = susc_mul * ps["beta"] / self.population
+            susc_mul = get_susc_mul(tms_rule=tms, data=self.data)
+            transmission_rate = susc_mul / self.population
             A[idx(source), idx(source)] = - transmission_rate
             A[idx(source), idx(target)] = transmission_rate
         return A
@@ -178,8 +181,8 @@ class MatrixGenerator:
         for tms in self.tms_rules:
             source = f"{tms['source']['name']}_0"
             target = f"{tms['target']}_0"
-            susc_mul, inf_mul = get_tms_multipliers(tms, self.data)
-            infection_spread_rate = cm.T * inf_mul.unsqueeze(0)  # Broadcast inf_mul to columns
+            inf_mul = get_inf_mul(tms_rule=tms, data=self.data)
+            infection_spread_rate = self.ps["beta"] * cm.T * inf_mul.unsqueeze(0)  # Broadcast inf_mul to columns
             for actor in tms["infection"]["actors-params"].keys():
                 for substate in get_substates(n_substates=self.state_data[actor]["n_substates"],
                                               comp_name=actor):
@@ -207,7 +210,7 @@ class MatrixGenerator:
             # Iterate over the linear transitions
             trans_param = ps[trans["param"]]
             # Multiply the transition parameter by the distribution(s) given
-            trans_param *= get_distr_mul(trans["distr"], self.ps)
+            trans_param = trans_param * get_distr_mul(trans["distr"], self.ps) # Throws shape error with *= in some cases
             source = end_state[trans["source"]]
             target = f"{trans['target']}_0"
             n_substates = state_data[trans["source"]]["n_substates"]

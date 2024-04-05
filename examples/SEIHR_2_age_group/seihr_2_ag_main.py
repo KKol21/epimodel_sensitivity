@@ -7,9 +7,11 @@ from examples.SEIHR_2_age_group.simulation_seihr import SimulationSEIHR
 
 def main():
     params = {"gamma": 0.2,
-                    "beta": 0.2,
-                    "alpha": 0.3}
-
+              "beta": 0.2,
+              "alpha": 0.3,
+              "eta": [0.5, 0.5]}
+    for key, value in params.items():
+        params[key] = torch.tensor(value)
     contact_data = torch.tensor([[1, 2],
                                  [0.5, 1]])
 

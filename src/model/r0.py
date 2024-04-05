@@ -1,6 +1,6 @@
 import torch
 
-from src.model.matrix_generator import generate_transition_matrix, get_tms_multipliers, get_distr_mul
+from src.model.matrix_generator import generate_transition_matrix, get_susc_mul, get_inf_mul, get_distr_mul
 from src.model.model_base import get_substates
 
 
@@ -94,7 +94,8 @@ class R0Generator:
         f = torch.zeros((s_mtx, s_mtx)).to(self.device)
 
         for tms in self.tms_rules:
-            susc_mul, inf_mul = get_tms_multipliers(tms_rule=tms, data=self.data)
+            susc_mul = get_susc_mul(tms_rule=tms, data=self.data)
+            inf_mul = get_inf_mul(tms_rule=tms, data=self.data)
             for actor in tms["infection"]["actors-params"]:
                 for substate in get_substates(n_substates=self.state_data[actor]["n_substates"],
                                               comp_name=actor):

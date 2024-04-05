@@ -23,14 +23,6 @@
   },
   "transition": [
     {
-      "source": "s",
-      "target": "e",
-      "param": "beta",
-      "distr": null,
-      "type": "infection",
-      "actor": "i"
-    },
-    {
       "source": "i",
       "target": "r",
       "param": "gamma",
@@ -63,16 +55,19 @@
       "type": "basic"
     }
   ],
-  "transmission": {
-    "global_params": null,
-    "transmission_rules": [
-      {
-        "source": "s",
-        "target": "e",
+  "transmission_rules": [
+    {
+      "source": {
+        "name": "s",
+        "params": []
+      },
+      "target": "e",
+      "infection": {
         "actors-params": {
           "i": "beta"
-        }
+        },
+        "infection_params": []
       }
-    ]
-  }
+    }
+  ]
 }
