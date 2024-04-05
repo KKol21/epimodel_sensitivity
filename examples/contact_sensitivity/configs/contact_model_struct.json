@@ -4,13 +4,21 @@
       "type": "susceptible",
       "n_substates": 1
     },
-    "e": {
+    "l": {
       "type": "infected",
+      "n_substates": 2
+    },
+    "ip": {
+      "type": "infectious",
+      "n_substates": 1
+    },
+    "ia": {
+      "type": "infectious",
       "n_substates": 3
     },
-    "i": {
+    "is": {
       "type": "infectious",
-      "n_substates": 5
+      "n_substates": 3
     },
     "ic": {
       "type": "recovering",
@@ -37,43 +45,60 @@
       "n_substates": 1
     }
   },
-  "transmission": {
-    "transmission_rules": [
-      {
-        "nodes": {
-          "source": {
-            "name": "s",
-            "params": [
-              "susc"
-            ]
-          },
-          "target": "e"
+  "transmission_rules": [
+    {
+      "source": {
+        "name": "s",
+        "params": []
+      },
+      "target": "l",
+      "infection": {
+        "actors-params": {
+          "is": null,
+          "ip": null,
+          "ia": "inf_a"
         },
-        "infecfion": {
-          "actors-params": {
-            "is": null,
-            "ip": null,
-            "ia": "inf_a"
-          },
-          "infection_params": [
-            "infectivity"
-          ]
-        }
+        "infection_params": []
       }
-    ]
-  },
+    }
+  ],
   "transition": [
     {
-      "source": "s",
-      "target": "e",
-      "param": "beta",
-      "distr": null,
-      "type": "infection"
+      "source": "l",
+      "target": "ip",
+      "param": "alpha_l",
+      "distr": [],
+      "type": "basic"
     },
     {
-      "source": "i",
+      "source": "ip",
+      "target": "ia",
+      "param": "alpha_p",
+      "distr": [
+        "p"
+      ],
+      "type": "basic"
+    },
+    {
+      "source": "ia",
       "target": "r",
-      "param": "gamma",
+      "param": "gamma_a",
+      "distr": null,
+      "type": "basic"
+    },
+    {
+      "source": "ip",
+      "target": "is",
+      "param": "alpha_p",
+      "distr": [
+        "p_"
+      ],
+      "type": "basic"
+    },
+    {
+      "source": "is",
+      "target": "r",
+      "param": "gamma_s",
       "distr": [
         "h_"
       ],
@@ -87,9 +112,9 @@
       "type": "basic"
     },
     {
-      "source": "i",
+      "source": "is",
       "target": "ic",
-      "param": "gamma",
+      "param": "gamma_s",
       "distr": [
         "h",
         "xi"
@@ -106,16 +131,9 @@
       "type": "basic"
     },
     {
-      "source": "s",
-      "target": "v",
-      "param": null,
-      "distr": null,
-      "type": "vaccination"
-    },
-    {
-      "source": "i",
+      "source": "is",
       "target": "h",
-      "param": "gamma",
+      "param": "gamma_s",
       "distr": [
         "h",
         "xi_"
@@ -136,13 +154,6 @@
       "distr": [
         "mu_"
       ],
-      "type": "basic"
-    },
-    {
-      "source": "e",
-      "target": "i",
-      "param": "alpha",
-      "distr": null,
       "type": "basic"
     }
   ]

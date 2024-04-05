@@ -16,6 +16,6 @@ class FinalSizeCalculator(TargetCalcBase):
         inf_sum = torch.zeros(last_val.shape[0], device=self.model.device)
         for state, data in self.model.state_data.items():
             if data["type"] in ["infectious"]:
-                inf_sum += self.model.aggregate_by_age(solution=last_val, comp="i")
+                inf_sum += self.model.aggregate_by_age(solution=last_val, comp=state)
         finished = inf_sum < 1e-2
         return finished, last_val

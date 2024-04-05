@@ -41,9 +41,7 @@
     {
       "source": {
         "name": "s",
-        "params": [
-          "susc"
-        ]
+        "params": []
       },
       "target": "e",
       "infection": {

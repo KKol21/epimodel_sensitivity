@@ -3,25 +3,29 @@
     "value": 0.33333333333333,
     "description": "Reciprocal of expected time spent in exposed state"
   },
-  "beta": {
-    "value": 0.03,
-    "description": "Base transmission rate"
-  },
   "gamma": {
     "value": 0.2,
     "description": "Reciprocal of expected time spent in infected state"
   },
-  "t_start": {
-    "value": 0,
-    "description": "Start of vaccination campaign"
+  "alpha_l": {
+    "value": 0.3125,
+    "description": "Reciprocal of latent period"
   },
-  "T": {
-    "value": 90.0,
-    "description": "Duration of the vaccination campaign"
+  "alpha_p": {
+    "value": 0.5,
+    "description": "Reciprocal of pre-symptomatic (infectious) period"
   },
-  "total_vaccines": {
-    "value": 3000000,
-    "description": "Number of vaccines given to a specific age group"
+  "gamma_a": {
+    "value": 0.3333333333333333,
+    "description": "Reciprocal of infectious period of Ia"
+  },
+  "gamma_s": {
+    "value": 0.3333333333333333,
+    "description": "Reciprocal of infectious period of Is"
+  },
+  "gamma_h": {
+    "value": 0.1,
+    "description": "Reciprocal of hospitalization period"
   },
   "gamma_c": {
     "value": 0.1,
@@ -31,9 +35,9 @@
     "value": 0.07142857142857142,
     "description": "Reciprocal of recovery time from Icr"
   },
-  "gamma_h": {
-    "value": 0.1,
-    "description": "Reciprocal of hospitalization period"
+  "inf_a": {
+    "value": 0.5,
+    "description": "Relative infectousness of Ia vs. Is"
   },
   "mu": {
     "value": [
@@ -119,24 +123,37 @@
     ],
     "description": "Probability of intensive care (given hospitalization)"
   },
-  "susc": {
+  "p": {
     "value": [
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1
-    ]
+      0.95,
+      0.8,
+      0.8,
+      0.7,
+      0.7,
+      0.7,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.4,
+      0.4,
+      0.3,
+      0.2
+    ],
+    "description": "Probability of asymptomatic course"
+  },
+  "t_start": {
+    "value": 0,
+    "description": "Start of vaccination campaign"
+  },
+  "T": {
+    "value": 90.0,
+    "description": "Duration of the vaccination campaign"
+  },
+  "total_vaccines": {
+    "value": 3000000,
+    "description": "Number of vaccines given to a specific age group"
   }
 }
