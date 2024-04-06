@@ -3,5 +3,3 @@ tqdm==4.51.0
 xlrd==1.2.0
 torch~=2.0.0
 torchode~=0.1.8
-seaborn~=0.12.2
-pandas~=2.0.3

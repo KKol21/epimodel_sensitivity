@@ -1,8 +1,6 @@
 import os
 
 import numpy as np
-import pandas as pd
-import seaborn
 from matplotlib import pyplot as plt, colors
 from matplotlib.cm import ScalarMappable
 from matplotlib.ticker import LogLocator, LogFormatter
@@ -73,17 +71,7 @@ def get_age_groups():
     return [f'{5 * age_start}-{5 * age_start + 5}' if 5 * age_start != 75 else '75+' for age_start in range(16)]
 
 
-def get_hmap(cm):
-    labels = get_age_groups()
-    cm = pd.DataFrame(cm).loc[:, ::-1].T
-    cmap = seaborn.color_palette("flare", as_cmap=True)
-    hmap = seaborn.heatmap(cm, xticklabels=labels, yticklabels=labels[::-1], cmap=cmap)
-    hmap = hmap.get_figure()
-    hmap.suptitle('Kontakt mátrix hőtérképe')
-    hmap.savefig('../cont_mtx_hmap.pdf', dpi=400)
-
-
-def construct_triangle_grids_prcc_p_value(n_age):
+def construct_triangle_grid(n_age):
     # vertices of the little squares
     xv, yv = np.meshgrid(np.arange(-0.5, n_age), np.arange(-0.5, n_age))
     # centers of the little square
@@ -102,7 +90,7 @@ def construct_triangle_grids_prcc_p_value(n_age):
     return triang
 
 
-def get_values(n_age, prcc_vector, p_values):
+def get_prcc_and_p_values(n_age, prcc_vector, p_values):
     prcc_mtx = np.array(get_rectangular_matrix_from_upper_triu(
         rvector=prcc_vector,
         matrix_size=n_age))
@@ -121,8 +109,8 @@ def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save
     norm = plt.Normalize(vmin=0, vmax=1)  # used for PRCC_values
 
     fig, ax = plt.subplots()
-    triang = construct_triangle_grids_prcc_p_value(n_age=n_age)
-    mask = get_values(n_age=n_age, prcc_vector=prcc_vector, p_values=p_values)
+    triang = construct_triangle_grid(n_age=n_age)
+    mask = get_prcc_and_p_values(n_age=n_age, prcc_vector=prcc_vector, p_values=p_values)
     images = [ax.tripcolor(t, np.ravel(val), cmap=cmap, ec="white")
               for t, val, cmap in zip(triang,
                                       mask, cmaps)]
