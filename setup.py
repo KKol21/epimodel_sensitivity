@@ -13,6 +13,8 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/KKol21/epimodel_sensitivity',
     packages=find_packages(),
+    package_data={
+        '': ['*.json', '*.xls']},
     install_requires=[
         "smt~=1.3.0",
         "tqdm==4.51.0",

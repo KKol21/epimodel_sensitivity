@@ -1,8 +1,9 @@
 import numpy as np
 import torch
 
-from src.sensitivity.target_calc.final_size_calc import FinalSizeCalculator
-from src.sensitivity.target_calc.peak_calc import PeakCalculator
+from src.sensitivity.target_calc.sol_based.final_size_calc import FinalSizeCalculator
+from src.sensitivity.target_calc.sol_based.peak_calc import PeakCalculator
+from src.sensitivity.target_calc.r0calculator import R0Calculator
 
 
 class OutputGenerator:
@@ -15,6 +16,9 @@ class OutputGenerator:
         lhs = torch.from_numpy(lhs_table).float().to(self.sim_obj.device)
         results = {}
         for target in self.sim_obj.target_vars:
+            if target == "r0":
+                r0calc = R0Calculator(self.sim_obj)
+                results[target] = r0calc.get_output()
             results[target] = self.calculate_target(lhs, target)
         return results
 
