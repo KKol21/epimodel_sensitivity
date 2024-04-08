@@ -15,6 +15,10 @@ def get_params_col_idx(sampled_params_boundaries: dict):
     return params_col_idx
 
 
+def get_lhs_dict(params: list, lhs_table: torch.Tensor, params_col_idx: dict) -> dict:
+    return {param: lhs_table[:, params_col_idx[param]] for param in params}
+
+
 class SensitivityModelBase(EpidemicModelBase, ABC):
     def __init__(self, sim_obj):
         super().__init__(data=sim_obj.data, **sim_obj.model_struct)
@@ -93,19 +97,17 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         susc_params = [param for tms_rule in self.tms_rules for param in tms_rule["source"]["params"]]
         transmission_params_left = [param for param in spb if param in susc_params]
         # Params in T_2
-        inf_params = [param for tms_rule in self.tms_rules
-                      for param in tms_rule["infection"]["actors-params"].values()]
+        actor_params = [param for tms_rule in self.tms_rules
+                        for param in tms_rule["infection"]["actors-params"].values()]
+        inf_params = actor_params + [param for tms_rule in self.tms_rules
+                                     for param in tms_rule["infection"]["infection_params"]]
         transmission_params_right = [param for param in spb if param in inf_params] + ["beta"]
 
-        params_col_idx = get_params_col_idx(sampled_params_boundaries=spb)
+        pci = get_params_col_idx(sampled_params_boundaries=spb)
 
-        def get_lhs_dict(params, lhs_table):
-            return {param: lhs_table[:, params_col_idx[param]] for param in params}
-
-        tpl_lhs = get_lhs_dict(transmission_params_left, samples)
-        tpr_lhs = get_lhs_dict(transmission_params_right, samples)
-        tpl_lhs.update(**tpr_lhs) # TODO: This is not the proper way, but it works until new transmission rules are added
-        lp_lhs = get_lhs_dict(linear_params, samples)
-        self.A = self.get_matrix_from_lhs(tpl_lhs, "A") if len(tpl_lhs) > 0 else self.A
-        self.T = self.get_matrix_from_lhs(tpr_lhs, "T") if len(tpr_lhs) > 0 else self.T
-        self.B = self.get_matrix_from_lhs(lp_lhs, "B") if len(lp_lhs) > 0 else self.B
+        tpl_lhs = get_lhs_dict(transmission_params_left, samples, pci)
+        tpr_lhs = get_lhs_dict(transmission_params_right, samples, pci)
+        lp_lhs = get_lhs_dict(linear_params, samples, pci)
+        self.A = self.get_matrix_from_lhs(tpl_lhs, "A") if len(tpl_lhs) > 0 else self.matrix_generator.get_A()
+        self.T = self.get_matrix_from_lhs(tpr_lhs, "T") if len(tpr_lhs) > 0 else self.matrix_generator.get_T()
+        self.B = self.get_matrix_from_lhs(lp_lhs, "B") if len(lp_lhs) > 0 else self.matrix_generator.get_B()

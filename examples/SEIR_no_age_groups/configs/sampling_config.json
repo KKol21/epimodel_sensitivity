@@ -5,12 +5,13 @@
       3
     ],
     "susc": {
-      "even": [
+      "full": [
         1
       ]
     }
   },
   "target_vars": [
+    "r0",
     "i_max",
     "r_sup"
   ],

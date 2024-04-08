@@ -19,14 +19,6 @@
   },
   "transition": [
     {
-      "source": "s",
-      "target": "e",
-      "param": "beta",
-      "distr": null,
-      "type": "infection",
-      "actor": "i"
-    },
-    {
       "source": "i",
       "target": "r",
       "param": "gamma",

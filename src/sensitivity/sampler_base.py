@@ -107,7 +107,7 @@ class SamplerBase(ABC):
         dirname = os.path.join(folder_name, output_name)
         filename = os.path.join(dirname, f"{output_name}_{filename}")
         os.makedirs(dirname, exist_ok=True)
-        np.savetxt(fname=filename + ".csv", X=output, delimiter=";")
+        np.savetxt(fname=filename + ".csv", X=output)
 
 
 def create_latin_table(n_of_samples, lower, upper):

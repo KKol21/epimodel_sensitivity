@@ -132,22 +132,36 @@ class SimulationBase(ABC):
 
         """
         folder_name = self.folder_name
-        os.makedirs(f"{folder_name}/prcc", exist_ok=True)
-        filename_without_target = filename[:filename[:filename.rfind("_")].rfind("_")]
-        lhs_table = np.loadtxt(f'{folder_name}/lhs/lhs_{filename_without_target}.csv', delimiter=';')
-        sim_output = np.loadtxt(f'{folder_name}/simulations/simulations_{filename}.csv', delimiter=';')
+        os.makedirs(os.path.join(folder_name, "prcc"), exist_ok=True)
+        if "r0" == filename[-2:]:  # remove _r0
+            filename_without_target = filename[:-3]
+        else:  # remove _comp_sup / _comp_max
+            filename_without_target = filename[:filename[:filename.rfind("_")].rfind("_")]
+        lhs_path = os.path.join(folder_name, f"lhs/lhs_{filename_without_target}.csv")
+        output_path = os.path.join(folder_name, f"simulations/simulations_{filename}.csv")
+        lhs_table = np.loadtxt(lhs_path)
+        sim_output = np.loadtxt(output_path)
 
         prcc = get_prcc_values(np.c_[lhs_table, sim_output.T])
-        np.savetxt(fname=f'{folder_name}/prcc/prcc_{filename}.csv', X=prcc)
+
+        prcc_path = os.path.join(folder_name, f"prcc/prcc_{filename}.csv")
+        np.savetxt(fname=prcc_path, X=prcc)
 
     def calculate_p_values(self, filename, significance=0.05):
-        os.makedirs(self.folder_name + '/p_values', exist_ok=True)
-        prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
+        p_values_dir = os.path.join(self.folder_name, 'p_values')
+        os.makedirs(p_values_dir, exist_ok=True)
+
+        prcc_path = os.path.join(self.folder_name, f"prcc/prcc_{filename}.csv")
+        prcc = np.loadtxt(fname=prcc_path)
+
         t = prcc * np.sqrt((self.n_samples - 2 - self.n_age) / (1 - prcc ** 2))
         # p-value for 2-sided test
         dof = self.n_samples - 2 - self.n_age
         p_values = 2 * (1 - ss.t.cdf(x=abs(t), df=dof))
-        np.savetxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv', X=p_values)
+
+        p_values_path = os.path.join(self.folder_name, f"p_values/p_values_{filename}.csv")
+        np.savetxt(fname=p_values_path, X=p_values)
+
         is_first = True
         if len(p_values) < 30:
             for idx, p_val in enumerate(p_values):
@@ -183,9 +197,14 @@ class SimulationBase(ABC):
                 else:
                     labels.append(param_label)
 
-        os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
-        prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
-        p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
+        prcc_plots_dir = os.path.join(self.folder_name, "prcc_plots")
+        os.makedirs(prcc_plots_dir, exist_ok=True)
+
+        prcc_file = os.path.join(self.folder_name, f"prcc/prcc_{filename}.csv")
+        prcc = np.loadtxt(fname=prcc_file)
+
+        p_values_file = os.path.join(self.folder_name, f"p_values/p_values_{filename}.csv")
+        p_val = np.loadtxt(fname=p_values_file)
 
         generate_tornado_plot(sim_obj=self,
                               labels=labels,

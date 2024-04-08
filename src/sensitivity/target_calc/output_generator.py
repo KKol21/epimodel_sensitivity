@@ -18,15 +18,16 @@ class OutputGenerator:
         for target in self.sim_obj.target_vars:
             if target == "r0":
                 r0calc = R0Calculator(self.sim_obj)
-                results[target] = r0calc.get_output()
-            results[target] = self.calculate_target(lhs, target)
+                results[target] = r0calc.get_output(lhs_table=lhs)
+            else:
+                results[target] = self.calculate_target(lhs_table=lhs, target_var=target)
         return results
 
     def calculate_target(self, lhs_table: torch.Tensor, target_var: str) -> torch.Tensor:
         if target_var.split('_')[1] == "sup":
-            target_calculator = FinalSizeCalculator(self.sim_obj.model)
+            target_calculator = FinalSizeCalculator(model=self.sim_obj.model)
         else:
-            target_calculator = PeakCalculator(self.sim_obj.model)
+            target_calculator = PeakCalculator(model=self.sim_obj.model)
         return target_calculator.get_output(lhs_table=lhs_table,
                                             batch_size=self.batch_size,
                                             target_var=target_var)
