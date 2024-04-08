@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='epimodel_sensitivity_test',
-    version='0.1.1',
+    version='0.1.2',
     author='Kolos Kovács',
     author_email='kovkol21@gmail.com',
     description='Efficient sensitivity analysis and evaluation of epidemiological models',
@@ -13,8 +13,16 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/KKol21/epimodel_sensitivity',
     packages=find_packages(),
+    include_package_data=True,
     package_data={
-        '': ['*.json', '*.xls']},
+        "examples.contact_sensitivity": ["configs/*"],
+        "examples.SEIHR_2_age_groups": ["configs/*"],
+        "examples.SEIR_no_age_groups": ["configs/*"],
+        "examples.vaccinated_sensitivity": ["configs/*"]
+    },
+    data_files=[("data", ["data/age_distribution.xls",
+                          "data/contact_matrices.xls",
+                          "data/model_parameters.json"])],
     install_requires=[
         "smt~=1.3.0",
         "tqdm==4.51.0",

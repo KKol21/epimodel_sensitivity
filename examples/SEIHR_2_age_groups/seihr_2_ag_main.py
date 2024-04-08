@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import torch
 
-from examples.SEIHR_2_age_group.simulation_seihr import SimulationSEIHR
+from examples.SEIHR_2_age_groups.simulation_seihr import SimulationSEIHR
 
 
 def main():

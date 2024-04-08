@@ -1,4 +1,4 @@
-from examples.SEIHR_2_age_group import seihr_2_ag_main
+from examples.SEIHR_2_age_groups import seihr_2_ag_main
 from examples.SEIR_no_age_groups import seir_no_ag_main
 from examples.contact_sensitivity import contact_main
 from examples.vaccinated_sensitivity import vaccinated_main
