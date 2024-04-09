@@ -122,7 +122,7 @@ class SimulationBase(ABC):
                                                  susceptibles=self.susceptibles.reshape(1, -1),
                                                  population=self.population)
 
-    def calculate_prcc(self, filename):
+    def calculate_prcc(self, filename: str, target: str) -> None:
         """
 
         Calculates PRCC (Partial Rank Correlation Coefficient) values from saved LHS tables and simulation results.
@@ -133,18 +133,14 @@ class SimulationBase(ABC):
         """
         folder_name = self.folder_name
         os.makedirs(os.path.join(folder_name, "prcc"), exist_ok=True)
-        if "r0" == filename[-2:]:  # remove _r0
-            filename_without_target = filename[:-3]
-        else:  # remove _comp_sup / _comp_max
-            filename_without_target = filename[:filename[:filename.rfind("_")].rfind("_")]
-        lhs_path = os.path.join(folder_name, f"lhs/lhs_{filename_without_target}.csv")
-        output_path = os.path.join(folder_name, f"simulations/simulations_{filename}.csv")
+        lhs_path = os.path.join(folder_name, f"lhs/lhs_{filename}.csv")
+        output_path = os.path.join(folder_name, f"simulations/simulations_{filename}_{target}.csv")
         lhs_table = np.loadtxt(lhs_path)
         sim_output = np.loadtxt(output_path)
 
         prcc = get_prcc_values(np.c_[lhs_table, sim_output.T])
 
-        prcc_path = os.path.join(folder_name, f"prcc/prcc_{filename}.csv")
+        prcc_path = os.path.join(folder_name, f"prcc/prcc_{filename}_{target}.csv")
         np.savetxt(fname=prcc_path, X=prcc)
 
     def calculate_p_values(self, filename, significance=0.05):
@@ -213,7 +209,9 @@ class SimulationBase(ABC):
                               filename=filename)
 
     def calculate_all_prcc(self):
-        self.run_func_for_all_configs(self.calculate_prcc)
+        for variable_params, target in itertools.product(self.variable_param_combinations, self.target_vars):
+            filename = self.get_filename(variable_params)
+            self.calculate_prcc(filename=filename, target=target)
 
     def calculate_all_p_values(self):
         self.run_func_for_all_configs(self.calculate_p_values)
