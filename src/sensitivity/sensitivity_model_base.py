@@ -101,7 +101,7 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
                         for param in tms_rule["infection"]["actors-params"].values()]
         inf_params = actor_params + [param for tms_rule in self.tms_rules
                                      for param in tms_rule["infection"]["infection_params"]]
-        transmission_params_right = [param for param in spb if param in inf_params] + ["beta"]
+        transmission_params_right = [param for param in spb if param in inf_params + ["beta"]]
 
         pci = get_params_col_idx(sampled_params_boundaries=spb)
 

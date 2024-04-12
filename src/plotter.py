@@ -14,6 +14,7 @@ def generate_tornado_plot(sim_obj, labels, prcc: np.ndarray, p_val, filename: st
     Generate a tornado plot to visualize the Partial Rank Correlation Coefficient (PRCC) values.
     """
     prcc = np.round(prcc, 3)
+    prcc = np.atleast_1d(prcc)
     ys = range(len(labels))[::-1]
 
     p_val_colors = ['green', 'yellow', 'red']
@@ -28,7 +29,8 @@ def generate_tornado_plot(sim_obj, labels, prcc: np.ndarray, p_val, filename: st
 
     # Plot the bars one by one
     for y, value in zip(ys, prcc):
-        facecolor = cmap(norm((p_val[len(prcc) - 1 - y])))
+        p = p_val[len(prcc) - 1 - y] if p_val.ndim > 0 else p_val
+        facecolor = cmap(norm((p)))
         plt.broken_barh(
             [(value if value < 0 else 0, abs(value))],
             (y - 0.4, 0.8),

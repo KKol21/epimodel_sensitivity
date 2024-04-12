@@ -154,6 +154,7 @@ class SimulationBase(ABC):
         # p-value for 2-sided test
         dof = self.n_samples - 2 - self.n_age
         p_values = 2 * (1 - ss.t.cdf(x=abs(t), df=dof))
+        p_values = np.atleast_1d(p_values)
 
         p_values_path = os.path.join(self.folder_name, f"p_values/p_values_{filename}.csv")
         np.savetxt(fname=p_values_path, X=p_values)
