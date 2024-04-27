@@ -1,5 +1,6 @@
 import os
 
+import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt, colors
 from matplotlib.cm import ScalarMappable
@@ -7,6 +8,72 @@ from matplotlib.ticker import LogLocator, LogFormatter
 from matplotlib.tri import Triangulation
 
 from examples.contact_sensitivity.sensitivity_model_contact import get_rectangular_matrix_from_upper_triu
+
+
+def visualize_transmission_graph(state_data, trans_data, tms_rules):
+    plt.figure(figsize=(10, 8))
+    G = nx.DiGraph()
+    for node, data in state_data.items():
+        if data["n_substates"] > 1:
+            label = f"$^{{{data['n_substates']}}}$"
+            G.add_node(node, label=label)
+        else:
+            G.add_node(node)
+
+    # Add edges from transitions
+    def extract_label(trans):
+        if trans["distr"] is not None:
+            distr = [distr
+                     if distr[-1] != "_"
+                     else f"(1 - {distr[:-1]})"
+                     for distr in trans["distr"]
+                     ]
+            return " * ".join(distr + [trans["param"]])
+        return trans["param"]
+
+    trans_edges = [(transition["source"], transition["target"], extract_label(transition)) for transition in trans_data]
+    for edge in trans_edges:
+        source, target, param = edge
+        G.add_edge(source, target, param=param)
+
+    # Add transmission rules as edges
+    tms_edges = []
+    tms_edges_unpar = []
+    for rule in tms_rules:
+        source = rule["source"]["name"]
+        target = rule["target"]
+        G.add_edge(source, target, param="beta")
+        for actor, param in rule["infection"]["actors-params"].items():
+            if param is not None:
+                tms_edges.append((actor, source, param))
+            else:
+                tms_edges_unpar.append((actor, source))
+
+    pos = nx.circular_layout(G, scale=3)
+    """
+    pos = nx.kamada_kawai_layout(G)  # Kamada-Kawai layout
+    pos = nx.random_layout(G)  # Random layout
+    pos = nx.spectral_layout(G)  # Spectral layout
+    pos = nx.fruchterman_reingold_layout(G)  # Fruchterman-Reingold layout
+    pos = nx.spiral_layout(G)
+    """
+    nx.draw(G, pos, with_labels=True, node_size=500, node_color="skyblue", font_size=10, arrowsize=10)
+
+    # Add substate labels
+    labels = nx.get_node_attributes(G, 'label')
+    nx.draw_networkx_labels(G, pos, labels, font_size=6, font_color="black")
+
+    # Draw full edges with labels
+    labels = nx.get_edge_attributes(G, 'param')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=7)
+
+    # Draw dashed edges and label
+    dashed_edge_labels = {(edge[0], edge[1]): edge[2] for edge in tms_edges}
+    nx.draw_networkx_edges(G, pos, edgelist=tms_edges + tms_edges_unpar, width=1, style=":")
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=dashed_edge_labels, font_size=7)
+
+    plt.title("Transmission Graph")
+    plt.show()
 
 
 def generate_tornado_plot(sim_obj, labels, prcc: np.ndarray, p_val, filename: str, title=None):
