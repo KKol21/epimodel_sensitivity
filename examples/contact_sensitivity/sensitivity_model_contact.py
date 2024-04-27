@@ -25,35 +25,31 @@ class ContactModel(SensitivityModelBase):
 
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]
-        cm_samples = self.get_contacts_from_lhs(lhs_table)
-        betas = self._get_betas_from_contacts(cm_samples)
-        self.A = self._get_A_from_betas(betas)
-        self.T = self._get_T_from_contacts(cm_samples)
+        cm_samples = self.get_contacts_from_lhs(lhs_table=lhs_table)
+        betas = self._get_betas_from_contacts(cm_samples=cm_samples)
+        self.T = self._get_T_from_contacts(cm_samples=cm_samples, betas=betas)
         if self.is_vaccinated:
             odefun = self.get_vaccinated_ode(lhs_table.shape[0])
         else:
             odefun = self.get_basic_ode()
         return self.get_sol_from_ode(y0, t_eval, odefun)
 
-    def _get_A_from_betas(self, betas):
-        lhs_dict = {"beta": betas}
-        return self.get_matrix_from_lhs(lhs_dict=lhs_dict, matrix_name="A")
-
-    def _get_T_from_contacts(self, cm_samples: torch.Tensor):
+    def _get_T_from_contacts(self, cm_samples: torch.Tensor, betas: torch.Tensor):
         T = torch.zeros((cm_samples.size(0), self.s_mtx, self.s_mtx)).to(self.device)
-        for idx, cm in enumerate(cm_samples):
-            T[idx, :, :] = self.matrix_generator.get_T(cm)
+        for idx, (beta, cm) in enumerate(zip(cm_samples, betas)):
+            self.matrix_generator.ps.update({"beta": beta})
+            T[idx, :, :] = self.matrix_generator.get_T(cm=cm)
         return T
 
-    def _get_betas_from_contacts(self, cm_samples):
-        r0gen = R0Generator(self.data, **self.sim_obj.model_struct)
+    def _get_betas_from_contacts(self, cm_samples: torch.Tensor):
+        r0gen = R0Generator(data=self.data, **self.sim_obj.model_struct)
         betas = [self.base_r0 / r0gen.get_eig_val(contact_mtx=cm,
                                                   susceptibles=self.sim_obj.susceptibles.flatten(),
                                                   population=self.sim_obj.population)
                  for cm in cm_samples]
         return torch.tensor(betas, device=self.device)
 
-    def get_contacts_from_lhs(self, lhs_table):
+    def get_contacts_from_lhs(self, lhs_table: np.ndarray):
         contact_sim = torch.zeros((lhs_table.shape[0], self.sim_obj.n_age, self.sim_obj.n_age))
         for idx, sample in enumerate(lhs_table):
             contact_sim[idx, :, :] = get_contact_matrix_from_upper_triu(rvector=sample,
