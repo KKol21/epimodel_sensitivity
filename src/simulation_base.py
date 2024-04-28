@@ -27,6 +27,8 @@ class SimulationBase(ABC):
         self._load_simulation_data()
         self._load_config(config_path)
         self._load_model_structure(model_struct_path)
+        from src.plotter import visualize_transmission_graph
+        visualize_transmission_graph(**self.model_struct)
 
     @property
     def susceptibles(self):

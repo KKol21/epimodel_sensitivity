@@ -1,31 +1,26 @@
 {
   "states": {
     "s": {
-      "type": "susceptible",
-      "n_substates": 1
+      "type": "susceptible"
     },
     "e": {
-      "type": "infected",
-      "n_substates": 1
+      "type": "infected"
     },
     "i": {
-      "type": "infected",
-      "n_substates": 1
+      "type": "infected"
     },
     "h": {
       "n_substates": 1
     },
     "r": {
-      "type": "recovered",
-      "n_substates": 1
+      "type": "recovered"
     }
   },
   "transition": [
     {
       "source": "i",
       "target": "r",
-      "param": "gamma",
-      "distr": null
+      "param": "gamma"
     },
     {
       "source": "e",

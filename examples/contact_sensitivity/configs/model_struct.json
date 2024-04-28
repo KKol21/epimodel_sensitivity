@@ -26,9 +26,6 @@
     },
     "d": {
       "type": "dead"
-    },
-    "v": {
-      "type": "recovered"
     }
   },
   "transmission_rules": [

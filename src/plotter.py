@@ -13,15 +13,18 @@ from examples.contact_sensitivity.sensitivity_model_contact import get_rectangul
 def visualize_transmission_graph(state_data, trans_data, tms_rules):
     plt.figure(figsize=(10, 8))
     G = nx.DiGraph()
+
+    # Add nodes
+    def get_node_label(node):
+        if n_substates := state_data[node].get("n_substates"):
+            return f"{node}$^{{{n_substates}}}$"
+        return node
+
     for node, data in state_data.items():
-        if data.get("n_substates", 1) > 1:
-            label = f"$^{{{data.get('n_substates', 1)}}}$"
-            G.add_node(node, label=label)
-        else:
-            G.add_node(node)
+        G.add_node(get_node_label(node))
 
     # Add edges from transitions
-    def extract_label(trans):
+    def get_edge_label(trans):
         if trans.get("distr"):
             distr_muls = \
                 [distr
@@ -29,11 +32,11 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
                  else f"(1 - {distr[:-1]})"
                  for distr in trans["distr"]]
             return " * ".join(distr_muls + [trans["param"]])
-        return trans["param"]
+        return trans.get("param", trans.get("type"))
 
-    trans_edges = [(transition["source"],
-                    transition["target"],
-                    extract_label(transition))
+    trans_edges = [(get_node_label(transition["source"]),
+                    get_node_label(transition["target"]),
+                    get_edge_label(transition))
                    for transition in trans_data]
     for edge in trans_edges:
         source, target, param = edge
@@ -43,28 +46,23 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
     tms_edges = []
     tms_edges_unpar = []
     for rule in tms_rules:
-        source = rule["source"]
-        target = rule["target"]
-        G.add_edge(source, target, param="beta")
+        source = get_node_label(rule["source"])
+        target = get_node_label(rule["target"])
+        G.add_edge(source, target, param="beta")  # TODO: susc mul, inf mul
         for actor, param in rule["actors-params"].items():
+            actor = get_node_label(actor)
             if param is not None:
                 tms_edges.append((actor, source, param))
             else:
                 tms_edges_unpar.append((actor, source))
 
-    pos = nx.circular_layout(G, scale=3)
-    """
-    pos = nx.kamada_kawai_layout(G)  # Kamada-Kawai layout
-    pos = nx.random_layout(G)  # Random layout
-    pos = nx.spectral_layout(G)  # Spectral layout
-    pos = nx.fruchterman_reingold_layout(G)  # Fruchterman-Reingold layout
-    pos = nx.spiral_layout(G)
-    """
+    if len(state_data) > 4:
+        pos = nx.kamada_kawai_layout(G)
+        pos = nx.arf_layout(G, pos=pos)
+    else:
+        pos = nx.circular_layout(G)
+    #pos = nx.multipartite_layout(G)  #requires manual partitioning
     nx.draw(G, pos, with_labels=True, node_size=500, node_color="skyblue", font_size=10, arrowsize=10)
-
-    # Add substate labels
-    labels = nx.get_node_attributes(G, 'label')
-    nx.draw_networkx_labels(G, pos, labels, font_size=6, font_color="black")
 
     # Draw full edges with labels
     labels = nx.get_edge_attributes(G, 'param')
@@ -72,7 +70,8 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
 
     # Draw dashed edges and label
     dashed_edge_labels = {(edge[0], edge[1]): edge[2] for edge in tms_edges}
-    nx.draw_networkx_edges(G, pos, edgelist=tms_edges + tms_edges_unpar, width=1, style=":")
+    nx.draw_networkx_edges(G, pos, edgelist=tms_edges + tms_edges_unpar,
+                           width=1, style=":")
     nx.draw_networkx_edge_labels(G, pos, edge_labels=dashed_edge_labels, font_size=7)
 
     plt.title("Transmission Graph")
