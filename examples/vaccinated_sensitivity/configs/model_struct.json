@@ -1,54 +1,35 @@
 {
   "states": {
     "s": {
-      "type": "susceptible",
-      "n_substates": 1
+      "type": "susceptible"
     },
     "e": {
       "type": "infected",
       "n_substates": 3
     },
     "i": {
-      "type": "infectious",
+      "type": "infected",
       "n_substates": 5
     },
-    "ic": {
-      "type": "recovering",
-      "n_substates": 1
-    },
-    "icr": {
-      "type": "recovering",
-      "n_substates": 1
-    },
-    "h": {
-      "type": "recovering",
-      "n_substates": 1
-    },
+    "ic": {},
+    "icr": {},
+    "h": {},
     "r": {
-      "type": "recovered",
-      "n_substates": 1
+      "type": "recovered"
     },
     "d": {
-      "type": "dead",
-      "n_substates": 1
+      "type": "dead"
     },
     "v": {
-      "type": "recovered",
-      "n_substates": 1
+      "type": "recovered"
     }
   },
   "transmission_rules": [
     {
-      "source": {
-        "name": "s",
-        "params": []
-      },
+      "source": "s",
       "target": "e",
-      "infection": {
-        "actors-params": {
-          "i": null
-        },
-        "infection_params": []
+      "actors-params": {
+        "i": null
       }
     }
   ],
@@ -59,15 +40,12 @@
       "param": "gamma",
       "distr": [
         "h_"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "icr",
       "target": "r",
-      "param": "gamma_cr",
-      "distr": null,
-      "type": "basic"
+      "param": "gamma_cr"
     },
     {
       "source": "i",
@@ -76,8 +54,7 @@
       "distr": [
         "h",
         "xi"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "ic",
@@ -85,14 +62,11 @@
       "param": "gamma_c",
       "distr": [
         "mu"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "s",
       "target": "v",
-      "param": null,
-      "distr": null,
       "type": "vaccination"
     },
     {
@@ -102,15 +76,12 @@
       "distr": [
         "h",
         "xi_"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "h",
       "target": "r",
-      "param": "gamma_h",
-      "distr": null,
-      "type": "basic"
+      "param": "gamma_h"
     },
     {
       "source": "ic",
@@ -118,16 +89,12 @@
       "param": "gamma_c",
       "distr": [
         "mu_"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "e",
       "target": "i",
-      "param": "alpha",
-      "distr": null,
-      "type": "basic"
+      "param": "alpha"
     }
   ]
 }
-

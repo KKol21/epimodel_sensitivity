@@ -9,11 +9,10 @@
       "n_substates": 1
     },
     "i": {
-      "type": "infectious",
+      "type": "infected",
       "n_substates": 1
     },
     "h": {
-      "type": "recovering",
       "n_substates": 1
     },
     "r": {
@@ -26,8 +25,7 @@
       "source": "i",
       "target": "r",
       "param": "gamma",
-      "distr": null,
-      "type": "basic"
+      "distr": null
     },
     {
       "source": "e",
@@ -35,8 +33,7 @@
       "param": "alpha",
       "distr": [
         "eta_"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "e",
@@ -44,29 +41,20 @@
       "param": "alpha",
       "distr": [
         "eta"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "h",
       "target": "r",
-      "param": "gamma",
-      "distr": null,
-      "type": "basic"
+      "param": "gamma"
     }
   ],
   "transmission_rules": [
     {
-      "source": {
-        "name": "s",
-        "params": []
-      },
+      "source": "s",
       "target": "e",
-      "infection": {
-        "actors-params": {
-          "i": null
-        },
-        "infection_params": []
+      "actors-params": {
+        "i": null
       }
     }
   ]

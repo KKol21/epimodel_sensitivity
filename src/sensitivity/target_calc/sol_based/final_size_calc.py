@@ -15,7 +15,7 @@ class FinalSizeCalculator(TargetCalcBase):
         last_val = kwargs["solutions"][:, -1, :]  # solutions.shape = (len(indices), t_limit, n_comp)
         inf_sum = torch.zeros(last_val.shape[0], device=self.model.device)
         for state, data in self.model.state_data.items():
-            if data["type"] in ["infectious"]:
+            if data.get("type") in ["infected"]:
                 inf_sum += self.model.aggregate_by_age(solution=last_val, comp=state)
         finished = inf_sum < 1e-2
         return finished, last_val

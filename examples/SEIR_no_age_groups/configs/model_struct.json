@@ -1,50 +1,36 @@
 {
   "states": {
     "s": {
-      "type": "susceptible",
-      "n_substates": 1
+      "type": "susceptible"
     },
     "e": {
-      "type": "infected",
-      "n_substates": 1
+      "type": "infected"
     },
     "i": {
-      "type": "infectious",
-      "n_substates": 1
+      "type": "infected"
     },
     "r": {
-      "type": "recovered",
-      "n_substates": 1
+      "type": "recovered"
     }
   },
   "transition": [
     {
       "source": "i",
       "target": "r",
-      "param": "gamma",
-      "distr": null,
-      "type": "basic"
+      "param": "gamma"
     },
     {
       "source": "e",
       "target": "i",
-      "param": "alpha",
-      "distr": null,
-      "type": "basic"
+      "param": "alpha"
     }
   ],
   "transmission_rules": [
     {
-      "source": {
-        "name": "s",
-        "params": []
-      },
+      "source": "s",
       "target": "e",
-      "infection": {
-        "actors-params": {
-          "i": null
-        },
-        "infection_params": []
+      "actors-params": {
+        "i": null
       }
     }
   ]

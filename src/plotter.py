@@ -14,24 +14,27 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
     plt.figure(figsize=(10, 8))
     G = nx.DiGraph()
     for node, data in state_data.items():
-        if data["n_substates"] > 1:
-            label = f"$^{{{data['n_substates']}}}$"
+        if data.get("n_substates", 1) > 1:
+            label = f"$^{{{data.get('n_substates', 1)}}}$"
             G.add_node(node, label=label)
         else:
             G.add_node(node)
 
     # Add edges from transitions
     def extract_label(trans):
-        if trans["distr"] is not None:
-            distr = [distr
-                     if distr[-1] != "_"
-                     else f"(1 - {distr[:-1]})"
-                     for distr in trans["distr"]
-                     ]
-            return " * ".join(distr + [trans["param"]])
+        if trans.get("distr"):
+            distr_muls = \
+                [distr
+                 if distr[-1] != "_"
+                 else f"(1 - {distr[:-1]})"
+                 for distr in trans["distr"]]
+            return " * ".join(distr_muls + [trans["param"]])
         return trans["param"]
 
-    trans_edges = [(transition["source"], transition["target"], extract_label(transition)) for transition in trans_data]
+    trans_edges = [(transition["source"],
+                    transition["target"],
+                    extract_label(transition))
+                   for transition in trans_data]
     for edge in trans_edges:
         source, target, param = edge
         G.add_edge(source, target, param=param)
@@ -40,10 +43,10 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
     tms_edges = []
     tms_edges_unpar = []
     for rule in tms_rules:
-        source = rule["source"]["name"]
+        source = rule["source"]
         target = rule["target"]
         G.add_edge(source, target, param="beta")
-        for actor, param in rule["infection"]["actors-params"].items():
+        for actor, param in rule["actors-params"].items():
             if param is not None:
                 tms_edges.append((actor, source, param))
             else:

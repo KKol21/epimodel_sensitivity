@@ -49,7 +49,7 @@ def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: 
     trans_matrix = torch.zeros((n_age * n_comp, n_age * n_comp))
     for age_group in range(n_age):
         for state, data in states_dict.items():
-            n_states = data["n_substates"]
+            n_states = data.get("n_substates", 1)
             trans_param = parameters[get_trans_param(state, trans_data)]
             diag_idx = age_group * n_comp + c_idx[f'{state}_0']
             block_slice = slice(diag_idx, diag_idx + n_states)
@@ -60,20 +60,20 @@ def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: 
 
 def get_susc_mul(tms_rule, data):
     susc_mul = torch.ones(data.n_age).to(data.device)
-    for susc_param in tms_rule["source"]["params"]:
+    for susc_param in tms_rule.get("susc_params", []):
         susc_mul *= data["params"][susc_param]
     return susc_mul
 
 
 def get_inf_mul(tms_rule, data):
     inf_mul = torch.ones(data.n_age).to(data.device)
-    for inf_param in tms_rule["infection"]["infection_params"]:
+    for inf_param in tms_rule.get("infection_params", []):
         inf_mul *= data["params"][inf_param]
     return inf_mul
 
 
 def get_distr_mul(distr: List[str], params: dict):
-    if distr is None:
+    if not distr:
         return 1
     result = 1
     for distr_param in distr:
@@ -166,7 +166,7 @@ class MatrixGenerator:
         idx = self.idx
 
         for tms in self.tms_rules:
-            source = f"{tms['source']['name']}_0"
+            source = f"{tms['source']}_0"
             target = f"{tms['target']}_0"
             susc_mul = get_susc_mul(tms_rule=tms, data=self.data)
             transmission_rate = susc_mul / self.population
@@ -179,12 +179,12 @@ class MatrixGenerator:
         if cm is None:
             cm = self.cm
         for tms in self.tms_rules:
-            source = f"{tms['source']['name']}_0"
+            source = f"{tms['source']}_0"
             target = f"{tms['target']}_0"
             inf_mul = get_inf_mul(tms_rule=tms, data=self.data)
-            infection_spread_rate = self.ps["beta"] * cm.T * inf_mul.unsqueeze(0)  # Broadcast inf_mul to columns
-            for actor in tms["infection"]["actors-params"].keys():
-                for substate in get_substates(n_substates=self.state_data[actor]["n_substates"],
+            infection_spread_rate = self.ps["beta"] * torch.atleast_2d(cm).T * inf_mul.unsqueeze(0)  # Broadcast inf_mul to columns
+            for actor in tms["actors-params"].keys():
+                for substate in get_substates(n_substates=self.state_data[actor].get("n_substates", 1),
                                               comp_name=actor):
                     T[self._get_comp_slice(substate), self._get_comp_slice(source)] = infection_spread_rate
                     T[self._get_comp_slice(substate), self._get_comp_slice(target)] = infection_spread_rate
@@ -194,26 +194,33 @@ class MatrixGenerator:
         ps = self.ps
         state_data = self.state_data
         trans_data = self.trans_data
+
         # B is the tensor representing the first-order elements of the ODE system. We begin by
         # filling in the transition blocks of the intermediate states
-        intermediate_states = {state: data for state, data in state_data.items()
-                               if data["type"] not in ["susceptible",
-                                                       "recovered",
-                                                       "dead"]}
+        def is_inter(state_data):
+            return state_data.get("type", "") not in ["susceptible",
+                                                     "recovered",
+                                                     "dead"]
+
+        intermediate_states = {state: data
+                               for state, data in state_data.items()
+                               if is_inter(state_data=data)}
         B = generate_transition_matrix(states_dict=intermediate_states, trans_data=trans_data, parameters=ps,
                                        n_age=self.n_age, n_comp=self.n_comp, c_idx=self.c_idx).to(self.device)
 
         # Fill in the rest of the first-order terms
         idx = self.idx
-        end_state = {state: f"{state}_{data['n_substates'] - 1}" for state, data in state_data.items()}
-        for trans in [trans for trans in trans_data if trans["type"] == "basic"]:
+        end_state = {state: f"{state}_{data.get('n_substates', 1) - 1}"
+                     for state, data in state_data.items()}
+        for trans in [trans for trans in trans_data if trans.get("type", "basic") == "basic"]:
             # Iterate over the linear transitions
             trans_param = ps[trans["param"]]
             # Multiply the transition parameter by the distribution(s) given
-            trans_param = trans_param * get_distr_mul(trans["distr"], self.ps) # Throws shape error with *= in some cases
+            trans_param = trans_param * get_distr_mul(trans.get("distr"),
+                                                      self.ps)  # Throws shape error with *= in some cases
             source = end_state[trans["source"]]
             target = f"{trans['target']}_0"
-            n_substates = state_data[trans["source"]]["n_substates"]
+            n_substates = state_data[trans["source"]].get("n_substates", 1)
             B[idx(source), idx(target)] = trans_param * n_substates
         return B
 
@@ -249,4 +256,4 @@ class MatrixGenerator:
         return slice(self.c_idx[comp], self.n_eq, self.n_comp)
 
     def get_end_state(self, comp: str) -> str:
-        return f"{comp}_{self.state_data[comp]['n_substates'] - 1}"
+        return f"{comp}_{self.state_data[comp].get('n_substates', 1) - 1}"

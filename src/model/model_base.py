@@ -29,7 +29,7 @@ class EpidemicModelBase(ABC):
 
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
         self.n_eq = self.n_age * self.n_comp
-        self.is_vaccinated = "vaccination" in [trans["type"] for trans in self.trans_data]
+        self.is_vaccinated = "vaccination" in [trans.get("type") for trans in self.trans_data]
 
         from src.model.matrix_generator import MatrixGenerator
         self.matrix_generator = MatrixGenerator(model=self, cm=data.cm)
@@ -66,7 +66,7 @@ class EpidemicModelBase(ABC):
     def get_compartments(self) -> list:
         compartments = []
         for name, data in self.state_data.items():
-            compartments += get_substates(data["n_substates"], name)
+            compartments += get_substates(data.get("n_substates", 1), name)
         return compartments
 
     def get_initial_values_from_dict(self, init_val_dict: dict) -> torch.FloatTensor:
@@ -80,11 +80,13 @@ class EpidemicModelBase(ABC):
 
         """
         iv = torch.zeros(self.n_eq).to(self.device)
-        iv[self.idx('s_0')] = self.population
+        susc_state = [state for state, data in self.state_data.items()
+                      if data.get("type") == "susceptible"][0] + "_0"
+        iv[self.idx(susc_state)] = self.population
         for comp, comp_iv in init_val_dict.items():
             comp_iv = torch.FloatTensor(comp_iv, device=self.device)
             iv[self.idx(f"{comp}_0")] = comp_iv
-            iv[self.idx('s_0')] -= comp_iv
+            iv[self.idx(susc_state)] -= comp_iv
         return iv
 
     def idx(self, state: str) -> torch.BoolTensor:
@@ -97,7 +99,7 @@ class EpidemicModelBase(ABC):
         values of individual substates for each age group.
 
         """
-        substates = get_substates(n_substates=self.state_data[comp]["n_substates"], comp_name=comp)
+        substates = get_substates(n_substates=self.state_data[comp].get("n_substates", 1), comp_name=comp)
         return torch.stack(
             tensors=[solution[:, self.idx(state)].sum(dim=1) for state in substates],
             dim=0).sum(dim=0)

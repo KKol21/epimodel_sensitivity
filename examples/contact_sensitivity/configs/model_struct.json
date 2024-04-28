@@ -1,64 +1,44 @@
 {
   "states": {
     "s": {
-      "type": "susceptible",
-      "n_substates": 1
+      "type": "susceptible"
     },
     "l": {
       "type": "infected",
       "n_substates": 2
     },
     "ip": {
-      "type": "infectious",
-      "n_substates": 1
+      "type": "infected"
     },
     "ia": {
-      "type": "infectious",
+      "type": "infected",
       "n_substates": 3
     },
     "is": {
-      "type": "infectious",
+      "type": "infected",
       "n_substates": 3
     },
-    "ic": {
-      "type": "recovering",
-      "n_substates": 1
-    },
-    "icr": {
-      "type": "recovering",
-      "n_substates": 1
-    },
-    "h": {
-      "type": "recovering",
-      "n_substates": 1
-    },
+    "ic": {},
+    "icr": {},
+    "h": {},
     "r": {
-      "type": "recovered",
-      "n_substates": 1
+      "type": "recovered"
     },
     "d": {
-      "type": "dead",
-      "n_substates": 1
+      "type": "dead"
     },
     "v": {
-      "type": "recovered",
-      "n_substates": 1
+      "type": "recovered"
     }
   },
   "transmission_rules": [
     {
-      "source": {
-        "name": "s",
-        "params": []
-      },
+      "source": "s",
       "target": "l",
-      "infection": {
-        "actors-params": {
+      "actors-params": {
           "is": null,
           "ip": null,
           "ia": "inf_a"
-        },
-        "infection_params": []
       }
     }
   ],
@@ -66,9 +46,7 @@
     {
       "source": "l",
       "target": "ip",
-      "param": "alpha_l",
-      "distr": [],
-      "type": "basic"
+      "param": "alpha_l"
     },
     {
       "source": "ip",
@@ -76,15 +54,12 @@
       "param": "alpha_p",
       "distr": [
         "p"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "ia",
       "target": "r",
-      "param": "gamma_a",
-      "distr": null,
-      "type": "basic"
+      "param": "gamma_a"
     },
     {
       "source": "ip",
@@ -92,8 +67,7 @@
       "param": "alpha_p",
       "distr": [
         "p_"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "is",
@@ -101,15 +75,12 @@
       "param": "gamma_s",
       "distr": [
         "h_"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "icr",
       "target": "r",
-      "param": "gamma_cr",
-      "distr": null,
-      "type": "basic"
+      "param": "gamma_cr"
     },
     {
       "source": "is",
@@ -118,8 +89,7 @@
       "distr": [
         "h",
         "xi"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "ic",
@@ -127,8 +97,7 @@
       "param": "gamma_c",
       "distr": [
         "mu"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "is",
@@ -137,15 +106,12 @@
       "distr": [
         "h",
         "xi_"
-      ],
-      "type": "basic"
+      ]
     },
     {
       "source": "h",
       "target": "r",
-      "param": "gamma_h",
-      "distr": null,
-      "type": "basic"
+      "param": "gamma_h"
     },
     {
       "source": "ic",
@@ -153,8 +119,7 @@
       "param": "gamma_c",
       "distr": [
         "mu_"
-      ],
-      "type": "basic"
+      ]
     }
   ]
 }

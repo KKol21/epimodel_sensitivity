@@ -24,13 +24,13 @@ class R0Generator:
 
     def isinf_state(self, state):
         return state in [state for state, data in self.state_data.items() if
-                         data["type"] in ["infected", "infectious"]]
+                         data.get("type") == "infected"]
 
     def get_infected_states(self):
         states = []
         for state, data in self.state_data.items():
             if self.isinf_state(state):
-                states += get_substates(data["n_substates"], state)
+                states += get_substates(data.get("n_substates", 1), state)
         return states
 
     def _idx(self, state: str) -> bool:
@@ -63,7 +63,7 @@ class R0Generator:
                                                parameters=self.params, n_age=self.n_age,
                                                n_comp=self.n_states, c_idx=self.i).to(self.device)
 
-        end_state_dict = {state: f"{state}_{data['n_substates'] - 1}"
+        end_state_dict = {state: f"{state}_{data.get('n_substates', 1) - 1}"
                           for state, data in self.state_data.items()}
         inf_trans = [trans for trans in self.trans_data if
                      isinf(state=trans['source']) and isinf(state=trans['target'])]
@@ -73,8 +73,8 @@ class R0Generator:
             source = end_state_dict[trans['source']]
             target = f"{trans['target']}_0"
             param = self.params[trans['param']]
-            n_substates = self.state_data[trans['source']]["n_substates"]
-            distr = get_distr_mul(distr=trans["distr"], params=self.params)
+            n_substates = self.state_data[trans['source']].get("n_substates", 1)
+            distr = get_distr_mul(distr=trans.get("distr"), params=self.params)
             trans_mtx[idx(source), idx(target)] = param * distr * n_substates
         return torch.linalg.inv(trans_mtx)
 
@@ -96,10 +96,10 @@ class R0Generator:
         for tms in self.tms_rules:
             susc_mul = get_susc_mul(tms_rule=tms, data=self.data)
             inf_mul = get_inf_mul(tms_rule=tms, data=self.data)
-            for actor in tms["infection"]["actors-params"]:
-                for substate in get_substates(n_substates=self.state_data[actor]["n_substates"],
+            for actor in tms["actors-params"]:
+                for substate in get_substates(n_substates=self.state_data[actor].get("n_substates", 1),
                                               comp_name=actor):
-                    f[i[substate]:s_mtx:n_states, i[f"{tms['target']}_0"]:s_mtx:n_states] =\
+                    f[i[substate]:s_mtx:n_states, i[f"{tms['target']}_0"]:s_mtx:n_states] = \
                         susc_mul * contact_mtx.T * inf_mul.unsqueeze(0)
         return f
 
