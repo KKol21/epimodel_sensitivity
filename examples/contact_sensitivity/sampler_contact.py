@@ -14,4 +14,4 @@ class SamplerContact(SamplerBase):
 
     def run(self):
         lhs_table = self._get_lhs_table()
-        self._get_sim_output(lhs_table)
+        self._get_sim_output(lhs_table=lhs_table)

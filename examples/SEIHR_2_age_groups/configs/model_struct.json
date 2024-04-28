@@ -64,7 +64,7 @@
       "target": "e",
       "infection": {
         "actors-params": {
-          "i": "beta"
+          "i": null
         },
         "infection_params": []
       }

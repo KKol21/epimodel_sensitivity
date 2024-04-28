@@ -48,9 +48,11 @@ class SimulationContact(SimulationBase):
 
         """
         for variable_params in self.variable_param_combinations:
+            # Get beta based on base reproduction number
             base_r0 = variable_params["r0"]
-            beta = self.get_beta_from_r0(base_r0)
+            beta = self.get_beta_from_r0(base_r0=base_r0)
             self.params.update({"beta": beta})
+
             # Generate matrices used in model representation
             self.model = ContactModel(sim_obj=self, base_r0=base_r0)
             self.model.initialize_matrices()
