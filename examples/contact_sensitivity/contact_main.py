@@ -5,6 +5,7 @@ from examples.utils.dataloader_16_ag import DataLoader
 def main():
     data = DataLoader()
     sim = SimulationContact(data)
+    sim.model.visualize_transmission_graph()
     sim.run_sampling()
     sim.calculate_all_prcc()
     sim.calculate_all_p_values()

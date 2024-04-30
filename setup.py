@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='epimodel_sensitivity_test',
-    version='0.1.2',
+    version='0.1.7',
     author='Kolos Kovács',
     author_email='kovkol21@gmail.com',
     description='Efficient sensitivity analysis and evaluation of epidemiological models',
@@ -27,8 +27,7 @@ setup(
         "smt~=1.3.0",
         "tqdm==4.51.0",
         "xlrd==1.2.0",
-        "torch~=2.0.0",
-        "torchode~=0.1.8",
+        "torchode~=0.2.0",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

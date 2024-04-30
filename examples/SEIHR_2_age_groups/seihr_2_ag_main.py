@@ -15,16 +15,17 @@ def main():
     contact_data = torch.tensor([[1, 2],
                                  [0.5, 1]])
 
-    age_data = torch.tensor([[1E5,
-                              2E5]])
+    age_data = torch.tensor([1E5,
+                             2E5])
 
     data = SimpleNamespace(**{"params": params,
                               "cm": contact_data,
                               "age_data": age_data,
-                              "n_age": len(age_data[0]),
+                              "n_age": len(age_data),
                               "device": "cpu"})
 
     sim = SimulationSEIHR(data)
+    sim.model.visualize_transmission_graph()
     sim.run_sampling()
     sim.calculate_all_prcc()
     sim.calculate_all_p_values()

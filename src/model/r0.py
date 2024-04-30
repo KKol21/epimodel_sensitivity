@@ -5,12 +5,12 @@ from src.model.model_base import get_substates
 
 
 class R0Generator:
-    def __init__(self, data, state_data, trans_data, tms_rules):
+    def __init__(self, data, model_struct):
         self.data = data
         self.device = data.device
-        self.state_data = state_data
-        self.trans_data = trans_data
-        self.tms_rules = tms_rules
+        self.state_data = model_struct["state_data"]
+        self.trans_data = model_struct["trans_data"]
+        self.tms_rules = model_struct["tms_rules"]
 
         self.inf_states = self.get_infected_states()
         self.n_comp = len(self.inf_states)

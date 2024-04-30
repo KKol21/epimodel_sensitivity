@@ -5,11 +5,11 @@ from src.model.model_base import EpidemicModelBase
 
 class EpidemicModel(EpidemicModelBase):
     def __init__(self, data, model_struct):
-        super().__init__(data, **model_struct)
+        super().__init__(data, model_struct)
 
     def get_solution(self, y0, t_eval, **kwargs):
-        return self.get_sol_from_ode(y0=y0,
-                                     t_eval=t_eval,
+        return self.get_sol_from_ode(y0=torch.atleast_2d(y0),
+                                     t_eval=torch.atleast_2d(t_eval),
                                      odefun=self.get_ode())
 
     def get_ode(self):

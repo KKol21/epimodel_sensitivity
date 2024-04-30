@@ -42,7 +42,7 @@ class ContactModel(SensitivityModelBase):
         return T
 
     def _get_betas_from_contacts(self, cm_samples: torch.Tensor):
-        r0gen = R0Generator(data=self.data, **self.sim_obj.model_struct)
+        r0gen = R0Generator(data=self.data, model_struct=self.sim_obj.model_struct)
         betas = [self.base_r0 / r0gen.get_eig_val(contact_mtx=cm,
                                                   susceptibles=self.sim_obj.susceptibles.flatten(),
                                                   population=self.sim_obj.population)

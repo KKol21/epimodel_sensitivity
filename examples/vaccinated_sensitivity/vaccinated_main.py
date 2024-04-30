@@ -4,11 +4,12 @@ from examples.vaccinated_sensitivity.simulation_vacc import SimulationVaccinated
 
 def main():
     data = DataLoader()
-    simulation = SimulationVaccinated(data)
-    simulation.run_sampling()
-    simulation.calculate_all_prcc()
-    simulation.calculate_all_p_values()
-    simulation.plot_prcc_tornado_with_p_values()
+    sim = SimulationVaccinated(data)
+    sim.model.visualize_transmission_graph()
+    sim.run_sampling()
+    sim.calculate_all_prcc()
+    sim.calculate_all_p_values()
+    sim.plot_prcc_tornado_with_p_values()
 
 
 if __name__ == '__main__':

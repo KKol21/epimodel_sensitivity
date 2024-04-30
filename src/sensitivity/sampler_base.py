@@ -87,7 +87,8 @@ class SamplerBase(ABC):
         print(f"\n Simulation for {self.n_samples} samples ({self.sim_obj.get_filename(self.variable_params)})")
         print(f"Batch size: {self.batch_size}\n")
 
-        output_generator = OutputGenerator(self.sim_obj, self.variable_params)
+        output_generator = OutputGenerator(sim_obj=self.sim_obj,
+                                           variable_params=self.variable_params)
         sim_outputs = output_generator.get_output(lhs_table=lhs_table)
 
         time.sleep(0.3)

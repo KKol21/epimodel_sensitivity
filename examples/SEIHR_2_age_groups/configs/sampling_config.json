@@ -1,7 +1,8 @@
 {
   "variable_params": {
     "r0": [
-      1.8
+      1.8,
+      3
     ],
     "susc": {
       "odd": [
@@ -12,15 +13,10 @@
   },
   "target_vars": [
     "r0",
-    "i_max",
     "r_sup"
   ],
   "sampled_params_boundaries": {
     "alpha": [
-      0.2,
-      0.4
-    ],
-    "beta": [
       0.2,
       0.4
     ],

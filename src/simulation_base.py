@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from scipy import stats as ss
+from torch import atleast_2d
 
 from src.dataloader import PROJECT_PATH
 from src.model.r0 import R0Generator
@@ -27,8 +28,6 @@ class SimulationBase(ABC):
         self._load_simulation_data()
         self._load_config(config_path)
         self._load_model_structure(model_struct_path)
-        from src.plotter import visualize_transmission_graph
-        visualize_transmission_graph(**self.model_struct)
 
     @property
     def susceptibles(self):
@@ -36,18 +35,18 @@ class SimulationBase(ABC):
 
     def _load_simulation_data(self):
         self.params = self.data.params
-        self.n_age = self.data.n_age
-        self.cm = self.data.cm
+        self.cm = atleast_2d(self.data.cm)
         self.population = self.data.age_data.flatten()
+        self.n_age = len(self.population)
         self.folder_name = os.path.join(PROJECT_PATH, "sens_data")
 
     def _load_model_structure(self, model_struct_path):
         with open(model_struct_path) as f:
             model_structure = json.load(f)
 
-        self.state_data = model_structure["states"]
-        self.trans_data = model_structure["transition"]
-        self.tms_rules = model_structure["transmission_rules"]
+        self.state_data = model_structure["state_data"]
+        self.trans_data = model_structure["trans_data"]
+        self.tms_rules = model_structure["tms_rules"]
 
         self.model_struct = {
             "state_data": self.state_data,
@@ -117,7 +116,7 @@ class SimulationBase(ABC):
             return f"{key}-{variable_params[key]}"
 
     def get_beta_from_r0(self, base_r0):
-        r0generator = R0Generator(self.data, **self.model_struct)
+        r0generator = R0Generator(self.data, self.model_struct)
         if isinstance(base_r0, tuple):
             base_r0 = base_r0[0]
         return base_r0 / r0generator.get_eig_val(contact_mtx=self.cm,

@@ -5,7 +5,7 @@ import torchode as to
 
 
 class EpidemicModelBase(ABC):
-    def __init__(self, data, state_data, trans_data, tms_rules):
+    def __init__(self, data, model_struct):
         """
         Initialises Abstract base class for epidemic models.
 
@@ -16,9 +16,9 @@ class EpidemicModelBase(ABC):
             None
         """
         self.data = data
-        self.state_data = state_data
-        self.trans_data = trans_data
-        self.tms_rules = tms_rules
+        self.state_data = model_struct["state_data"]
+        self.trans_data = model_struct["trans_data"]
+        self.tms_rules = model_struct["tms_rules"]
 
         self.n_age = data.n_age
         self.population = data.age_data.flatten()
@@ -48,6 +48,12 @@ class EpidemicModelBase(ABC):
         if self.is_vaccinated:
             self.V_1 = mtx_gen.get_V_1()
             self.V_2 = mtx_gen.get_V_2()
+
+    def visualize_transmission_graph(self):
+        from src.plotter import visualize_transmission_graph
+        visualize_transmission_graph(state_data=self.state_data,
+                                     trans_data=self.trans_data,
+                                     tms_rules=self.tms_rules)
 
     @abstractmethod
     def get_solution(self, y0, t_eval, **kwargs):

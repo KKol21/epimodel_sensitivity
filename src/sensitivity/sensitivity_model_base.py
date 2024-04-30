@@ -21,7 +21,7 @@ def get_lhs_dict(params: list, lhs_table: torch.Tensor, params_col_idx: dict) ->
 
 class SensitivityModelBase(EpidemicModelBase, ABC):
     def __init__(self, sim_obj):
-        super().__init__(data=sim_obj.data, **sim_obj.model_struct)
+        super().__init__(data=sim_obj.data, model_struct=sim_obj.model_struct)
         self.sim_obj = sim_obj
         self.test = sim_obj.test
         self.sim_state = None
@@ -70,6 +70,7 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         n_eq = self.n_eq
         n_samples = next(iter(lhs_dict.values())).shape[0]
         mtx = torch.zeros((n_samples, n_eq, n_eq)).to(self.device)
+        ps_original = self.matrix_generator.ps.copy()
         for idx in range(n_samples):
             # Select idx. value from lhs table for each parameter
             row_dict = {key: value[idx] if len(value.size()) < 2 else value[idx, :]
@@ -77,6 +78,7 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
             self.matrix_generator.ps.update(row_dict)
 
             mtx[idx, :, :] = self.matrix_generator.generate_matrix(matrix_name)
+        self.matrix_generator.ps = ps_original
         return mtx
 
     def get_initial_values(self):

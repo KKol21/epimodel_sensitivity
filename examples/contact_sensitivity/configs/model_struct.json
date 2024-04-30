@@ -1,5 +1,5 @@
 {
-  "states": {
+  "state_data": {
     "s": {
       "type": "susceptible"
     },
@@ -28,7 +28,7 @@
       "type": "dead"
     }
   },
-  "transmission_rules": [
+  "tms_rules": [
     {
       "source": "s",
       "target": "l",
@@ -39,7 +39,7 @@
       }
     }
   ],
-  "transition": [
+  "trans_data": [
     {
       "source": "l",
       "target": "ip",

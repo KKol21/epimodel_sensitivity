@@ -1,5 +1,5 @@
 {
-  "states": {
+  "state_data": {
     "s": {
       "type": "susceptible"
     },
@@ -16,7 +16,7 @@
       "type": "recovered"
     }
   },
-  "transition": [
+  "trans_data": [
     {
       "source": "i",
       "target": "r",
@@ -44,7 +44,7 @@
       "param": "gamma"
     }
   ],
-  "transmission_rules": [
+  "tms_rules": [
     {
       "source": "s",
       "target": "e",

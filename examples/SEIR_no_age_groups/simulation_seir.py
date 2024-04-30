@@ -1,7 +1,5 @@
 import os
 
-import torch
-
 from examples.SEIR_no_age_groups.model_seir import SEIRModel
 from examples.SEIR_no_age_groups.sampler_seir import SamplerSEIR
 from src.dataloader import PROJECT_PATH
@@ -20,8 +18,6 @@ class SimulationSEIR(SimulationBase):
 
     def run_sampling(self):
         for variable_params in self.variable_param_combinations:
-            susc = self.tensorize(param=variable_params["susc"])
-            self.params.update({"susc": susc})
             base_r0 = variable_params["r0"]
             beta = self.get_beta_from_r0(base_r0)
             self.params["beta"] = beta
@@ -30,9 +26,3 @@ class SimulationSEIR(SimulationBase):
 
             param_generator = SamplerSEIR(sim_obj=self, variable_params=variable_params)
             param_generator.run()
-
-    def tensorize(self, param):
-        if isinstance(param, dict):
-            return torch.Tensor(list(param.values())[0], device=self.device)
-        else:
-            return torch.Tensor(param, device=self.device)

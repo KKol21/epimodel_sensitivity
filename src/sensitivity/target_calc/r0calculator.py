@@ -18,7 +18,7 @@ class R0Calculator:
             raise ValueError("Sampled parameters boundaries not specified, automatic R0 generation isn't possible")
         pci = get_params_col_idx(sampled_params_boundaries=spb)
         lhs_dict = get_lhs_dict(params=spb.keys(), lhs_table=lhs_table, params_col_idx=pci)
-        r0gen = R0Generator(sim_obj.data, **sim_obj.model_struct)
+        r0gen = R0Generator(sim_obj.data, sim_obj.model_struct)
         r0s = []
         print(f"Calculating R0 for {n_samples} samples")
         for idx in tqdm(range(n_samples)):
