@@ -20,8 +20,8 @@ class EpidemicModelBase(ABC):
         self.trans_data = model_struct["trans_data"]
         self.tms_rules = model_struct["tms_rules"]
 
-        self.n_age = data.n_age
         self.population = data.age_data.flatten()
+        self.n_age = len(self.population)
         self.compartments = self.get_compartments()
         self.n_comp = len(self.compartments)
         self.ps = data.params

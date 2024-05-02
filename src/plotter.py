@@ -16,12 +16,24 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
 
     # Add nodes
     def get_node_label(node):
-        if n_substates := state_data[node].get("n_substates"):
+        if n_substates := state_data[node].get("n_substates", 1) > 1:
             return f"{node}$^{{{n_substates}}}$"
         return node
 
+    def get_node_color(node):
+        node_type =  state_data[node].get("type", "basic")
+        if node_type == "susceptible":
+            return "green"
+        if node_type == "infected":
+            return "red"
+        if node_type == "recovered":
+            return "blue"
+        if node_type == "dead":
+            return "gray"
+        return "orange"
+
     for node, data in state_data.items():
-        G.add_node(get_node_label(node))
+        G.add_node(get_node_label(node), color=get_node_color(node))
 
     # Add edges from transitions
     def get_edge_label(trans):
@@ -62,7 +74,13 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
     else:
         pos = nx.circular_layout(G)
     #pos = nx.multipartite_layout(G)  #requires manual partitioning
-    nx.draw(G, pos, with_labels=True, node_size=500, node_color="skyblue", font_size=10, arrowsize=10)
+    node_colors = [node[1]['color'] for node in G.nodes(data=True)]
+    nx.draw(G, pos,
+            with_labels=True,
+            node_size=500,
+            node_color=node_colors,
+            font_size=12,
+            arrowsize=10)
 
     # Draw full edges with labels
     labels = nx.get_edge_attributes(G, 'param')
