@@ -17,10 +17,10 @@ class SamplerBase(ABC):
     parameter combinations and collect simulation results.
 
     Args:
-        sim_obj: The simulation object representing the underlying simulation model.
+        sim_object: The simulation object representing the underlying simulation model.
 
     Attributes:
-        sim_obj: The simulation object representing the underlying simulation model.
+        sim_object: The simulation object representing the underlying simulation model.
         lhs_bounds_dict (dict): The boundaries for Latin Hypercube Sampling (LHS) parameter ranges.
 
     Methods:
@@ -28,16 +28,16 @@ class SamplerBase(ABC):
             and collect simulation results.
     """
 
-    def __init__(self, sim_obj, variable_params):
-        self.sim_obj = sim_obj
+    def __init__(self, sim_object, variable_params):
+        self.sim_object = sim_object
         self.variable_params = variable_params
-        self.sampled_params_boundaries = sim_obj.sampled_params_boundaries
+        self.sampled_params_boundaries = sim_object.sampled_params_boundaries
         self._process_sampling_config()
 
     def _process_sampling_config(self):
-        sim_obj = self.sim_obj
-        self.n_samples = sim_obj.n_samples
-        self.batch_size = sim_obj.batch_size
+        sim_object = self.sim_object
+        self.n_samples = sim_object.n_samples
+        self.batch_size = sim_object.batch_size
 
         if (spb := self.sampled_params_boundaries) is not None:
             self.lhs_bounds_dict = {param: np.array(spb[param]) for param in spb}
@@ -84,17 +84,17 @@ class SamplerBase(ABC):
         return bounds.T
 
     def get_sim_output(self, lhs_table: np.ndarray):
-        print(f"\n Simulation for {self.n_samples} samples ({self.sim_obj.get_filename(self.variable_params)})")
+        print(f"\n Simulation for {self.n_samples} samples ({self.sim_object.get_filename(self.variable_params)})")
         print(f"Batch size: {self.batch_size}\n")
 
-        output_generator = OutputGenerator(sim_obj=self.sim_obj,
+        output_generator = OutputGenerator(sim_object=self.sim_object,
                                            variable_params=self.variable_params)
         sim_outputs = output_generator.get_output(lhs_table=lhs_table)
 
         time.sleep(0.3)
 
         # Save samples, target values
-        filename = self.sim_obj.get_filename(self.variable_params)
+        filename = self.sim_object.get_filename(self.variable_params)
         self.save_output(output=lhs_table, output_name='lhs', filename=filename)
         for target_var, sim_output in sim_outputs.items():
             self.save_output(output=sim_output.cpu(),
@@ -102,7 +102,7 @@ class SamplerBase(ABC):
                              filename=filename + f"_{target_var}")
 
     def save_output(self, output, output_name: str, filename: str):
-        folder_name = self.sim_obj.folder_name
+        folder_name = self.sim_object.folder_name
         os.makedirs(folder_name, exist_ok=True)
 
         dirname = os.path.join(folder_name, output_name)

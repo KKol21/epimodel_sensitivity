@@ -2,7 +2,7 @@ from emsa.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 
 class VaccinatedModel(SensitivityModelBase):
-    def __init__(self, sim_obj):
+    def __init__(self, sim_object):
         """
         Initializes the VaccinatedModel class.
 
@@ -10,10 +10,10 @@ class VaccinatedModel(SensitivityModelBase):
         constructor, and instantiating the matrix generator used in solving the model.
 
         Args:
-            sim_obj (SimulationVaccinated): Simulation object
+            sim_object (SimulationVaccinated): Simulation object
 
         """
-        super().__init__(sim_obj=sim_obj)
+        super().__init__(sim_object=sim_object)
 
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]

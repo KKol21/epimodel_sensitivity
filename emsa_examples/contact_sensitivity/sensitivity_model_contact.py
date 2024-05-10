@@ -6,7 +6,7 @@ from emsa.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 
 class ContactModel(SensitivityModelBase):
-    def __init__(self, sim_obj, base_r0):
+    def __init__(self, sim_object, base_r0):
         """
         Initializes the VaccinatedModel class.
 
@@ -14,14 +14,14 @@ class ContactModel(SensitivityModelBase):
         constructor, and instantiating the matrix generator used in solving the model.
 
         Args:
-            sim_obj (SimulationContact): Simulation object
+            sim_object (SimulationContact): Simulation object
 
         """
-        super().__init__(sim_obj=sim_obj)
+        super().__init__(sim_object=sim_object)
 
         self.base_r0 = base_r0
         self.s_mtx = self.n_age * self.n_comp
-        self.upper_tri_size = sim_obj.upper_tri_size
+        self.upper_tri_size = sim_object.upper_tri_size
 
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]
@@ -42,18 +42,18 @@ class ContactModel(SensitivityModelBase):
         return T
 
     def _get_betas_from_contacts(self, cm_samples: torch.Tensor):
-        r0gen = R0Generator(data=self.data, model_struct=self.sim_obj.model_struct)
+        r0gen = R0Generator(data=self.data, model_struct=self.sim_object.model_struct)
         betas = [self.base_r0 / r0gen.get_eig_val(contact_mtx=cm,
-                                                  susceptibles=self.sim_obj.susceptibles.flatten(),
-                                                  population=self.sim_obj.population)
+                                                  susceptibles=self.sim_object.susceptibles.flatten(),
+                                                  population=self.sim_object.population)
                  for cm in cm_samples]
         return torch.tensor(betas, device=self.device)
 
     def get_contacts_from_lhs(self, lhs_table: np.ndarray):
-        contact_sim = torch.zeros((lhs_table.shape[0], self.sim_obj.n_age, self.sim_obj.n_age))
+        contact_sim = torch.zeros((lhs_table.shape[0], self.sim_object.n_age, self.sim_object.n_age))
         for idx, sample in enumerate(lhs_table):
             contact_sim[idx, :, :] = get_contact_matrix_from_upper_triu(rvector=sample,
-                                                                        age_vector=self.sim_obj.population.flatten())
+                                                                        age_vector=self.sim_object.population.flatten())
         return contact_sim
 
 

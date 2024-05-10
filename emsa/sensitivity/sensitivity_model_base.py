@@ -24,10 +24,10 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
     Base class for implementing epidemic models with the capacity
     to run sample based simulations for sensitivity analysis.
     """
-    def __init__(self, sim_obj):
-        super().__init__(data=sim_obj.data, model_struct=sim_obj.model_struct)
-        self.sim_obj = sim_obj
-        self.test = sim_obj.test
+    def __init__(self, sim_object):
+        super().__init__(data=sim_object.data, model_struct=sim_object.model_struct)
+        self.sim_object = sim_object
+        self.test = sim_object.test
         self.sim_state = None
 
     def get_basic_ode(self):
@@ -86,10 +86,10 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         return mtx
 
     def get_initial_values(self):
-        return self.get_initial_values_from_dict(self.sim_obj.init_vals)
+        return self.get_initial_values_from_dict(self.sim_object.init_vals)
 
     def generate_3D_matrices(self, samples: torch.Tensor):
-        spb = self.sim_obj.sampled_params_boundaries
+        spb = self.sim_object.sampled_params_boundaries
         if spb is None:
             return
         # Params in B

@@ -205,7 +205,7 @@ class SimulationBase(ABC):
         p_values_file = os.path.join(self.folder_name, f"p_values/p_values_{filename}.csv")
         p_val = np.loadtxt(fname=p_values_file)
 
-        generate_tornado_plot(sim_obj=self,
+        generate_tornado_plot(sim_object=self,
                               labels=labels,
                               prcc=prcc,
                               p_val=p_val,

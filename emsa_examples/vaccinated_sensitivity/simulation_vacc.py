@@ -32,7 +32,7 @@ class SimulationVaccinated(SimulationBase):
         super().__init__(data, model_struct_path=struct_path, config_path=config_path)
 
         self.folder_name = os.path.join(self.folder_name, "sens_data_vacc")
-        self.model = VaccinatedModel(sim_obj=self)
+        self.model = VaccinatedModel(sim_object=self)
 
     def run_sampling(self):
         """
@@ -51,7 +51,7 @@ class SimulationVaccinated(SimulationBase):
             # Generate matrices used in model representation
             self.model.initialize_matrices()
 
-            param_generator = SamplerVaccinated(sim_obj=self, variable_params=variable_params)
+            param_generator = SamplerVaccinated(sim_object=self, variable_params=variable_params)
             param_generator.run()
 
     def plot_prcc_tornado_with_p_values(self):

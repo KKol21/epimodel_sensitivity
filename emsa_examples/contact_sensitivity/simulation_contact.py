@@ -35,7 +35,7 @@ class SimulationContact(SimulationBase):
         self.upper_tri_size = int((self.n_age + 1) * self.n_age / 2)
         self.folder_name += "/sens_data_contact"
 
-        self.model = ContactModel(sim_obj=self, base_r0=None)
+        self.model = ContactModel(sim_object=self, base_r0=None)
 
     def run_sampling(self):
         """
@@ -54,10 +54,10 @@ class SimulationContact(SimulationBase):
             self.params.update({"beta": beta})
 
             # Generate matrices used in model representation
-            self.model = ContactModel(sim_obj=self, base_r0=base_r0)
+            self.model = ContactModel(sim_object=self, base_r0=base_r0)
             self.model.initialize_matrices()
 
-            param_generator = SamplerContact(sim_obj=self, variable_params=variable_params)
+            param_generator = SamplerContact(sim_object=self, variable_params=variable_params)
             param_generator.run()
 
     def plot_prcc_and_p_values(self, filename):

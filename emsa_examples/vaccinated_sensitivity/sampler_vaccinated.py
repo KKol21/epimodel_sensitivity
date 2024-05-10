@@ -5,12 +5,12 @@ from emsa.sensitivity.sampler_base import SamplerBase
 
 
 class SamplerVaccinated(SamplerBase):
-    def __init__(self, sim_obj, variable_params):
-        super().__init__(sim_obj, variable_params)
-        self.sim_obj = sim_obj
+    def __init__(self, sim_object, variable_params):
+        super().__init__(sim_object, variable_params)
+        self.sim_object = sim_object
         self.lhs_bounds_dict = {
-            "vaccines": np.array([np.zeros(sim_obj.n_age),  # Ratio of daily vaccines given to each age group
-                                  np.ones(sim_obj.n_age)])
+            "vaccines": np.array([np.zeros(sim_object.n_age),  # Ratio of daily vaccines given to each age group
+                                  np.ones(sim_object.n_age)])
         }
 
     def run(self):
@@ -53,9 +53,9 @@ class SamplerVaccinated(SamplerBase):
 
         """
         lhs_table = self.norm_table_rows(lhs_table)
-        params = self.sim_obj.params
+        params = self.sim_object.params
         total_vac = params["total_vaccines"] * lhs_table
-        population = np.array(self.sim_obj.population.cpu())
+        population = np.array(self.sim_object.population.cpu())
 
         while np.any(total_vac > population):
             mask = total_vac > population

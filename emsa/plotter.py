@@ -96,7 +96,7 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
     plt.show()
 
 
-def generate_tornado_plot(sim_obj, labels, prcc: np.ndarray, p_val, filename: str, title=None, verbose=True):
+def generate_tornado_plot(sim_object, labels, prcc: np.ndarray, p_val, filename: str, title=None, verbose=True):
     """
     Generate a tornado plot to visualize the Partial Rank Correlation Coefficient (PRCC) values.
     """
@@ -153,7 +153,7 @@ def generate_tornado_plot(sim_obj, labels, prcc: np.ndarray, p_val, filename: st
         plt.title(title)
     if verbose and title is None:
         plt.title(f"PRCC values for {filename}")
-    plot_path = os.path.join(sim_obj.folder_name, f"prcc_plots/prcc_tornado_plot_{filename}.pdf")
+    plot_path = os.path.join(sim_object.folder_name, f"prcc_plots/prcc_tornado_plot_{filename}.pdf")
     plt.savefig(plot_path, format="pdf", bbox_inches='tight')
     plt.show()
 
