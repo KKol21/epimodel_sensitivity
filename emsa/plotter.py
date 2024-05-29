@@ -196,7 +196,8 @@ def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save
     p_value_cmap = colors.ListedColormap(['Orange', 'red', 'darkred'])
     cmaps = ["Greens", p_value_cmap]
 
-    log_norm = colors.LogNorm(vmin=1e-3, vmax=1e0)  # used for p_values
+    thresholds = [0, 0.01, 0.1, 1]
+    log_norm = colors.BoundaryNorm(boundaries=thresholds, ncolors=p_value_cmap.N, clip=True) # used for p_values
     norm = plt.Normalize(vmin=0, vmax=1)  # used for PRCC_values
 
     fig, ax = plt.subplots()
@@ -206,17 +207,11 @@ def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save
               for t, val, cmap in zip(triang,
                                       mask, cmaps)]
 
-    fig.colorbar(images[0], ax=ax, shrink=0.7, aspect=20 * 0.7)  # for the prcc values
-    cbar_pval = fig.colorbar(images[1], ax=ax, shrink=0.7, aspect=20 * 0.7, pad=0.1)
+    fig.colorbar(images[0], ax=ax, shrink=0.7, aspect=20 * 0.7, label="PRCC")  # for the prcc values
+    fig.colorbar(images[1], ax=ax, shrink=0.7, aspect=20 * 0.7, pad=0.1, label="p-value") # p-values
 
     images[1].set_norm(norm=log_norm)
     images[0].set_norm(norm=norm)
-
-    locator = LogLocator()
-    formatter = LogFormatter()
-    cbar_pval.locator = locator
-    cbar_pval.formatter = formatter
-    cbar_pval.update_normal(images[1])
 
     ax.set_xticks(range(n_age))
     ax.set_yticks(range(n_age))
@@ -227,7 +222,6 @@ def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save
     ax.margins(x=0, y=0)
     ax.set_aspect('equal', 'box')
     plt.tight_layout()
-    plt.title(plot_title, y=1.03, fontsize=25)
     plt.title(plot_title, y=1.03, fontsize=25)
     plt.savefig(filename_to_save, format="pdf",
                 bbox_inches='tight')
