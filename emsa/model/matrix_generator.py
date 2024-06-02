@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any, Dict
 
 import torch
 
@@ -25,26 +25,31 @@ def generate_transition_block(transition_param: float, n_states: int) -> torch.T
     return trans_block
 
 
-def get_trans_param(state: str, trans_data: dict):
+def get_trans_param(state: str, trans_data: List[Dict[str, Any]]) -> str:
     for trans in trans_data:
         if trans["source"] == state:
             return trans["param"]
     raise Exception(f"No transition parameter was provided for state {state}")
 
 
-def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: dict,
-                               n_age: int, n_comp: int, c_idx: dict) -> torch.Tensor:
+def generate_transition_matrix(states_dict: Dict[str, Any],
+                               trans_data: List[Dict[str, Any]],
+                               parameters: Dict[str, float],
+                               n_age: int, n_comp: int,
+                               c_idx: Dict[str, int]) -> torch.Tensor:
     """
     Generate the transition matrix for the model.
 
     Args:
-        states_dict:
-        trans_data:
-        parameters: A dictionary containing model params.
-        n_age: The number of age groups.
-        n_comp: The number of compartments.
-        c_idx: A dictionary containing the indices of different compartments.
+        states_dict (Dict[str, Any]): Dictionary of states.
+        trans_data (List[Dict[str, Any]]): Transition data.
+        parameters (Dict[str, float]): A dictionary containing model parameters.
+        n_age (int): The number of age groups.
+        n_comp (int): The number of compartments.
+        c_idx (Dict[str, int]): A dictionary containing the indices of different compartments.
 
+    Returns:
+        torch.Tensor: The transition matrix.
     """
     trans_matrix = torch.zeros((n_age * n_comp, n_age * n_comp))
     for age_group in range(n_age):
@@ -58,21 +63,51 @@ def generate_transition_matrix(states_dict: dict, trans_data: dict, parameters: 
     return trans_matrix
 
 
-def get_susc_mul(tms_rule, data):
+def get_susc_mul(tms_rule: dict, data) -> torch.Tensor:
+    """
+    Get the susceptibility multiplier.
+
+    Args:
+        tms_rule (Dict[str, Any]): Transmission rule.
+        data (Any): Model data.
+
+    Returns:
+        torch.Tensor: Susceptibility multiplier.
+    """
     susc_mul = torch.ones(data.n_age).to(data.device)
     for susc_param in tms_rule.get("susc_params", []):
         susc_mul *= data["params"][susc_param]
     return susc_mul
 
 
-def get_inf_mul(tms_rule, data):
+def  get_inf_mul(tms_rule: dict, data) -> torch.Tensor:
+    """
+    Get the infection multiplier.
+
+    Args:
+        tms_rule (Dict[str, Any]): Transmission rule.
+        data (Any): Model data.
+
+    Returns:
+        torch.Tensor: Infection multiplier.
+    """
     inf_mul = torch.ones(data.n_age).to(data.device)
     for inf_param in tms_rule.get("infection_params", []):
         inf_mul *= data["params"][inf_param]
     return inf_mul
 
 
-def get_distr_mul(distr: List[str], params: dict):
+def get_distr_mul(distr: List[str], params: dict) -> float:
+    """
+    Get the distribution multiplier.
+
+    Args:
+        distr (List[str]): Distribution parameters.
+        params (Dict[str, float]): Model parameters.
+
+    Returns:
+        float: Distribution multiplier.
+    """
     if not distr:
         return 1
     result = 1
@@ -91,7 +126,7 @@ class MatrixGenerator:
     Let y be size n_samples * n_eq, each row corresponding to a different simulation. The general formula we represent
     the system of ODEs with is the following:
 
-            y' = (y @ T_1) * (y @ T_2) + y * L,
+            y' = (y @ T_1) * (y @ T_2) + y @ L,
 
     where T_1 and T_2 are responsible for the transmission of the disease, and L defines the linear changes.
 
@@ -99,20 +134,20 @@ class MatrixGenerator:
 
             vacc = (y @ V_1) / (y @ V_2).
 
-    Args:
-        model (EpidemicModelBase): An instance of the EpidemicModelBase class.
-        cm: The contact matrix.
-
     Attributes:
-        cm: The contact matrix.
-        ps: A dictionary containing model params.
-        n_eq: The total number of compartments in the model.
-        n_age: The number of age groups.
-        n_comp: The number of states.
-        population: The total population.
-        device: The device to be used for computations.
-        idx: A dictionary containing the indices of different compartments.
-        c_idx: A dictionary containing the indices of different compartments' components.
+        cm (torch.Tensor): The contact matrix.
+        ps (Dict[str, float]): A dictionary containing model parameters.
+        data (Any): Model data.
+        state_data (Dict[str, Any]): Data related to states.
+        trans_data (List[Dict[str, Any]]): Data related to transitions.
+        tms_rules (List[Dict[str, Any]]): Transmission rules.
+        n_eq (int): The total number of compartments in the model.
+        n_age (int): The number of age groups.
+        n_comp (int): The number of states.
+        population (torch.Tensor): The total population.
+        device (torch.device): The device to be used for computations.
+        idx (Dict[str, int]): A dictionary containing the indices of different compartments.
+        c_idx (Dict[str, int]): A dictionary containing the indices of different compartments' components.
 
     Methods:
         _get_comp_slice(comp): Get a slice representing the indices of a given compartment.
@@ -143,7 +178,7 @@ class MatrixGenerator:
         self.idx = model.idx
         self.c_idx = model.c_idx
 
-    def generate_matrix(self, matrix_name):
+    def generate_matrix(self, matrix_name: str) -> torch.Tensor:
         matrix_methods = {
             "A": self.get_A,
             "T": self.get_T,
@@ -245,15 +280,24 @@ class MatrixGenerator:
 
     def _get_comp_slice(self, comp: str) -> slice:
         """
+        Get a slice representing the indices of a given compartment.
 
         Args:
             comp (str): The compartment name.
 
         Returns:
             slice: A slice representing the indices of the compartment.
-
         """
         return slice(self.c_idx[comp], self.n_eq, self.n_comp)
 
     def get_end_state(self, comp: str) -> str:
+        """
+        Get the string representing the last state of a given compartment.
+
+        Args:
+            comp (str): The compartment name.
+
+        Returns:
+            str: The last state of the compartment.
+        """
         return f"{comp}_{self.state_data[comp].get('n_substates', 1) - 1}"

@@ -2,10 +2,18 @@ import torch
 
 from emsa.model.matrix_generator import generate_transition_matrix, get_susc_mul, get_inf_mul, get_distr_mul
 from emsa.model.model_base import get_substates
+from typing import Dict, Any
 
 
 class R0Generator:
-    def __init__(self, data, model_struct):
+    def __init__(self, data, model_struct: Dict[str, Any]):
+        """
+        This class generates the basic reproduction number (R0) for the epidemic model.
+
+        Args:
+            data (Any): Data for the epidemic model.
+            model_struct (Dict[str, Any]): Structure of the epidemic model.
+        """
         self.data = data
         self.device = data.device
         self.state_data = model_struct["state_data"]
@@ -27,17 +35,43 @@ class R0Generator:
                          data.get("type") == "infected"]
 
     def get_infected_states(self):
+        """
+        Get the list of infected states.
+
+        Returns:
+            list: List of infected states.
+        """
         states = []
         for state, data in self.state_data.items():
             if self.isinf_state(state):
                 states += get_substates(data.get("n_substates", 1), state)
         return states
 
-    def _idx(self, state: str) -> bool:
+    def _idx(self, state: str) -> torch.BoolTensor:
+        """
+        Get a BoolTensor representing the indices of the compartments corresponding to a given state.
+
+        Args:
+            state (str): State name.
+
+        Returns:
+            torch.BoolTensor: Index tensor.
+        """
         return torch.arange(self.n_age * self.n_states) % self.n_states == self.i[state]
 
     def get_eig_val(self, susceptibles: torch.Tensor, population: torch.Tensor,
                     contact_mtx: torch.Tensor) -> float:
+        """
+        Compute the dominant eigenvalue of the next-generation matrix (NGM).
+
+        Args:
+            susceptibles (torch.Tensor): Susceptible population.
+            population (torch.Tensor): Total population.
+            contact_mtx (torch.Tensor): Contact matrix.
+
+        Returns:
+            float: Dominant eigenvalue representing the basic reproduction number (R0).
+        """
         # contact matrix needed for effective reproduction number: [c_{j,i} * S_i(t) / N_i(t)]
         cm = contact_mtx / population.reshape((-1, 1))
         cm = cm * susceptibles
@@ -54,8 +88,10 @@ class R0Generator:
 
     def _get_v(self) -> torch.Tensor:
         """
-        Compute and store the inverse of the transition matrix.
+        Compute the inverse of the transition matrix.
 
+        Returns:
+            torch.Tensor: Inverse of the transition matrix.
         """
         isinf = self.isinf_state
         inf_state_dict = {state: data for state, data in self.state_data.items() if isinf(state=state)}
@@ -104,6 +140,9 @@ class R0Generator:
         return f
 
     def _get_e(self):
+        """
+        Compute and store the matrix 'e' used in the next-generation matrix (NGM) calculation.
+        """
         block = torch.zeros(self.n_states, ).to(self.device)
         block[0] = 1
         self.e = block

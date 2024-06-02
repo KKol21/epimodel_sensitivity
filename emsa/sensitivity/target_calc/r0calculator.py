@@ -7,10 +7,28 @@ from emsa.simulation_base import SimulationBase
 
 
 class R0Calculator:
+    """
+       R0Calculator class for calculating the basic reproduction number (R0) for epidemic models.
+
+       Attributes:
+           sim_object: An instance of SimulationBase containing simulation parameters and data.
+    """
     def __init__(self, sim_object: SimulationBase):
         self.sim_object = sim_object
 
-    def get_output(self, lhs_table: torch.Tensor):
+    def get_output(self, lhs_table: torch.Tensor) -> torch.Tensor:
+        """
+        Calculate the R0 values for the given LHS (Latin Hypercube Sampling) table.
+
+        Parameters:
+            lhs_table (torch.Tensor): LHS table with sampled parameter values.
+
+        Returns:
+            torch.Tensor: Calculated R0 values for each sample.
+
+        Raises:
+            ValueError: If sampled parameters boundaries are not specified in the simulation object.
+        """
         sim_object = self.sim_object
         n_samples = lhs_table.shape[0]
         spb = sim_object.sampled_params_boundaries

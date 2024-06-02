@@ -53,15 +53,15 @@ class SamplerBase(ABC):
         return sampling(self.n_samples)
 
     def _get_lhs_bounds(self):
-        non_spec_bounds = self._get_general_param_bounds()
+        general_bounds = self._get_general_param_bounds()
         age_spec_bounds = self._get_age_spec_param_bounds()
 
         if age_spec_bounds.shape[0] == 0:
-            return non_spec_bounds
-        elif non_spec_bounds.shape[0] == 0:
+            return general_bounds
+        elif general_bounds.shape[0] == 0:
             return age_spec_bounds
         else:
-            return self._concat_bounds(non_spec_bounds=non_spec_bounds,
+            return self._concat_bounds(non_spec_bounds=general_bounds,
                                        age_spec_bounds=age_spec_bounds)
 
     def _get_general_param_bounds(self):

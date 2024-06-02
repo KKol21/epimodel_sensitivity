@@ -2,11 +2,12 @@ import math
 from time import time
 
 import torch
-import logging
+from typing import Dict
+from emsa.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 
 class TargetCalc:
-    def __init__(self, model, targets):
+    def __init__(self, model: SensitivityModelBase, targets):
         self.model = model
         self.max_targets = [target.split('_')[:-1][0] for target in targets if target.split('_')[-1] == "max"]
         self.sup_targets = [target.split('_')[:-1][0] for target in targets if target.split('_')[-1] == "sup"]
@@ -17,10 +18,7 @@ class TargetCalc:
         self.sup_targets_output = {}
         self.finished = None
 
-        self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.INFO)
-
-    def get_output(self, lhs_table: torch.Tensor, batch_size: int) -> dict[str, torch.Tensor]:
+    def get_output(self, lhs_table: torch.Tensor, batch_size: int) -> Dict[str, torch.Tensor]:
         device = self.model.device
         model = self.model
 
@@ -54,7 +52,7 @@ class TargetCalc:
                 batch = lhs_table[curr_indices]
 
                 # Solve for the current batch
-                self.model.generate_3D_matrices(samples=batch)
+                self.model.generate_3D_matrices(samples=batch)  # Only relevant with automatic sampling
                 solutions = self.get_batch_solution(y0=y0[curr_indices], t_eval=t_eval[batch_slice], samples=batch)
                 # Save finished indices and outputs
                 self.save_finished_indices(solutions=solutions, indices=curr_indices)

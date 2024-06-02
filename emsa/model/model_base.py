@@ -1,16 +1,22 @@
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Callable
 
 import torch
+import torchode
 import torchode as to
 
 
 class EpidemicModelBase(ABC):
-    def __init__(self, data, model_struct):
+    def __init__(self, data, model_struct: Dict[str, Any]):
         """
         Initialises Abstract base class for epidemic models.
 
-        This class provides the base functionality for epidemic models. It contains methods to initialize the model,
-        retrieve initial values, and obtain the model solutution
+        This class provides the base functionality for epidemic models. It contains methods to initialise the model,
+        retrieve initial values, and obtain the model solution
+
+        Args:
+            data (Any): Data for the epidemic model.
+            model_struct (Dict[str, Any]): Structure of the epidemic model.
 
         Returns:
             None
@@ -42,6 +48,9 @@ class EpidemicModelBase(ABC):
         self.V_2 = None
 
     def initialize_matrices(self):
+        """
+        Initialize the matrices used in the model.
+        """
         mtx_gen = self.matrix_generator
         self.A = mtx_gen.get_A()
         self.T = mtx_gen.get_T()
@@ -58,9 +67,31 @@ class EpidemicModelBase(ABC):
 
     @abstractmethod
     def get_solution(self, y0, t_eval, **kwargs):
+        """
+        Get the solution of the epidemic model.
+
+        Args:
+            y0 (torch.Tensor): Initial values.
+            t_eval (torch.Tensor): Evaluation times.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Any: Solution of the model.
+        """
         pass
 
-    def get_sol_from_ode(self, y0, t_eval, odefun):
+    def get_sol_from_ode(self, y0: torch.Tensor, t_eval: torch.Tensor, odefun: Callable) -> torchode.Solution:
+        """
+        Solve the ODE system using the Euler method with a step size of 1.
+
+        Args:
+            y0 (torch.Tensor): Initial values.
+            t_eval (torch.Tensor): Evaluation times.
+            odefun (Any): ODE function.
+
+        Returns:
+            Any: Solution of the ODE system.
+        """
         term = to.ODETerm(odefun)
         step_method = to.Euler(term=term)
         step_size_controller = to.FixedStepController()
@@ -71,6 +102,12 @@ class EpidemicModelBase(ABC):
         return solver.solve(problem, dt0=dt0)
 
     def get_compartments(self) -> list:
+        """
+        Get the list of compartments.
+
+        Returns:
+            List[str]: List of compartments.
+        """
         compartments = []
         for name, data in self.state_data.items():
             compartments += get_substates(data.get("n_substates", 1), name)
@@ -79,8 +116,8 @@ class EpidemicModelBase(ABC):
     def get_initial_values_from_dict(self, init_val_dict: dict) -> torch.FloatTensor:
         """
 
-        This method retrieves the initial values for the model based
-        on the provided values in the corresponding configuration json.
+        Retrieve the initial values for the model based on
+        the provided values in the corresponding configuration json.
 
         Returns:
             torch.Tensor: Initial values of the model.
@@ -97,14 +134,27 @@ class EpidemicModelBase(ABC):
         return iv
 
     def idx(self, state: str) -> torch.BoolTensor:
+        """
+        Get the index tensor for a given state.
+
+        Args:
+            state (str): State name.
+
+        Returns:
+            torch.BoolTensor: Index tensor.
+        """
         return torch.arange(self.n_eq) % self.n_comp == self.c_idx[state]
 
     def aggregate_by_age(self, solution, comp):
         """
+        Aggregate the solution by age for a compartment.
 
-        This method aggregates the solution by age for a compartment by summing the solution
-        values of individual substates for each age group.
+        Args:
+            solution (torch.Tensor): Solution tensor.
+            comp (str): Compartment name.
 
+        Returns:
+            torch.Tensor: Aggregated solution.
         """
         substates = get_substates(n_substates=self.state_data[comp].get("n_substates", 1), comp_name=comp)
         return torch.stack(
@@ -114,12 +164,13 @@ class EpidemicModelBase(ABC):
 
 def get_substates(n_substates, comp_name):
     """
-   Args:
-       n_substates (int): Number of substates
-       comp_name (str): Compartment name.
+    Get the list of substates for a compartment.
 
-   Returns:
-       list: List of state names.
+    Args:
+        n_substates (int): Number of substates.
+        comp_name (str): Compartment name.
 
-   """
+    Returns:
+        List[str]: List of state names.
+    """
     return [f"{comp_name}_{i}" for i in range(n_substates)]
