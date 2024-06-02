@@ -8,8 +8,8 @@ from emsa.dataloader import DataLoaderBase
 
 
 class DataLoader(DataLoaderBase):
-    def __init__(self, params_path=None, contact_data_path=None, age_data_path=None):
-        super().__init__()
+    def __init__(self, params_path=None, contact_data_path=None, age_data_path=None, device="cpu"):
+        super().__init__(device=device)
         self._model_parameters_data_file = join(self.project_path, "data/model_parameters.json") \
             if params_path is None else params_path
         self._contact_data_file = join(self.project_path, "data/contact_matrices.xls")\

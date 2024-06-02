@@ -123,12 +123,12 @@ class EpidemicModelBase(ABC):
             torch.Tensor: Initial values of the model.
 
         """
-        iv = torch.zeros(self.n_eq).to(self.device)
+        iv = torch.zeros(self.n_eq, device=self.device)
         susc_state = [state for state, data in self.state_data.items()
                       if data.get("type") == "susceptible"][0] + "_0"
         iv[self.idx(susc_state)] = self.population
         for comp, comp_iv in init_val_dict.items():
-            comp_iv = torch.FloatTensor(comp_iv, device=self.device)
+            comp_iv = torch.FloatTensor(comp_iv).to(self.device)
             iv[self.idx(f"{comp}_0")] = comp_iv
             iv[self.idx(susc_state)] -= comp_iv
         return iv

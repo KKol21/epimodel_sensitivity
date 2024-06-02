@@ -4,6 +4,7 @@ from time import time
 import torch
 from typing import Dict
 from emsa.sensitivity.sensitivity_model_base import SensitivityModelBase
+import gc
 
 
 class TargetCalc:
@@ -45,26 +46,36 @@ class TargetCalc:
             ind_to_keep = []
             print(f"\n Time limit: {t_limit[1]} \n"
                   f" Samples left: {indices.numel()} \n")
-            for batch_idx in range(0, len(indices), batch_size):
-                print(f" Solving batch {int(batch_idx / batch_size) + 1} / {math.ceil(len(indices) / batch_size)}")
-                batch_slice = slice(batch_idx, batch_idx + batch_size)
-                curr_indices = indices[batch_slice]
-                batch = lhs_table[curr_indices]
+            with torch.no_grad():
+                for batch_idx in range(0, len(indices), batch_size):
+                    print(f" Solving batch {int(batch_idx / batch_size) + 1} / {math.ceil(len(indices) / batch_size)}")
+                    batch_slice = slice(batch_idx, batch_idx + batch_size)
+                    curr_indices = indices[batch_slice]
+                    batch = lhs_table[curr_indices]
 
-                # Solve for the current batch
-                self.model.generate_3D_matrices(samples=batch)  # Only relevant with automatic sampling
-                solutions = self.get_batch_solution(y0=y0[curr_indices], t_eval=t_eval[batch_slice], samples=batch)
-                # Save finished indices and outputs
-                self.save_finished_indices(solutions=solutions, indices=curr_indices)
-                self.save_output_for_finished(solutions=solutions, indices=curr_indices)
+                    # Solve for the current batch
+                    self.model.generate_3D_matrices(samples=batch)  # Only relevant with automatic sampling
+                    solutions = self.get_batch_solution(y0=y0[curr_indices], t_eval=t_eval[batch_slice], samples=batch)
+                    # Save finished indices and outputs
+                    self.save_finished_indices(solutions=solutions, indices=curr_indices)
+                    self.save_output_for_finished(solutions=solutions, indices=curr_indices)
 
-                # Save the last values and indices of unfinished simulations
-                # to use as initial values in the next iteration
-                true_finished = self.get_true_finished()
-                last_val = solutions[:, -1, :]
-                batch_unfinished_indices = curr_indices[~true_finished[curr_indices]]
-                y0[batch_unfinished_indices] = last_val[~true_finished[curr_indices]]
-                ind_to_keep += batch_unfinished_indices
+                    # Save the last values and indices of unfinished simulations
+                    # to use as initial values in the next iteration
+                    true_finished = self.get_true_finished()
+                    last_val = solutions[:, -1, :]
+
+                    batch_unfinished_indices = curr_indices[~true_finished[curr_indices]]
+                    y0[batch_unfinished_indices] = last_val[~true_finished[curr_indices]]
+                    ind_to_keep += batch_unfinished_indices
+                    # Delete previous solutions
+                    del solutions
+                    print(torch.cuda.memory_summary(device="cuda"))
+                    torch.cuda.empty_cache()
+                    print(torch.cuda.memory_summary(device="cuda"))
+                    gc.collect()
+                    print(torch.cuda.memory_summary(device="cuda"))
+
             # Adjust time period
             t_limit[0] = t_limit[1]
             t_limit[1] += 50
@@ -145,3 +156,16 @@ class TargetCalc:
         for comp in self.max_targets:
             finished = finished & self.max_targets_finished[comp]
         return finished
+
+    def get_current_tensors(self):
+        import torch
+        import gc
+        tensors = []
+        for obj in gc.get_objects():
+            try:
+                if (torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)))\
+                        and obj.nbytes > 1E6:
+                    tensors.append(f"{obj.size()}: {obj.nbytes} \n")
+            except:
+                pass
+        return tensors

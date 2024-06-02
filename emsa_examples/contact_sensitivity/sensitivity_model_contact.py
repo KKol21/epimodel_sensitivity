@@ -49,12 +49,14 @@ class ContactModel(SensitivityModelBase):
                  for cm in cm_samples]
         return torch.tensor(betas, device=self.device)
 
-    def get_contacts_from_lhs(self, lhs_table: np.ndarray):
+    def get_contacts_from_lhs(self, lhs_table: torch.Tensor):
         contact_sim = torch.zeros((lhs_table.shape[0], self.sim_object.n_age, self.sim_object.n_age))
-        for idx, sample in enumerate(lhs_table):
-            contact_sim[idx, :, :] = get_contact_matrix_from_upper_triu(rvector=sample,
-                                                                        age_vector=self.sim_object.population.flatten())
-        return contact_sim
+        for idx, sample in enumerate(np.array(lhs_table.cpu())):
+            contact_sim[idx, :, :] = get_contact_matrix_from_upper_triu(
+                rvector=sample,
+                age_vector=self.sim_object.population.flatten().cpu()
+            )
+        return contact_sim.to(self.device)
 
 
 def get_contact_matrix_from_upper_triu(rvector, age_vector):
