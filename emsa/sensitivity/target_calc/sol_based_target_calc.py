@@ -18,6 +18,7 @@ class TargetCalc:
         self.max_targets_output = {}
         self.sup_targets_output = {}
         self.finished = None
+        self.last_val = None
 
     def get_output(self, lhs_table: torch.Tensor, batch_size: int) -> Dict[str, torch.Tensor]:
         device = self.model.device
@@ -52,27 +53,23 @@ class TargetCalc:
                     batch_slice = slice(batch_idx, batch_idx + batch_size)
                     curr_indices = indices[batch_slice]
                     batch = lhs_table[curr_indices]
+                    print(torch.cuda.memory_summary(device="cuda"))
+                    self.save_finished_indices_and_outputs(y0=y0,
+                                                           t_eval=t_eval,
+                                                           curr_indices=curr_indices,
+                                                           batch=batch,
+                                                           batch_slice=batch_slice)
 
-                    # Solve for the current batch
-                    self.model.generate_3D_matrices(samples=batch)  # Only relevant with automatic sampling
-                    solutions = self.get_batch_solution(y0=y0[curr_indices], t_eval=t_eval[batch_slice], samples=batch)
-                    # Save finished indices and outputs
-                    self.save_finished_indices(solutions=solutions, indices=curr_indices)
-                    self.save_output_for_finished(solutions=solutions, indices=curr_indices)
 
                     # Save the last values and indices of unfinished simulations
                     # to use as initial values in the next iteration
                     true_finished = self.get_true_finished()
-                    last_val = solutions[:, -1, :]
 
                     batch_unfinished_indices = curr_indices[~true_finished[curr_indices]]
-                    y0[batch_unfinished_indices] = last_val[~true_finished[curr_indices]]
+                    y0[batch_unfinished_indices] = self.last_val[~true_finished[curr_indices]]
                     ind_to_keep += batch_unfinished_indices
                     # Delete previous solutions
-                    del solutions
-                    print(torch.cuda.memory_summary(device="cuda"))
                     torch.cuda.empty_cache()
-                    print(torch.cuda.memory_summary(device="cuda"))
                     gc.collect()
                     print(torch.cuda.memory_summary(device="cuda"))
 
@@ -91,6 +88,16 @@ class TargetCalc:
                 f"{comp}_sup": output for comp, output in self.sup_targets_output.items()
             }
         }
+
+    def save_finished_indices_and_outputs(self, y0, t_eval, batch, curr_indices, batch_slice):
+        # Solve for the current batch
+        self.model.generate_3D_matrices(samples=batch)  # Only relevant with automatic sampling
+        solutions = self.get_batch_solution(y0=y0[curr_indices], t_eval=t_eval[batch_slice], samples=batch)
+        # Save finished indices and outputs
+        self.save_finished_indices(solutions=solutions, indices=curr_indices)
+        self.save_output_for_finished(solutions=solutions, indices=curr_indices)
+        self.last_val = solutions[:, -1, :]
+        del solutions, self.model.T
 
     def get_batch_solution(self, y0: torch.Tensor, t_eval: torch.Tensor, samples: torch.Tensor) -> torch.Tensor:
         sol = self.model.get_solution(y0=y0, t_eval=t_eval, lhs_table=samples).ys
@@ -165,7 +172,20 @@ class TargetCalc:
             try:
                 if (torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)))\
                         and obj.nbytes > 1E6:
-                    tensors.append(f"{obj.size()}: {obj.nbytes} \n")
+                    tensors.append(f"{obj.size()}: {obj.nbytes / 1E6} \n")
+            except:
+                pass
+        return tensors
+
+    def get_big_tensor(self):
+        import torch
+        import gc
+        tensors = []
+        for obj in gc.get_objects():
+            try:
+                if (torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data))) \
+                        and obj.nbytes > 1E8:
+                    return obj
             except:
                 pass
         return tensors
