@@ -4,12 +4,12 @@ from emsa.model.model_base import EpidemicModelBase
 
 
 class EpidemicModel(EpidemicModelBase):
-    def __init__(self, data: dict, model_struct: dict):
+    def __init__(self, data, model_struct: dict):
         """
         Initialize the EpidemicModel, a class for running single simulations of a given model.
 
         Parameters:
-            data (dict): Model data.
+            data: Model data.
             model_struct (dict): The structure of the model.
         """
         super().__init__(data, model_struct)

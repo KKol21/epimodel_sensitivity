@@ -48,11 +48,7 @@ class SimulationBase(ABC):
         self.trans_data = model_structure["trans_data"]
         self.tms_rules = model_structure["tms_rules"]
 
-        self.model_struct = {
-            "state_data": self.state_data,
-            "trans_data": self.trans_data,
-            "tms_rules": self.tms_rules,
-        }
+        self.model_struct = model_structure
 
     def _load_config(self, config_path):
         with open(config_path) as f:
