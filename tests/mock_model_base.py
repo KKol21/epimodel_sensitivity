@@ -1,17 +1,19 @@
 from abc import abstractmethod, ABC
-from typing import Callable
+
+import torch
 
 
 class MockModelBase(ABC):
     """
     Base class for unit testing example models validity.
     """
+
     def __init__(self, data):
         self.data = data
         self.ps = data.ps
         self.cm = data.cm
-        self.age_data = data.age_data
+        self.population = data.age_data.flatten()
 
     @abstractmethod
-    def odefun(self, t, y) -> Callable:
+    def odefun(self, t, y: torch.Tensor) -> torch.Tensor:
         pass

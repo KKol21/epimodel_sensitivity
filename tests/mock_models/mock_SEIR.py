@@ -2,17 +2,17 @@ from . import MockModelBase
 import torch
 
 
-class MockSEIHRModel(MockModelBase):
+class MockSEIRModel(MockModelBase):
     def __init__(self, data):
         super().__init__(data)
 
     def odefun(self, t, y):
         S, E, I, R = y.squeeze(0)
         ps = self.ps
-        age_data = self.age_data
+        population = self.population
 
-        dSdt = -ps["beta"] * S / age_data * I
-        dEdt = ps["beta"] * S / age_data * I - ps["alpha"] * E
+        dSdt = -ps["beta"] * S / population * I
+        dEdt = ps["beta"] * S / population * I - ps["alpha"] * E
         dIdt = ps["alpha"] * E - ps["gamma"] * I
         dRdt = ps["gamma"] * I
 
