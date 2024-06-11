@@ -1,5 +1,6 @@
-from . import MockModelBase
 import torch
+
+from . import MockModelBase
 
 
 class MockSEIHRModel(MockModelBase):
@@ -7,9 +8,9 @@ class MockSEIHRModel(MockModelBase):
         super().__init__(data)
 
     def odefun(self, t, y):
-        S, E, I, H, R = y.squeeze(0)
         ps = self.ps
         population = self.population
+        S, E, I, H, R = self.get_comp_vals(y)
 
         dSdt = -ps["beta"] * S / population * I
         dEdt = ps["beta"] * S / population * I - ps["alpha"] * E
@@ -17,5 +18,4 @@ class MockSEIHRModel(MockModelBase):
         dHdt = ps["eta"] * ps["alpha"] * E - ps["gamma_h"] * H
         dRdt = ps["gamma"] * I + ps["gamma_h"] * H
 
-        dydt = [dSdt, dEdt, dIdt, dHdt, dRdt]
-        return torch.tensor([dydt])
+        return self.concat_sol(dSdt, dEdt, dIdt, dHdt, dRdt)

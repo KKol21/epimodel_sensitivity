@@ -11,9 +11,9 @@
       "type": "infected",
       "n_substates": 5
     },
+    "h": {},
     "ic": {},
     "icr": {},
-    "h": {},
     "r": {
       "type": "recovered"
     },

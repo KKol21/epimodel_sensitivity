@@ -8,19 +8,18 @@ class MockVaccinatedModel(MockModelBase):
 
     def odefun(self, t, y):
         (s, e1, e2, e3, i1, i2, i3, i4, i5,
-         h, ic, icr, r, d, c) = y.squeeze(0)
+         h, ic, icr, r, d, v) = self.get_comp_vals(y)
 
         ps = self.ps
-        cm = torch.tensor(self.cm, dtype=torch.float32)
         actual_population = torch.tensor(self.population, dtype=torch.float32)
 
         # Compute transmission
         infectious_terms = i1 + i2 + i3 + i4 + i5
-        transmission = ps["beta"] * torch.dot(infectious_terms, cm)
+        transmission = self.get_transmission(infectious_terms)
 
-        ds = -ps["susc"] * (s / actual_population) * transmission - \
+        ds = (s / actual_population) * transmission - \
              s / (s + r) * ps["daily_vacc"]
-        de1 = ps["susc"] * (s / actual_population) * transmission - 3 * ps["alpha_l"] * e1
+        de1 = (s / actual_population) * transmission - 3 * ps["alpha_l"] * e1
         de2 = 3 * ps["alpha_l"] * e1 - 2 * ps["alpha"] * e2
         de3 = 3 * ps["alpha_l"] * e2 - 3 * ps["alpha"] * e3
 
@@ -39,5 +38,4 @@ class MockVaccinatedModel(MockModelBase):
         dd = ps["mu"] * ps["gamma_c"] * ic
         dv = s / (s + r) * ps["daily_vacc"]
 
-        dydt = torch.tensor([ds, de1, de2, de3, di1, di2, di3, di4, di5, dh, dic, dicr, dr, dd, dv])
-        return dydt.unsqueeze(0)
+        return self.concat_sol(ds, de1, de2, de3, di1, di2, di3, di4, di5, dh, dic, dicr, dr, dd, dv)

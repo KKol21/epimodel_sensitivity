@@ -12,8 +12,8 @@ def main():
               "eta": [0.5, 0.5]}
     for key, value in params.items():
         params[key] = torch.tensor(value)
-    contact_data = torch.tensor([[1, 2],
-                                 [0.5, 1]])
+    contact_data = torch.tensor([[1, 1],
+                                 [2, 1]])
 
     age_data = torch.tensor([1E5,
                              2E5])

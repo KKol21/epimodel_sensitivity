@@ -18,9 +18,9 @@
       "type": "infected",
       "n_substates": 3
     },
+    "h": {},
     "ic": {},
     "icr": {},
-    "h": {},
     "r": {
       "type": "recovered"
     },
@@ -33,9 +33,9 @@
       "source": "s",
       "target": "l",
       "actors-params": {
-          "is": null,
-          "ip": null,
-          "ia": "inf_a"
+        "is": null,
+        "ip": null,
+        "ia": "inf_a"
       }
     }
   ],
@@ -75,28 +75,6 @@
       ]
     },
     {
-      "source": "icr",
-      "target": "r",
-      "param": "gamma_cr"
-    },
-    {
-      "source": "is",
-      "target": "ic",
-      "param": "gamma_s",
-      "distr": [
-        "h",
-        "xi"
-      ]
-    },
-    {
-      "source": "ic",
-      "target": "d",
-      "param": "gamma_c",
-      "distr": [
-        "mu"
-      ]
-    },
-    {
       "source": "is",
       "target": "h",
       "param": "gamma_s",
@@ -109,6 +87,28 @@
       "source": "h",
       "target": "r",
       "param": "gamma_h"
+    },
+    {
+      "source": "is",
+      "target": "ic",
+      "param": "gamma_s",
+      "distr": [
+        "h",
+        "xi"
+      ]
+    },
+    {
+      "source": "icr",
+      "target": "r",
+      "param": "gamma_cr"
+    },
+    {
+      "source": "ic",
+      "target": "d",
+      "param": "gamma_c",
+      "distr": [
+        "mu"
+      ]
     },
     {
       "source": "ic",

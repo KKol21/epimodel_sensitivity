@@ -1,4 +1,3 @@
-import torch
 from . import MockModelBase
 
 
@@ -8,17 +7,16 @@ class MockContactModel(MockModelBase):
 
     def odefun(self, t, y):
         (s, l1, l2, ip, ia1, ia2, ia3, is1, is2, is3,
-         h, ic, icr, r, d, c) = y.squeeze(0)
+         h, ic, icr, r, d) = self.get_comp_vals(y)
         ps = self.ps
-        cm = torch.tensor(self.cm, dtype=torch.float32)
-        actual_population = torch.tensor(self.population, dtype=torch.float32)
+        population = self.population
 
         # Compute transmission
         infectious_terms = ip + ps["inf_a"] * (ia1 + ia2 + ia3) + (is1 + is2 + is3)
-        transmission = ps["beta"] * torch.dot(infectious_terms, cm)
+        transmission = self.get_transmission(infectious_terms)
 
-        ds = -ps["susc"] * (s / actual_population) * transmission
-        dl1 = ps["susc"] * (s / actual_population) * transmission - 2 * ps["alpha_l"] * l1
+        ds = (s / population) * transmission
+        dl1 = (s / population) * transmission - 2 * ps["alpha_l"] * l1
         dl2 = 2 * ps["alpha_l"] * l1 - 2 * ps["alpha_l"] * l2
         dip = 2 * ps["alpha_l"] * l2 - ps["alpha_p"] * ip
 
@@ -38,5 +36,4 @@ class MockContactModel(MockModelBase):
               ps["gamma_h"] * h + ps["gamma_cr"] * icr)
         dd = ps["mu"] * ps["gamma_c"] * ic
 
-        dydt = torch.tensor([ds, dl1, dl2, dip, dia1, dia2, dia3, dis1, dis2, dis3, dh, dic, dicr, dr, dd])
-        return dydt.unsqueeze(0)
+        return self.concat_sol(ds, dl1, dl2, dip, dia1, dia2, dia3, dis1, dis2, dis3, dh, dic, dicr, dr, dd)
