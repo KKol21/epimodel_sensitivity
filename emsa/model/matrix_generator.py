@@ -221,8 +221,9 @@ class MatrixGenerator:
             for actor in tms["actors-params"].keys():
                 for substate in get_substates(n_substates=self.state_data[actor].get("n_substates", 1),
                                               comp_name=actor):
-                    T[self._get_comp_slice(substate), self._get_comp_slice(source)] = infection_spread_rate
-                    T[self._get_comp_slice(substate), self._get_comp_slice(target)] = infection_spread_rate
+                    rel_inf = self.ps.get(tms["actors-params"][actor], 1)
+                    T[self._get_comp_slice(substate), self._get_comp_slice(source)] = infection_spread_rate * rel_inf
+                    T[self._get_comp_slice(substate), self._get_comp_slice(target)] = infection_spread_rate * rel_inf
         return T
 
     def get_B(self) -> torch.Tensor:

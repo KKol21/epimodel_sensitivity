@@ -4,7 +4,6 @@ import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt, colors
 from matplotlib.cm import ScalarMappable
-from matplotlib.ticker import LogLocator, LogFormatter
 from matplotlib.tri import Triangulation
 
 from emsa_examples.contact_sensitivity.sensitivity_model_contact import get_rectangular_matrix_from_upper_triu

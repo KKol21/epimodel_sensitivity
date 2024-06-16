@@ -133,10 +133,11 @@ class R0Generator:
             susc_mul = get_susc_mul(tms_rule=tms, data=self.data)
             inf_mul = get_inf_mul(tms_rule=tms, data=self.data)
             for actor in tms["actors-params"]:
+                rel_inf = self.params.get(tms["actors-params"][actor], 1)
                 for substate in get_substates(n_substates=self.state_data[actor].get("n_substates", 1),
                                               comp_name=actor):
                     f[i[substate]:s_mtx:n_states, i[f"{tms['target']}_0"]:s_mtx:n_states] = \
-                        susc_mul * contact_mtx.T * inf_mul.unsqueeze(0)
+                        susc_mul * contact_mtx.T * inf_mul.unsqueeze(0) * rel_inf
         return f
 
     def _get_e(self):

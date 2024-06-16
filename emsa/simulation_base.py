@@ -42,13 +42,7 @@ class SimulationBase(ABC):
 
     def _load_model_structure(self, model_struct_path):
         with open(model_struct_path) as f:
-            model_structure = json.load(f)
-
-        self.state_data = model_structure["state_data"]
-        self.trans_data = model_structure["trans_data"]
-        self.tms_rules = model_structure["tms_rules"]
-
-        self.model_struct = model_structure
+            self.model_struct = json.load(f)
 
     def _load_config(self, config_path):
         with open(config_path) as f:
