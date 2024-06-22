@@ -20,11 +20,11 @@ class MockModelBase(ABC):
         pass
 
     def get_comp_vals(self, y):
-        return y.T.resize(y.shape[1] // self.n_age, self.n_age)
+        return y.reshape(self.n_age, y.shape[1] // self.n_age).T
 
     @staticmethod
     def concat_sol(*args):
-        return torch.cat(args).flatten()
+        return torch.stack(args).T.flatten()
 
     def get_transmission(self, infectious_terms):
-        return self.ps["beta"] * infectious_terms @ self.cm
+        return self.ps["beta"] * infectious_terms @ self.cm / self.population

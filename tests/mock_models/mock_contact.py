@@ -9,14 +9,13 @@ class MockContactModel(MockModelBase):
         (s, l1, l2, ip, ia1, ia2, ia3, is1, is2, is3,
          h, ic, icr, r, d) = self.get_comp_vals(y)
         ps = self.ps
-        population = self.population
 
         # Compute transmission
         infectious_terms = ip + ps["inf_a"] * (ia1 + ia2 + ia3) + (is1 + is2 + is3)
         transmission = self.get_transmission(infectious_terms)
 
-        ds = (s / population) * transmission
-        dl1 = (s / population) * transmission - 2 * ps["alpha_l"] * l1
+        ds = - s * transmission
+        dl1 = s * transmission - 2 * ps["alpha_l"] * l1
         dl2 = 2 * ps["alpha_l"] * l1 - 2 * ps["alpha_l"] * l2
         dip = 2 * ps["alpha_l"] * l2 - ps["alpha_p"] * ip
 
