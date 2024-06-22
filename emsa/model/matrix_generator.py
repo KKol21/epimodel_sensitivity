@@ -219,9 +219,9 @@ class MatrixGenerator:
             inf_mul = get_inf_mul(tms_rule=tms, data=self.data)
             infection_spread_rate = self.ps["beta"] * torch.atleast_2d(cm).T * inf_mul.unsqueeze(0)  # Broadcast inf_mul to columns
             for actor in tms["actors-params"].keys():
+                rel_inf = self.ps.get(tms["actors-params"][actor], 1)
                 for substate in get_substates(n_substates=self.state_data[actor].get("n_substates", 1),
                                               comp_name=actor):
-                    rel_inf = self.ps.get(tms["actors-params"][actor], 1)
                     T[self._get_comp_slice(substate), self._get_comp_slice(source)] = infection_spread_rate * rel_inf
                     T[self._get_comp_slice(substate), self._get_comp_slice(target)] = infection_spread_rate * rel_inf
         return T

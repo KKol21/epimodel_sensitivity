@@ -1,8 +1,8 @@
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Callable
 
 import torch
-import torchode
 import torchode as to
 
 
@@ -32,6 +32,7 @@ class EpidemicModelBase(ABC):
         self.compartments = self.get_compartments()
         self.n_comp = len(self.compartments)
         self.ps = data.params
+        self.validate_params()
         self.device = data.device
 
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
@@ -46,6 +47,16 @@ class EpidemicModelBase(ABC):
         self.B = None
         self.V_1 = None
         self.V_2 = None
+
+    def validate_params(self):
+        for param, value in self.ps.items():
+            msg = f"Parameter {param} was given a non-positive value - are you sure you meant to do this?"
+            if torch.is_tensor(value):
+                if (value <= 0).any():
+                    warnings.warn(msg)
+            elif isinstance(value, (int, float)):
+                if value <= 0:
+                    warnings.warn(msg)
 
     def initialize_matrices(self):
         """
@@ -80,7 +91,7 @@ class EpidemicModelBase(ABC):
         """
         pass
 
-    def get_sol_from_ode(self, y0: torch.Tensor, t_eval: torch.Tensor, odefun: Callable) -> torchode.Solution:
+    def get_sol_from_ode(self, y0: torch.Tensor, t_eval: torch.Tensor, odefun: Callable) -> to.Solution:
         """
         Solve the ODE system using the Euler method with a step size of 1.
 
