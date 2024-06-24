@@ -47,7 +47,7 @@ class TestEpidemicModels(unittest.TestCase):
     def get_seihr_data():
         data = DataLoader()
         seihr_params = data.params.copy()
-        seihr_params["eta"] = torch.tensor([0.05, 0.15])
+        seihr_params["eta"] = torch.tensor([0.1, 0.3])
         contact_data_seihr = torch.tensor([[1, 2],
                                            [0.5, 1]])
         age_data_seihr = torch.tensor([1E5,
@@ -80,7 +80,7 @@ class TestEpidemicModels(unittest.TestCase):
         model.initialize_matrices()
         emsa_sol = model.get_solution(y0, t_eval).ys
         mock_sol = model.get_sol_from_ode(y0, t_eval, odefun=mock_model.odefun).ys
-        self.assertTrue((mock_sol[:, -1] - emsa_sol[:, -1]).sum().item() < 1, "Model solutions do not match")
+        self.assertTrue((torch.abs(mock_sol[:, -1] - emsa_sol[:, -1])).sum().item() < 1, "Model solutions do not match")
 
 
 if __name__ == "__main__":

@@ -27,4 +27,4 @@ class MockModelBase(ABC):
         return torch.stack(args).T.flatten()
 
     def get_transmission(self, infectious_terms):
-        return self.ps["beta"] * infectious_terms @ self.cm / self.population
+        return self.ps["beta"] * infectious_terms @ self.cm.T / self.population

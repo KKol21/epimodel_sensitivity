@@ -153,11 +153,15 @@
     "description": "Start of vaccination campaign"
   },
   "T": {
-    "value": 90.0,
+    "value": 90,
     "description": "Duration of the vaccination campaign"
   },
   "total_vaccines": {
     "value": 3000000,
-    "description": "Number of vaccines given to a specific age group"
+    "description": "Total number of vaccines spread among the population"
+  },
+  "daily_vacc": {
+    "value": 3000,
+    "description": "Base value for testing"
   }
 }

@@ -1,6 +1,7 @@
 import torch
 import torchode as to
-from emsa.model.model_base import EpidemicModelBase
+
+from .model_base import EpidemicModelBase
 
 
 class EpidemicModel(EpidemicModelBase):
