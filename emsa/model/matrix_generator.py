@@ -1,4 +1,4 @@
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Callable
 
 import torch
 
@@ -21,7 +21,9 @@ def generate_transition_block(transition_param: float, n_states: int) -> torch.T
     # Outflow from states (diagonal elements)
     trans_block = trans_block.fill_diagonal_(-transition_param * n_states)
     # Inflow to states (elements under the diagonal)
-    trans_block[:n_states - 1, 1:] = trans_block[:n_states - 1, 1:].fill_diagonal_(transition_param * n_states)
+    trans_block[: n_states - 1, 1:] = trans_block[: n_states - 1, 1:].fill_diagonal_(
+        transition_param * n_states
+    )
     return trans_block
 
 
@@ -32,11 +34,14 @@ def get_trans_param(state: str, trans_data: List[Dict[str, Any]]) -> str:
     raise Exception(f"No transition parameter was provided for state {state}")
 
 
-def generate_transition_matrix(states_dict: Dict[str, Any],
-                               trans_data: List[Dict[str, Any]],
-                               parameters: Dict[str, float],
-                               n_age: int, n_comp: int,
-                               c_idx: Dict[str, int]) -> torch.Tensor:
+def generate_transition_matrix(
+    states_dict: Dict[str, Any],
+    trans_data: List[Dict[str, Any]],
+    parameters: Dict[str, float],
+    n_age: int,
+    n_comp: int,
+    c_idx: Dict[str, int],
+) -> torch.Tensor:
     """
     Generate the transition matrix for the model.
 
@@ -56,10 +61,12 @@ def generate_transition_matrix(states_dict: Dict[str, Any],
         for state, data in states_dict.items():
             n_states = data.get("n_substates", 1)
             trans_param = parameters[get_trans_param(state, trans_data)]
-            diag_idx = age_group * n_comp + c_idx[f'{state}_0']
+            diag_idx = age_group * n_comp + c_idx[f"{state}_0"]
             block_slice = slice(diag_idx, diag_idx + n_states)
             # Fill in transition block of each transitional state
-            trans_matrix[block_slice, block_slice] = generate_transition_block(trans_param, n_states)
+            trans_matrix[block_slice, block_slice] = generate_transition_block(
+                trans_param, n_states
+            )
     return trans_matrix
 
 
@@ -80,7 +87,7 @@ def get_susc_mul(tms_rule: dict, data) -> torch.Tensor:
     return susc_mul
 
 
-def  get_inf_mul(tms_rule: dict, data) -> torch.Tensor:
+def get_inf_mul(tms_rule: dict, data) -> torch.Tensor:
     """
     Get the infection multiplier.
 
@@ -184,10 +191,11 @@ class MatrixGenerator:
             "T": self.get_T,
             "B": self.get_B,
             "V_1": self.get_V_1,
-            "V_2": self.get_V_2
+            "V_2": self.get_V_2,
         }
         if matrix_name in matrix_methods:
-            return matrix_methods[matrix_name]()
+            get_matrix: Callable[[], torch.Tensor] = matrix_methods[matrix_name]
+            return get_matrix()
         else:
             raise Exception("Not a valid matrix!")
 
@@ -205,7 +213,7 @@ class MatrixGenerator:
             target = f"{tms['target']}_0"
             susc_mul = get_susc_mul(tms_rule=tms, data=self.data)
             transmission_rate = susc_mul / self.population
-            A[idx(source), idx(source)] = - transmission_rate
+            A[idx(source), idx(source)] = -transmission_rate
             A[idx(source), idx(target)] = transmission_rate
         return A
 
@@ -217,13 +225,21 @@ class MatrixGenerator:
             source = f"{tms['source']}_0"
             target = f"{tms['target']}_0"
             inf_mul = get_inf_mul(tms_rule=tms, data=self.data)
-            infection_spread_rate = self.ps["beta"] * torch.atleast_2d(cm).T * inf_mul.unsqueeze(0)  # Broadcast inf_mul to columns
+            infection_spread_rate = (
+                self.ps["beta"] * torch.atleast_2d(cm).T * inf_mul.unsqueeze(0)
+            )  # Broadcast inf_mul to columns
             for actor in tms["actors-params"].keys():
                 rel_inf = self.ps.get(tms["actors-params"][actor], 1)
-                for substate in get_substates(n_substates=self.state_data[actor].get("n_substates", 1),
-                                              comp_name=actor):
-                    T[self._get_comp_slice(substate), self._get_comp_slice(source)] = infection_spread_rate * rel_inf
-                    T[self._get_comp_slice(substate), self._get_comp_slice(target)] = infection_spread_rate * rel_inf
+                for substate in get_substates(
+                    n_substates=self.state_data[actor].get("n_substates", 1),
+                    comp_name=actor,
+                ):
+                    T[self._get_comp_slice(substate), self._get_comp_slice(source)] = (
+                        infection_spread_rate * rel_inf
+                    )
+                    T[self._get_comp_slice(substate), self._get_comp_slice(target)] = (
+                        infection_spread_rate * rel_inf
+                    )
         return T
 
     def get_B(self) -> torch.Tensor:
@@ -234,26 +250,36 @@ class MatrixGenerator:
         # B is the tensor representing the first-order elements of the ODE system. We begin by
         # filling in the transition blocks of the intermediate states
         def is_inter(state_data):
-            return state_data.get("type", "") not in ["susceptible",
-                                                     "recovered",
-                                                     "dead"]
+            return state_data.get("type", "") not in [
+                "susceptible",
+                "recovered",
+                "dead",
+            ]
 
-        intermediate_states = {state: data
-                               for state, data in state_data.items()
-                               if is_inter(state_data=data)}
-        B = generate_transition_matrix(states_dict=intermediate_states, trans_data=trans_data, parameters=ps,
-                                       n_age=self.n_age, n_comp=self.n_comp, c_idx=self.c_idx).to(self.device)
+        intermediate_states = {
+            state: data for state, data in state_data.items() if is_inter(state_data=data)
+        }
+        B = generate_transition_matrix(
+            states_dict=intermediate_states,
+            trans_data=trans_data,
+            parameters=ps,
+            n_age=self.n_age,
+            n_comp=self.n_comp,
+            c_idx=self.c_idx,
+        ).to(self.device)
 
         # Fill in the rest of the first-order terms
         idx = self.idx
-        end_state = {state: f"{state}_{data.get('n_substates', 1) - 1}"
-                     for state, data in state_data.items()}
+        end_state = {
+            state: f"{state}_{data.get('n_substates', 1) - 1}" for state, data in state_data.items()
+        }
         for trans in [trans for trans in trans_data if trans.get("type", "basic") == "basic"]:
             # Iterate over the linear transitions
             trans_param = ps[trans["param"]]
             # Multiply the transition parameter by the distribution(s) given
-            trans_param = trans_param * get_distr_mul(trans.get("distr"),
-                                                      self.ps)  # Throws shape error with *= in some cases
+            trans_param = trans_param * get_distr_mul(
+                trans.get("distr"), self.ps
+            )  # Throws shape error with *= in some cases
             source = end_state[trans["source"]]
             target = f"{trans['target']}_0"
             n_substates = state_data[trans["source"]].get("n_substates", 1)
@@ -265,18 +291,18 @@ class MatrixGenerator:
             daily_vac = self.ps["daily_vac"]
         V_1 = torch.zeros((self.n_eq, self.n_eq)).to(self.device)
         # Tensor responsible for the nominators of the vaccination formula
-        V_1[self.idx('s_0'), self.idx('s_0')] = daily_vac
-        V_1[self.idx('s_0'), self.idx('v_0')] = daily_vac
+        V_1[self.idx("s_0"), self.idx("s_0")] = daily_vac
+        V_1[self.idx("s_0"), self.idx("v_0")] = daily_vac
         return V_1
 
     def get_V_2(self) -> torch.Tensor:
         idx = self.idx
         V_2 = torch.zeros((self.n_eq, self.n_eq)).to(self.device)
         # Fill in all the terms such that we will divide the terms at the indices of s^i and v^i by (s^i + r^i)
-        V_2[idx('s_0'), idx('s_0')] = -1
-        V_2[idx('r_0'), idx('s_0')] = -1
-        V_2[idx('s_0'), idx('v_0')] = 1
-        V_2[idx('r_0'), idx('v_0')] = 1
+        V_2[idx("s_0"), idx("s_0")] = -1
+        V_2[idx("r_0"), idx("s_0")] = -1
+        V_2[idx("s_0"), idx("v_0")] = 1
+        V_2[idx("r_0"), idx("v_0")] = 1
         return V_2
 
     def _get_comp_slice(self, comp: str) -> slice:

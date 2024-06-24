@@ -10,8 +10,13 @@ from emsa.simulation_base import SimulationBase
 
 class SimulationSEIHR(SimulationBase):
     def __init__(self, data):
-        model_struct_path = os.path.join(PROJECT_PATH, "emsa_examples/SEIHR_2_age_groups/configs/model_struct.json")
-        config_path = os.path.join(PROJECT_PATH, "emsa_examples/SEIHR_2_age_groups/configs/sampling_config.json")
+        model_struct_path = os.path.join(
+            PROJECT_PATH, "emsa_examples/SEIHR_2_age_groups/configs/model_struct.json"
+        )
+        config_path = os.path.join(
+            PROJECT_PATH,
+            "emsa_examples/SEIHR_2_age_groups/configs/sampling_config.json",
+        )
         super().__init__(data=data, model_struct_path=model_struct_path, config_path=config_path)
         self.folder_name += "/sens_data_SEIR_2_ag"
 

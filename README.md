@@ -5,10 +5,10 @@ starting point for the sensitivity analysis of epidemic models. Colab notebook w
 
 ## Introduction
 The purpose of this project is to provide a general framework for the sensitivity
-analysis of deterministic compartmental epidemic models, as well as a tool for predictive modeling. 
+analysis of deterministic compartmental epidemic models, as well as a tool for predictive modeling.
 Sensitivity analysis is performed using Latin Hypercube Sampling (LHS) for parameter sampling
-and Partial Rank Correlation Coefficient (PRCC) as a metric for sensitivity. The pipeline is fully 
-compatible with CUDA and provides an efficient representation of the epidemic model used, enabling 
+and Partial Rank Correlation Coefficient (PRCC) as a metric for sensitivity. The pipeline is fully
+compatible with CUDA and provides an efficient representation of the epidemic model used, enabling
 parallel evaluation based on different parameter combinations and initial values.
 
 For evaluation of the model we use the package `torchode`, and we represent the ODE system corresponding

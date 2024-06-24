@@ -1,6 +1,6 @@
 import warnings
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Callable
+from typing import Any, Dict, Callable
 
 import torch
 import torchode as to
@@ -40,6 +40,7 @@ class EpidemicModelBase(ABC):
         self.is_vaccinated = "vaccination" in [trans.get("type") for trans in self.trans_data]
 
         from emsa.model.matrix_generator import MatrixGenerator
+
         self.matrix_generator = MatrixGenerator(model=self, cm=data.cm)
 
         self.A = None
@@ -72,9 +73,12 @@ class EpidemicModelBase(ABC):
 
     def visualize_transmission_graph(self):
         from emsa.plotter import visualize_transmission_graph
-        visualize_transmission_graph(state_data=self.state_data,
-                                     trans_data=self.trans_data,
-                                     tms_rules=self.tms_rules)
+
+        visualize_transmission_graph(
+            state_data=self.state_data,
+            trans_data=self.trans_data,
+            tms_rules=self.tms_rules,
+        )
 
     @abstractmethod
     def get_solution(self, y0, t_eval, **kwargs):
@@ -91,7 +95,9 @@ class EpidemicModelBase(ABC):
         """
         pass
 
-    def get_sol_from_ode(self, y0: torch.Tensor, t_eval: torch.Tensor, odefun: Callable) -> to.Solution:
+    def get_sol_from_ode(
+        self, y0: torch.Tensor, t_eval: torch.Tensor, odefun: Callable
+    ) -> to.Solution:
         """
         Solve the ODE system using the Euler method with a step size of 1.
 
@@ -135,8 +141,9 @@ class EpidemicModelBase(ABC):
 
         """
         iv = torch.zeros(self.n_eq).to(self.device)
-        susc_state = [state for state, data in self.state_data.items()
-                      if data.get("type") == "susceptible"][0] + "_0"
+        susc_state = [
+            state for state, data in self.state_data.items() if data.get("type") == "susceptible"
+        ][0] + "_0"
         iv[self.idx(susc_state)] = self.population
         for comp, comp_iv in init_val_dict.items():
             comp_iv = torch.as_tensor(comp_iv, dtype=torch.float32, device=self.device)
@@ -167,10 +174,13 @@ class EpidemicModelBase(ABC):
         Returns:
             torch.Tensor: Aggregated solution.
         """
-        substates = get_substates(n_substates=self.state_data[comp].get("n_substates", 1), comp_name=comp)
+        substates = get_substates(
+            n_substates=self.state_data[comp].get("n_substates", 1), comp_name=comp
+        )
         return torch.stack(
             tensors=[solution[:, self.idx(state)].sum(dim=1) for state in substates],
-            dim=0).sum(dim=0)
+            dim=0,
+        ).sum(dim=0)
 
 
 def get_substates(n_substates, comp_name):

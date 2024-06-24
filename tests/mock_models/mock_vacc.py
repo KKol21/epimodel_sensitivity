@@ -1,4 +1,3 @@
-import torch
 from . import MockModelBase
 
 
@@ -8,15 +7,14 @@ class MockVaccinatedModel(MockModelBase):
         self.vaccination = lambda t: 1 if t <= self.ps["T"] else 0
 
     def odefun(self, t, y):
-        (s, e1, e2, e3, i1, i2, i3, i4, i5,
-         h, ic, icr, r, d, v) = self.get_comp_vals(y)
+        (s, e1, e2, e3, i1, i2, i3, i4, i5, h, ic, icr, r, d, v) = self.get_comp_vals(y)
         ps = self.ps
         # Compute transmission
         infectious_terms = i1 + i2 + i3 + i4 + i5
         transmission = self.get_transmission(infectious_terms)
 
         # Calculate derivatives
-        ds = - s * transmission - s / (s + r) * ps["daily_vacc"] * self.vaccination(t)
+        ds = -s * transmission - s / (s + r) * ps["daily_vacc"] * self.vaccination(t)
 
         de1 = s * transmission - 3 * ps["alpha"] * e1
         de2 = 3 * ps["alpha"] * e1 - 3 * ps["alpha"] * e2
@@ -36,4 +34,6 @@ class MockVaccinatedModel(MockModelBase):
         dd = ps["mu"] * ps["gamma_c"] * ic
         dv = s / (s + r) * ps["daily_vacc"] * self.vaccination(t)
 
-        return self.concat_sol(ds, de1, de2, de3, di1, di2, di3, di4, di5, dh, dic, dicr, dr, dd, dv)
+        return self.concat_sol(
+            ds, de1, de2, de3, di1, di2, di3, di4, di5, dh, dic, dicr, dr, dd, dv
+        )

@@ -2,7 +2,9 @@ import itertools
 import os
 
 from emsa_examples.vaccinated_sensitivity.sampler_vaccinated import SamplerVaccinated
-from emsa_examples.vaccinated_sensitivity.sensitivity_model_vaccinated import VaccinatedModel
+from .sensitivity_model_vaccinated import (
+    VaccinatedModel,
+)
 from emsa.dataloader import PROJECT_PATH
 from emsa.simulation_base import SimulationBase
 
@@ -25,10 +27,14 @@ class SimulationVaccinated(SimulationBase):
     """
 
     def __init__(self, data):
-        struct_path = os.path.join(PROJECT_PATH,
-                                   "emsa_examples/vaccinated_sensitivity/configs/model_struct.json")
-        config_path = os.path.join(PROJECT_PATH,
-                                   "emsa_examples/vaccinated_sensitivity/configs/sampling_config.json")
+        struct_path = os.path.join(
+            PROJECT_PATH,
+            "emsa_examples/vaccinated_sensitivity/configs/model_struct.json",
+        )
+        config_path = os.path.join(
+            PROJECT_PATH,
+            "emsa_examples/vaccinated_sensitivity/configs/sampling_config.json",
+        )
         super().__init__(data, model_struct_path=struct_path, config_path=config_path)
 
         self.folder_name = os.path.join(self.folder_name, "sens_data_vacc")
@@ -65,14 +71,20 @@ class SimulationVaccinated(SimulationBase):
 
 
         """
-        os.makedirs(f'{self.folder_name}/prcc_plots', exist_ok=True)
+        os.makedirs(f"{self.folder_name}/prcc_plots", exist_ok=True)
 
         def get_age_group(idx, bin_size):
             age_start = idx * bin_size
             max_age = bin_size * (self.n_age - 1)
-            return f'{age_start}-{age_start + bin_size - 1} ' if age_start != max_age else f'{max_age}+ '
+            return (
+                f"{age_start}-{age_start + bin_size - 1} "
+                if age_start != max_age
+                else f"{max_age}+ "
+            )
 
         labels = [get_age_group(idx, 5) for idx in range(self.n_age)]
-        for variable_params, target in itertools.product(self.variable_param_combinations, self.target_vars):
+        for variable_params, target in itertools.product(
+            self.variable_param_combinations, self.target_vars
+        ):
             filename = self.get_filename(variable_params) + f"_{target}"
             self.plot_prcc(filename, labels)

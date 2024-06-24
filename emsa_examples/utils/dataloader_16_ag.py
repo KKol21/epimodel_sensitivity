@@ -10,12 +10,21 @@ from emsa.dataloader import DataLoaderBase
 class DataLoader(DataLoaderBase):
     def __init__(self, params_path=None, contact_data_path=None, age_data_path=None):
         super().__init__()
-        self._model_parameters_data_file = join(self.project_path, "data/model_parameters.json") \
-            if params_path is None else params_path
-        self._contact_data_file = join(self.project_path, "data/contact_matrices.xls")\
-            if contact_data_path is None else contact_data_path
-        self._age_data_file = join(self.project_path, "data/age_distribution.xls") \
-            if age_data_path is None else age_data_path
+        self._model_parameters_data_file = (
+            join(self.project_path, "data/model_parameters.json")
+            if params_path is None
+            else params_path
+        )
+        self._contact_data_file = (
+            join(self.project_path, "data/contact_matrices.xls")
+            if contact_data_path is None
+            else contact_data_path
+        )
+        self._age_data_file = (
+            join(self.project_path, "data/age_distribution.xls")
+            if age_data_path is None
+            else age_data_path
+        )
 
         self._get_age_data()
         self._get_model_parameters_data()
@@ -46,13 +55,19 @@ class DataLoader(DataLoaderBase):
         contact_matrices = dict()
         for idx in range(4):
             sheet = wb.sheet_by_index(idx)
-            datalist = torch.Tensor([sheet.row_values(i) for i in range(0, sheet.nrows)]).to(self.device)
+            datalist = torch.Tensor([sheet.row_values(i) for i in range(0, sheet.nrows)]).to(
+                self.device
+            )
             cm_type = wb.sheet_names()[idx]
             wb.unload_sheet(0)
             datalist = self.transform_matrix(datalist)
             contact_matrices.update({cm_type: datalist})
-        self.cm = contact_matrices["home"] + contact_matrices["work"] + \
-                  contact_matrices["school"] + contact_matrices["other"]
+        self.cm = (
+            contact_matrices["home"]
+            + contact_matrices["work"]
+            + contact_matrices["school"]
+            + contact_matrices["other"]
+        )
 
     def transform_matrix(self, matrix: torch.Tensor) -> torch.Tensor:
         """

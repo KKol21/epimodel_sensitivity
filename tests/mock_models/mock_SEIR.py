@@ -18,4 +18,3 @@ class MockSEIRModel(MockModelBase):
 
         dydt = [dSdt, dEdt, dIdt, dRdt]
         return torch.tensor([dydt])
-

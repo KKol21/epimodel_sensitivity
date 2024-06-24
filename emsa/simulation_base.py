@@ -90,12 +90,16 @@ class SimulationBase(ABC):
         pass
 
     def run_func_for_all_configs(self, func):
-        for variable_params, target in itertools.product(self.variable_param_combinations, self.target_vars):
+        for variable_params, target in itertools.product(
+            self.variable_param_combinations, self.target_vars
+        ):
             filename = self.get_filename(variable_params) + f"_{target}"
             func(filename)
 
     def get_filename(self, variable_params):
-        return "_".join([self.parse_param_name(variable_params, key) for key in variable_params.keys()])
+        return "_".join(
+            [self.parse_param_name(variable_params, key) for key in variable_params.keys()]
+        )
 
     @staticmethod
     def parse_param_name(variable_params: dict, key):
@@ -109,9 +113,11 @@ class SimulationBase(ABC):
         r0generator = R0Generator(self.data, self.model_struct)
         if isinstance(base_r0, tuple):
             base_r0 = base_r0[0]
-        return base_r0 / r0generator.get_eig_val(contact_mtx=self.cm,
-                                                 susceptibles=self.susceptibles.reshape(1, -1),
-                                                 population=self.population)
+        return base_r0 / r0generator.get_eig_val(
+            contact_mtx=self.cm,
+            susceptibles=self.susceptibles.reshape(1, -1),
+            population=self.population,
+        )
 
     def calculate_prcc(self, filename: str, target: str) -> None:
         """
@@ -135,13 +141,12 @@ class SimulationBase(ABC):
         np.savetxt(fname=prcc_path, X=prcc)
 
     def calculate_p_values(self, filename, significance=0.05):
-        p_values_dir = os.path.join(self.folder_name, 'p_values')
+        p_values_dir = os.path.join(self.folder_name, "p_values")
         os.makedirs(p_values_dir, exist_ok=True)
 
         prcc_path = os.path.join(self.folder_name, f"prcc/prcc_{filename}.csv")
         prcc = np.loadtxt(fname=prcc_path)
-        denom = np.where(prcc ** 2 < 1 - 1e-6,
-                         1 - prcc ** 2, 0.01)
+        denom = np.where(prcc**2 < 1 - 1e-6, 1 - prcc**2, 0.01)
         t = prcc * np.sqrt((self.n_samples - 2 - self.n_age) / denom)
         # p-value for 2-sided test
         dof = self.n_samples - 2 - self.n_age
@@ -180,7 +185,9 @@ class SimulationBase(ABC):
             labels = []
             pci = get_params_col_idx(sampled_params_boundaries=spb)
             for param, idx in pci.items():
-                param_label = get_aged_param_labels(param) if isinstance(spb[param][0], list) else param
+                param_label = (
+                    get_aged_param_labels(param) if isinstance(spb[param][0], list) else param
+                )
                 if isinstance(param_label, list):
                     labels += param_label
                 else:
@@ -195,14 +202,14 @@ class SimulationBase(ABC):
         p_values_file = os.path.join(self.folder_name, f"p_values/p_values_{filename}.csv")
         p_val = np.loadtxt(fname=p_values_file)
 
-        generate_tornado_plot(sim_object=self,
-                              labels=labels,
-                              prcc=prcc,
-                              p_val=p_val,
-                              filename=filename)
+        generate_tornado_plot(
+            sim_object=self, labels=labels, prcc=prcc, p_val=p_val, filename=filename
+        )
 
     def calculate_all_prcc(self):
-        for variable_params, target in itertools.product(self.variable_param_combinations, self.target_vars):
+        for variable_params, target in itertools.product(
+            self.variable_param_combinations, self.target_vars
+        ):
             filename = self.get_filename(variable_params)
             self.calculate_prcc(filename=filename, target=target)
 

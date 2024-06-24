@@ -43,22 +43,33 @@ class ContactModel(SensitivityModelBase):
 
     def _get_betas_from_contacts(self, cm_samples: torch.Tensor):
         r0gen = R0Generator(data=self.data, model_struct=self.model_struct)
-        betas = [self.base_r0 / r0gen.get_eig_val(contact_mtx=cm,
-                                                  susceptibles=self.sim_object.susceptibles.flatten(),
-                                                  population=self.sim_object.population)
-                 for cm in cm_samples]
+        betas = [
+            self.base_r0
+            / r0gen.get_eig_val(
+                contact_mtx=cm,
+                susceptibles=self.sim_object.susceptibles.flatten(),
+                population=self.sim_object.population,
+            )
+            for cm in cm_samples
+        ]
         return torch.tensor(betas, device=self.device)
 
     def get_contacts_from_lhs(self, lhs_table: np.ndarray):
-        contact_sim = torch.zeros((lhs_table.shape[0], self.sim_object.n_age, self.sim_object.n_age))
+        contact_sim = torch.zeros(
+            (lhs_table.shape[0], self.sim_object.n_age, self.sim_object.n_age)
+        )
         for idx, sample in enumerate(lhs_table):
-            contact_sim[idx, :, :] = get_contact_matrix_from_upper_triu(rvector=sample,
-                                                                        age_vector=self.sim_object.population.flatten())
+            contact_sim[idx, :, :] = get_contact_matrix_from_upper_triu(
+                rvector=sample, age_vector=self.sim_object.population.flatten()
+            )
         return contact_sim
 
 
 def get_contact_matrix_from_upper_triu(rvector, age_vector):
-    new = get_rectangular_matrix_from_upper_triu(rvector=rvector, matrix_size=age_vector.size(0)) / age_vector
+    new = (
+        get_rectangular_matrix_from_upper_triu(rvector=rvector, matrix_size=age_vector.size(0))
+        / age_vector
+    )
     return new
 
 

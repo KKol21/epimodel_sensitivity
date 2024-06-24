@@ -61,17 +61,20 @@ class SamplerBase(ABC):
         elif general_bounds.shape[0] == 0:
             return age_spec_bounds
         else:
-            return self._concat_bounds(non_spec_bounds=general_bounds,
-                                       age_spec_bounds=age_spec_bounds)
+            return self._concat_bounds(
+                non_spec_bounds=general_bounds, age_spec_bounds=age_spec_bounds
+            )
 
     def _get_general_param_bounds(self):
-        return np.array([bound for bound in self.lhs_bounds_dict.values()
-                         if len(bound.shape) == 1])
+        return np.array([bound for bound in self.lhs_bounds_dict.values() if len(bound.shape) == 1])
 
     def _get_age_spec_param_bounds(self):
-        age_spec_bounds = [bounds for param in self.lhs_bounds_dict
-                           for bounds in self.lhs_bounds_dict[param]
-                           if len(self.lhs_bounds_dict[param].shape) == 2]
+        age_spec_bounds = [
+            bounds
+            for param in self.lhs_bounds_dict
+            for bounds in self.lhs_bounds_dict[param]
+            if len(self.lhs_bounds_dict[param].shape) == 2
+        ]
         return np.array(age_spec_bounds).T
 
     def _concat_bounds(self, non_spec_bounds: np.ndarray, age_spec_bounds: np.ndarray):
@@ -84,22 +87,27 @@ class SamplerBase(ABC):
         return bounds.T
 
     def get_sim_output(self, lhs_table: np.ndarray):
-        print(f"\n Simulation for {self.n_samples} samples ({self.sim_object.get_filename(self.variable_params)})")
+        print(
+            f"\n Simulation for {self.n_samples} samples ({self.sim_object.get_filename(self.variable_params)})"
+        )
         print(f"Batch size: {self.batch_size}\n")
 
-        output_generator = OutputGenerator(sim_object=self.sim_object,
-                                           variable_params=self.variable_params)
+        output_generator = OutputGenerator(
+            sim_object=self.sim_object, variable_params=self.variable_params
+        )
         sim_outputs = output_generator.get_output(lhs_table=lhs_table)
 
         time.sleep(0.3)
 
         # Save samples, target values
         filename = self.sim_object.get_filename(self.variable_params)
-        self.save_output(output=lhs_table, output_name='lhs', filename=filename)
+        self.save_output(output=lhs_table, output_name="lhs", filename=filename)
         for target_var, sim_output in sim_outputs.items():
-            self.save_output(output=sim_output.cpu(),
-                             output_name='simulations',
-                             filename=filename + f"_{target_var}")
+            self.save_output(
+                output=sim_output.cpu(),
+                output_name="simulations",
+                filename=filename + f"_{target_var}",
+            )
 
     def save_output(self, output, output_name: str, filename: str):
         folder_name = self.sim_object.folder_name

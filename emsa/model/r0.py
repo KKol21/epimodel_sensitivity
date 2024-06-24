@@ -1,6 +1,11 @@
 import torch
 
-from emsa.model.matrix_generator import generate_transition_matrix, get_susc_mul, get_inf_mul, get_distr_mul
+from emsa.model.matrix_generator import (
+    generate_transition_matrix,
+    get_susc_mul,
+    get_inf_mul,
+    get_distr_mul,
+)
 from emsa.model.model_base import get_substates
 from typing import Dict, Any
 
@@ -31,8 +36,9 @@ class R0Generator:
         self._get_e()
 
     def isinf_state(self, state):
-        return state in [state for state, data in self.state_data.items() if
-                         data.get("type") == "infected"]
+        return state in [
+            state for state, data in self.state_data.items() if data.get("type") == "infected"
+        ]
 
     def get_infected_states(self):
         """
@@ -59,8 +65,12 @@ class R0Generator:
         """
         return torch.arange(self.n_age * self.n_states) % self.n_states == self.i[state]
 
-    def get_eig_val(self, susceptibles: torch.Tensor, population: torch.Tensor,
-                    contact_mtx: torch.Tensor) -> float:
+    def get_eig_val(
+        self,
+        susceptibles: torch.Tensor,
+        population: torch.Tensor,
+        contact_mtx: torch.Tensor,
+    ) -> float:
         """
         Compute the dominant eigenvalue of the next-generation matrix (NGM).
 
@@ -94,36 +104,48 @@ class R0Generator:
             torch.Tensor: Inverse of the transition matrix.
         """
         isinf = self.isinf_state
-        inf_state_dict = {state: data for state, data in self.state_data.items() if isinf(state=state)}
-        trans_mtx = generate_transition_matrix(states_dict=inf_state_dict, trans_data=self.trans_data,
-                                               parameters=self.params, n_age=self.n_age,
-                                               n_comp=self.n_states, c_idx=self.i).to(self.device)
+        inf_state_dict = {
+            state: data for state, data in self.state_data.items() if isinf(state=state)
+        }
+        trans_mtx = generate_transition_matrix(
+            states_dict=inf_state_dict,
+            trans_data=self.trans_data,
+            parameters=self.params,
+            n_age=self.n_age,
+            n_comp=self.n_states,
+            c_idx=self.i,
+        ).to(self.device)
 
-        end_state_dict = {state: f"{state}_{data.get('n_substates', 1) - 1}"
-                          for state, data in self.state_data.items()}
-        inf_trans = [trans for trans in self.trans_data if
-                     isinf(state=trans['source']) and isinf(state=trans['target'])]
+        end_state_dict = {
+            state: f"{state}_{data.get('n_substates', 1) - 1}"
+            for state, data in self.state_data.items()
+        }
+        inf_trans = [
+            trans
+            for trans in self.trans_data
+            if isinf(state=trans["source"]) and isinf(state=trans["target"])
+        ]
         idx = self._idx
 
         for trans in inf_trans:
-            source = end_state_dict[trans['source']]
+            source = end_state_dict[trans["source"]]
             target = f"{trans['target']}_0"
-            param = self.params[trans['param']]
-            n_substates = self.state_data[trans['source']].get("n_substates", 1)
+            param = self.params[trans["param"]]
+            n_substates = self.state_data[trans["source"]].get("n_substates", 1)
             distr = get_distr_mul(distr=trans.get("distr"), params=self.params)
             trans_mtx[idx(source), idx(target)] = param * distr * n_substates
         return torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
         """
-       Compute the matrix representing the rate of infection.
+        Compute the matrix representing the rate of infection.
 
-       Args:
-           contact_mtx (torch.Tensor): The contact matrix.
+        Args:
+            contact_mtx (torch.Tensor): The contact matrix.
 
-       Returns:
-           torch.Tensor: The matrix representing the rate of infection.
-       """
+        Returns:
+            torch.Tensor: The matrix representing the rate of infection.
+        """
         i = self.i
         s_mtx = self.s_mtx
         n_states = self.n_states
@@ -134,17 +156,23 @@ class R0Generator:
             inf_mul = get_inf_mul(tms_rule=tms, data=self.data)
             for actor in tms["actors-params"]:
                 rel_inf = self.params.get(tms["actors-params"][actor], 1)
-                for substate in get_substates(n_substates=self.state_data[actor].get("n_substates", 1),
-                                              comp_name=actor):
-                    f[i[substate]:s_mtx:n_states, i[f"{tms['target']}_0"]:s_mtx:n_states] = \
+                for substate in get_substates(
+                    n_substates=self.state_data[actor].get("n_substates", 1), comp_name=actor
+                ):
+                    substate_slice = slice(i[substate], s_mtx, n_states)
+                    target_slice = slice(i[f"{tms['target']}_0"], s_mtx, n_states)
+                    f[substate_slice, target_slice] = (
                         susc_mul * contact_mtx.T * inf_mul.unsqueeze(0) * rel_inf
+                    )
         return f
 
     def _get_e(self):
         """
         Compute and store the matrix 'e' used in the next-generation matrix (NGM) calculation.
         """
-        block = torch.zeros(self.n_states, ).to(self.device)
+        block = torch.zeros(
+            self.n_states,
+        ).to(self.device)
         block[0] = 1
         self.e = block
         for i in range(1, self.n_age):

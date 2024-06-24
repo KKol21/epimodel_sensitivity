@@ -9,8 +9,12 @@ class SamplerVaccinated(SamplerBase):
         super().__init__(sim_object, variable_params)
         self.sim_object = sim_object
         self.lhs_bounds_dict = {
-            "vaccines": np.array([np.zeros(sim_object.n_age),  # Ratio of daily vaccines given to each age group
-                                  np.ones(sim_object.n_age)])
+            "vaccines": np.array(
+                [
+                    np.zeros(sim_object.n_age),  # Ratio of daily vaccines given to each age group
+                    np.ones(sim_object.n_age),
+                ]
+            )
         }
 
     def run(self):
@@ -65,6 +69,6 @@ class SamplerVaccinated(SamplerBase):
             total_vac[mask] = np.tile(population, (lhs_table.shape[0], 1))[mask]
             total_vac[~mask] += redistribution[~mask]
 
-            lhs_table = self.norm_table_rows(total_vac / params['total_vaccines'])
+            lhs_table = self.norm_table_rows(total_vac / params["total_vaccines"])
             total_vac = params["total_vaccines"] * lhs_table
         return lhs_table

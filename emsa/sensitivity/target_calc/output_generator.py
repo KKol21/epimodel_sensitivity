@@ -3,6 +3,7 @@ import numpy as np
 
 from emsa.sensitivity.target_calc.r0calculator import R0Calculator
 from emsa.sensitivity.target_calc.sol_based_target_calc import TargetCalc
+from typing import Dict
 
 
 class OutputGenerator:
@@ -11,7 +12,7 @@ class OutputGenerator:
         self.sim_object = sim_object
         self.variable_params = variable_params
 
-    def get_output(self, lhs_table: np.ndarray) -> dict[str: torch.Tensor]:
+    def get_output(self, lhs_table: np.ndarray) -> Dict[str, torch.Tensor]:
         lhs = torch.from_numpy(lhs_table).float().to(self.sim_object.device)
         targets = self.sim_object.target_vars
         output = {}

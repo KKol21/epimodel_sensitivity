@@ -31,7 +31,7 @@ class EpidemicModel(EpidemicModelBase):
         return self.get_sol_from_ode(
             y0=torch.atleast_2d(y0),
             t_eval=torch.atleast_2d(t_eval),
-            odefun=self.get_ode()
+            odefun=self.get_ode(),
         )
 
     def get_ode(self):
@@ -43,7 +43,7 @@ class EpidemicModel(EpidemicModelBase):
         """
         if self.is_vaccinated:
             v_div = torch.ones(self.n_eq).to(self.device)
-            div_idx = self.idx('s_0') + self.idx('v_0')
+            div_idx = self.idx("s_0") + self.idx("v_0")
 
             def vaccinated_ode(t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
                 """

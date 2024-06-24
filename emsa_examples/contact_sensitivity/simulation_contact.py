@@ -26,11 +26,14 @@ class SimulationContact(SimulationBase):
     """
 
     def __init__(self, data):
-        config_path = os.path.join(PROJECT_PATH, "emsa_examples/contact_sensitivity/configs/sampling_config.json")
-        model_struct_path = os.path.join(PROJECT_PATH, "emsa_examples/contact_sensitivity/configs/model_struct.json")
-        super().__init__(data=data,
-                         config_path=config_path,
-                         model_struct_path=model_struct_path)
+        config_path = os.path.join(
+            PROJECT_PATH,
+            "emsa_examples/contact_sensitivity/configs/sampling_config.json",
+        )
+        model_struct_path = os.path.join(
+            PROJECT_PATH, "emsa_examples/contact_sensitivity/configs/model_struct.json"
+        )
+        super().__init__(data=data, config_path=config_path, model_struct_path=model_struct_path)
 
         self.upper_tri_size = int((self.n_age + 1) * self.n_age / 2)
         self.folder_name += "/sens_data_contact"
@@ -71,12 +74,14 @@ class SimulationContact(SimulationBase):
 
 
         """
-        os.makedirs(f'{self.folder_name}/prcc_p_val_plots', exist_ok=True)
-        prcc = np.loadtxt(fname=f'{self.folder_name}/prcc/prcc_{filename}.csv')
-        p_val = np.loadtxt(fname=f'{self.folder_name}/p_values/p_values_{filename}.csv')
+        os.makedirs(f"{self.folder_name}/prcc_p_val_plots", exist_ok=True)
+        prcc = np.loadtxt(fname=f"{self.folder_name}/prcc/prcc_{filename}.csv")
+        p_val = np.loadtxt(fname=f"{self.folder_name}/p_values/p_values_{filename}.csv")
 
-        plot_prcc_p_values_as_heatmap(n_age=self.n_age,
-                                      prcc_vector=prcc,
-                                      p_values=p_val,
-                                      filename_to_save=f"{self.folder_name}/prcc_p_val_plots/{filename}.pdf",
-                                      plot_title=f"Contact sensitivity values ({filename})")
+        plot_prcc_p_values_as_heatmap(
+            n_age=self.n_age,
+            prcc_vector=prcc,
+            p_values=p_val,
+            filename_to_save=f"{self.folder_name}/prcc_p_val_plots/{filename}.pdf",
+            plot_title=f"Contact sensitivity values ({filename})",
+        )

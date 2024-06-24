@@ -12,5 +12,5 @@ def main():
     sim.run_func_for_all_configs(sim.plot_prcc_and_p_values)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

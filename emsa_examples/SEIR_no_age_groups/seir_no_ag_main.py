@@ -9,11 +9,15 @@ def main():
     params = {"gamma": 0.2, "alpha": 0.3}
     contact_data = torch.tensor(1)
     age_data = torch.tensor([10000])
-    data = SimpleNamespace(**{"params": params,
-                              "cm": contact_data,
-                              "age_data": age_data,
-                              "n_age": 1,
-                              "device": "cpu"})
+    data = SimpleNamespace(
+        **{
+            "params": params,
+            "cm": contact_data,
+            "age_data": age_data,
+            "n_age": 1,
+            "device": "cpu",
+        }
+    )
 
     sim = SimulationSEIR(data)
     sim.model.visualize_transmission_graph()

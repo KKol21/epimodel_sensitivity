@@ -12,5 +12,5 @@ def main():
     sim.plot_prcc_tornado_with_p_values()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

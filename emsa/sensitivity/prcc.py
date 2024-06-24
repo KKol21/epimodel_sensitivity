@@ -23,7 +23,7 @@ def get_prcc_values(lhs_output_table):
 
     prcc_vector = np.zeros(parameter_count)
     for w in range(parameter_count):  # compute PRCC btwn each param & sim result
-        prcc_vector[w] = -corr_mtx_inverse[w, parameter_count] / \
-                         np.sqrt(corr_mtx_inverse[w, w] *
-                                 corr_mtx_inverse[parameter_count, parameter_count])
+        prcc_vector[w] = -corr_mtx_inverse[w, parameter_count] / np.sqrt(
+            corr_mtx_inverse[w, w] * corr_mtx_inverse[parameter_count, parameter_count]
+        )
     return prcc_vector

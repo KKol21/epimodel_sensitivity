@@ -8,11 +8,12 @@ from emsa.simulation_base import SimulationBase
 
 class R0Calculator:
     """
-       R0Calculator class for calculating the basic reproduction number (R0) for epidemic models.
+    R0Calculator class for calculating the basic reproduction number (R0) for epidemic models.
 
-       Attributes:
-           sim_object: An instance of SimulationBase containing simulation parameters and data.
+    Attributes:
+        sim_object: An instance of SimulationBase containing simulation parameters and data.
     """
+
     def __init__(self, sim_object: SimulationBase):
         self.sim_object = sim_object
 
@@ -33,7 +34,9 @@ class R0Calculator:
         n_samples = lhs_table.shape[0]
         spb = sim_object.sampled_params_boundaries
         if spb is None:
-            raise ValueError("Sampled parameters boundaries not specified, automatic R0 generation isn't possible")
+            raise ValueError(
+                "Sampled parameters boundaries not specified, automatic R0 generation isn't possible"
+            )
         pci = get_params_col_idx(sampled_params_boundaries=spb)
         lhs_dict = get_lhs_dict(params=spb.keys(), lhs_table=lhs_table, params_col_idx=pci)
         r0gen = R0Generator(sim_object.data, sim_object.model_struct)
@@ -41,11 +44,15 @@ class R0Calculator:
         print(f"Calculating R0 for {n_samples} samples")
         for idx in tqdm(range(n_samples)):
             # Select idx. value from lhs table for each parameter
-            row_dict = {key: value[idx] if len(value.size()) < 2 else value[idx, :]
-                        for key, value in lhs_dict.items()}
+            row_dict = {
+                key: value[idx] if len(value.size()) < 2 else value[idx, :]
+                for key, value in lhs_dict.items()
+            }
             r0gen.params.update(row_dict)
-            r0 = sim_object.params["beta"] * r0gen.get_eig_val(contact_mtx=sim_object.cm,
-                                                            susceptibles=sim_object.susceptibles.reshape(1, -1),
-                                                            population=sim_object.population)
+            r0 = sim_object.params["beta"] * r0gen.get_eig_val(
+                contact_mtx=sim_object.cm,
+                susceptibles=sim_object.susceptibles.reshape(1, -1),
+                population=sim_object.population,
+            )
             r0s.append(r0)
         return torch.tensor(r0s, device=sim_object.device)

@@ -10,7 +10,7 @@ class MockSEIHRModel(MockModelBase):
         S, E, I, H, R = self.get_comp_vals(y)
         transmission = self.get_transmission(infectious_terms=I)
 
-        dSdt = - transmission * S
+        dSdt = -transmission * S
         dEdt = transmission * S - ps["alpha"] * E
         dIdt = ps["alpha"] * E * (1 - ps["eta"]) - ps["gamma"] * I
         dHdt = ps["eta"] * ps["alpha"] * E - ps["gamma_h"] * H
