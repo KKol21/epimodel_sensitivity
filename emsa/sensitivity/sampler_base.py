@@ -96,6 +96,8 @@ class SamplerBase(ABC):
             sim_object=self.sim_object, variable_params=self.variable_params
         )
         sim_outputs = output_generator.get_output(lhs_table=lhs_table)
+        if sim_outputs == {}:
+            raise Exception("No output was produced by OutputGenerator instance!")
 
         time.sleep(0.3)
 

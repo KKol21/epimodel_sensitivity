@@ -13,14 +13,14 @@ class TargetCalc:
             target.rsplit("_", 1)[0] for target in targets if target.endswith("max")
         ]
         self.sup_targets = [
-            target.rsplit("_", 1)[0] for target in targets if target.endswith("max")
+            target.rsplit("_", 1)[0] for target in targets if target.endswith("sup")
         ]
 
         self.max_targets_finished: Dict[str, torch.Tensor] = {}
-        self.sup_finished: torch.Tensor
+        self.sup_finished = None
         self.max_targets_output: Dict[str, torch.Tensor] = {}
         self.sup_targets_output: Dict[str, torch.Tensor] = {}
-        self.finished: torch.Tensor
+        self.finished = None
 
     def get_output(self, lhs_table: torch.Tensor, batch_size: int) -> Dict[str, torch.Tensor]:
         device = self.model.device
@@ -161,5 +161,5 @@ class TargetCalc:
         finished = self.finished
         finished = finished | self.sup_finished
         for comp in self.max_targets:
-            finished = finished & self.max_targets_finished[comp]
+            finished &= self.max_targets_finished[comp]
         return finished
