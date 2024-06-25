@@ -4,7 +4,9 @@ from . import MockModelBase
 class MockVaccinatedModel(MockModelBase):
     def __init__(self, data):
         super().__init__(data)
-        self.vaccination = lambda t: 1 if t <= self.ps["T"] else 0
+        self.vaccination = lambda t: (
+            1 if self.ps["t_start"] <= t < self.ps["t_start"] + self.ps["T"] else 0
+        )
 
     def odefun(self, t, y):
         (s, e1, e2, e3, i1, i2, i3, i4, i5, h, ic, icr, r, d, v) = self.get_comp_vals(y)

@@ -1,9 +1,18 @@
+import matplotlib.pyplot as plt
 import pytest
 
 from emsa_examples.SEIHR_2_age_groups import seihr_2_ag_main
 from emsa_examples.SEIR_no_age_groups import seir_no_ag_main
 from emsa_examples.contact_sensitivity import contact_main
 from emsa_examples.vaccinated_sensitivity import vaccinated_main
+
+
+@pytest.fixture(autouse=True)
+def setup():
+    # Turn off interactive mode
+    plt.ioff()
+    # Use Agg backend (does not require a display)
+    plt.switch_backend("Agg")
 
 
 def test_seir_no_ag_main():

@@ -57,7 +57,7 @@ class EpidemicModel(EpidemicModelBase):
                     torch.Tensor: Derivative of the system.
                 """
                 base_result = torch.mul(y @ self.A, y @ self.T) + y @ self.B
-                if self.ps["t_start"] < t[0] < (self.ps["t_start"] + self.ps["T"]):
+                if self.ps["t_start"] <= t[0] < (self.ps["t_start"] + self.ps["T"]):
                     v_div[div_idx] = (y @ self.V_2)[0, div_idx]
                     vacc = torch.div(y @ self.V_1, v_div)
                     return base_result + vacc

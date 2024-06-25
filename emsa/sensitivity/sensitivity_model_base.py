@@ -54,7 +54,7 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
 
         def odefun(t, y):
             base_result = torch.mul(A_mul(y, self.A), T_mul(y, self.T)) + B_mul(y, self.B)
-            if self.ps["t_start"] < t[0] < self.ps["t_start"] + self.ps["T"]:
+            if self.ps["t_start"] <= t[0] < self.ps["t_start"] + self.ps["T"]:
                 v_div[:, div_idx] = (y @ self.V_2)[:, div_idx]
                 vacc = torch.div(V_1_mul(y, self.V_1), v_div)
                 return base_result + vacc

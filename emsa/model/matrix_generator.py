@@ -249,15 +249,15 @@ class MatrixGenerator:
 
         # B is the tensor representing the first-order elements of the ODE system. We begin by
         # filling in the transition blocks of the intermediate states
-        def is_inter(state_data):
-            return state_data.get("type", "") not in [
+        intermediate_states = {
+            state: data
+            for state, data in state_data.items()
+            if data.get("type", "")
+            not in [
                 "susceptible",
                 "recovered",
                 "dead",
             ]
-
-        intermediate_states = {
-            state: data for state, data in state_data.items() if is_inter(state_data=data)
         }
         B = generate_transition_matrix(
             states_dict=intermediate_states,
