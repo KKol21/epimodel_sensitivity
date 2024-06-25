@@ -28,54 +28,22 @@ class EpidemicModel(EpidemicModelBase):
         Returns:
             torch.Tensor: Solution of the ODE.
         """
+        odefun = kwargs.get("odefun", self.basic_ode)
         return self.get_sol_from_ode(
             y0=torch.atleast_2d(y0),
             t_eval=torch.atleast_2d(t_eval),
-            odefun=self.get_ode(),
+            odefun=odefun,
         )
 
-    def get_ode(self):
+    def basic_ode(self, t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
-        Get the ODE function based on whether the model includes vaccination.
+        Basic ODE function without vaccination.
+
+        Parameters:
+            t (torch.Tensor): Current time.
+            y (torch.Tensor): Current state.
 
         Returns:
-            Callable: ODE function.
+            torch.Tensor: Derivative of the system.
         """
-        if self.is_vaccinated:
-            v_div = torch.ones(self.n_eq).to(self.device)
-            div_idx = self.idx("s_0") + self.idx("v_0")
-
-            def vaccinated_ode(t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-                """
-                ODE function for the vaccinated scenario.
-
-                Parameters:
-                    t (torch.Tensor): Current time.
-                    y (torch.Tensor): Current state.
-
-                Returns:
-                    torch.Tensor: Derivative of the system.
-                """
-                base_result = torch.mul(y @ self.A, y @ self.T) + y @ self.B
-                if self.ps["t_start"] <= t[0] < (self.ps["t_start"] + self.ps["T"]):
-                    v_div[div_idx] = (y @ self.V_2)[0, div_idx]
-                    vacc = torch.div(y @ self.V_1, v_div)
-                    return base_result + vacc
-                return base_result
-
-            return vaccinated_ode
-
-        def basic_ode(t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-            """
-            Basic ODE function without vaccination.
-
-            Parameters:
-                t (torch.Tensor): Current time.
-                y (torch.Tensor): Current state.
-
-            Returns:
-                torch.Tensor: Derivative of the system.
-            """
-            return torch.mul(y @ self.A, y @ self.T) + y @ self.B
-
-        return basic_ode
+        return torch.mul(y @ self.A, y @ self.T) + y @ self.B

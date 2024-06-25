@@ -28,10 +28,7 @@ class ContactModel(SensitivityModelBase):
         cm_samples = self.get_contacts_from_lhs(lhs_table=lhs_table)
         betas = self._get_betas_from_contacts(cm_samples=cm_samples)
         self.T = self._get_T_from_contacts(cm_samples=cm_samples, betas=betas)
-        if self.is_vaccinated:
-            odefun = self.get_vaccinated_ode(lhs_table.shape[0])
-        else:
-            odefun = self.get_basic_ode()
+        odefun = self.get_basic_ode()
         return self.get_sol_from_ode(y0, t_eval, odefun)
 
     def _get_T_from_contacts(self, cm_samples: torch.Tensor, betas: torch.Tensor):

@@ -54,8 +54,6 @@ class SimulationVaccinated(SimulationBase):
             base_r0 = variable_params["r0"]
             beta = self.get_beta_from_r0(base_r0)
             self.params.update({"beta": beta})
-            # Generate matrices used in model representation
-            self.model.initialize_matrices()
 
             param_generator = SamplerVaccinated(sim_object=self, variable_params=variable_params)
             param_generator.run()

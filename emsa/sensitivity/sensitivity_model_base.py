@@ -43,25 +43,6 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
 
         return odefun
 
-    def get_vaccinated_ode(self, curr_batch_size):
-        A_mul = self.get_mul_method(self.A)
-        T_mul = self.get_mul_method(self.T)
-        B_mul = self.get_mul_method(self.B)
-        V_1_mul = self.get_mul_method(self.V_1)
-
-        v_div = torch.ones((curr_batch_size, self.n_eq)).to(self.device)
-        div_idx = self.idx("s_0") + self.idx("v_0")
-
-        def odefun(t, y):
-            base_result = torch.mul(A_mul(y, self.A), T_mul(y, self.T)) + B_mul(y, self.B)
-            if self.ps["t_start"] <= t[0] < self.ps["t_start"] + self.ps["T"]:
-                v_div[:, div_idx] = (y @ self.V_2)[:, div_idx]
-                vacc = torch.div(V_1_mul(y, self.V_1), v_div)
-                return base_result + vacc
-            return base_result
-
-        return odefun
-
     @staticmethod
     def get_mul_method(tensor: torch.Tensor):
         def mul_by_2d(y, tensor):

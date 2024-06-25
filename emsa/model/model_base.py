@@ -37,7 +37,6 @@ class EpidemicModelBase(ABC):
 
         self.c_idx = {comp: idx for idx, comp in enumerate(self.compartments)}
         self.n_eq = self.n_age * self.n_comp
-        self.is_vaccinated = "vaccination" in [trans.get("type") for trans in self.trans_data]
 
         from emsa.model.matrix_generator import MatrixGenerator
 
@@ -46,8 +45,6 @@ class EpidemicModelBase(ABC):
         self.A = None
         self.T = None
         self.B = None
-        self.V_1 = None
-        self.V_2 = None
 
     def validate_params(self):
         for param, value in self.ps.items():
@@ -67,9 +64,6 @@ class EpidemicModelBase(ABC):
         self.A = mtx_gen.get_A()
         self.T = mtx_gen.get_T()
         self.B = mtx_gen.get_B()
-        if self.is_vaccinated:
-            self.V_1 = mtx_gen.get_V_1()
-            self.V_2 = mtx_gen.get_V_2()
 
     def visualize_transmission_graph(self):
         from emsa.plotter import visualize_transmission_graph

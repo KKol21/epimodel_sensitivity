@@ -1,3 +1,5 @@
+import torch
+
 from emsa.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 
@@ -15,11 +17,35 @@ class VaccinatedModel(SensitivityModelBase):
         """
         super().__init__(sim_object=sim_object)
 
+        self.V_1 = None
+        self.V_2 = None
+
     def get_solution(self, y0, t_eval, **kwargs):
         lhs_table = kwargs["lhs_table"]
+        self.initialize_matrices()
         self.V_1 = self._get_V_1_from_lhs(lhs_table=lhs_table)
+        self.V_2 = self.matrix_generator.get_V_2()
         odefun = self.get_vaccinated_ode(curr_batch_size=lhs_table.shape[0])
         return self.get_sol_from_ode(y0, t_eval, odefun)
+
+    def get_vaccinated_ode(self, curr_batch_size):
+        A_mul = self.get_mul_method(self.A)
+        T_mul = self.get_mul_method(self.T)
+        B_mul = self.get_mul_method(self.B)
+        V_1_mul = self.get_mul_method(self.V_1)
+
+        v_div = torch.ones((curr_batch_size, self.n_eq)).to(self.device)
+        div_idx = self.idx("s_0") + self.idx("v_0")
+
+        def odefun(t, y):
+            base_result = torch.mul(A_mul(y, self.A), T_mul(y, self.T)) + B_mul(y, self.B)
+            if self.ps["t_start"] <= t[0] < self.ps["t_start"] + self.ps["T"]:
+                v_div[:, div_idx] = (y @ self.V_2)[:, div_idx]
+                vacc = torch.div(V_1_mul(y, self.V_1), v_div)
+                return base_result + vacc
+            return base_result
+
+        return odefun
 
     def _get_V_1_from_lhs(self, lhs_table):
         daily_vacc = (lhs_table * self.ps["total_vaccines"] / self.ps["T"]).to(self.device)
