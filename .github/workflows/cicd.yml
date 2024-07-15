@@ -5,20 +5,18 @@ on: push
 jobs:     
   bump:
     runs-on: ubuntu-latest
-    #needs: [test, lint]
     steps:
       - uses: actions/checkout@v2
       - name: Bump version and push tag
-        uses: jaumann/github-bumpversion-action@v0.0.7
+        uses: QustodioPablo/github-bumpversion-action@v1.0.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
-
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Push changes
-        uses: ad-m/github-push-action@main
+        uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.GHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           tags: true
-          
+  
   build:
     name: Build distribution 📦
     needs: bump
