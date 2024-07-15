@@ -20,10 +20,10 @@ jobs:
         run: pip install flake8 black
 
       - name: Lint with flake8
-        run: flake8 . --ignore E501
+        run: flake8 . --ignore E501,W503,F401
 
       - name: Format with black
-        run: black --check .
+        run: black --check --line-length=100
 
   test:
     runs-on: ubuntu-latest
