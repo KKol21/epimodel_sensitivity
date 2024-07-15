@@ -33,7 +33,7 @@ jobs:
       run: git fetch --tags --force
         
     - name: Install dependencies
-      run: pip install twine
+      run: pip install twine setuptools
 
     - name: Build package
       run: python setup.py sdist
