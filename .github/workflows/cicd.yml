@@ -3,6 +3,22 @@ name: CI/CD Pipeline
 on: push
 
 jobs:
+  bump:
+    runs-on: ubuntu-latest
+    #needs: [test, lint]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Bump version and push tag
+        uses: jaumann/github-bumpversion-action@v0.0.7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GHUB_TOKEN }}
+          tags: true
+          
   build:
     name: Build distribution 📦
     runs-on: ubuntu-latest
