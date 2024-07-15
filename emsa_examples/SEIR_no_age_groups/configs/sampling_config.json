@@ -20,7 +20,7 @@
     ]
   },
   "batch_size": 200,
-  "n_samples": 500,
+  "n_samples": 100,
   "test": true,
   "init_vals": {
     "e": [
