@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="epimodel_sensitivity_test",
-    version="0.1.18",
+    version="0.1.17",
     author="Kolos Kovács",
     author_email="kovkol21@gmail.com",
     description="Efficient sensitivity analysis and evaluation of epidemiological models",
