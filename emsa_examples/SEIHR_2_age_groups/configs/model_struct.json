@@ -20,28 +20,28 @@
     {
       "source": "i",
       "target": "r",
-      "param": "gamma"
+      "rate": "gamma"
     },
     {
       "source": "e",
       "target": "i",
-      "param": "alpha",
-      "distr": [
+      "rate": "alpha",
+      "params": [
         "eta_"
       ]
     },
     {
       "source": "e",
       "target": "h",
-      "param": "alpha",
-      "distr": [
+      "rate": "alpha",
+      "params": [
         "eta"
       ]
     },
     {
       "source": "h",
       "target": "r",
-      "param": "gamma"
+      "rate": "gamma"
     }
   ],
   "tms_rules": [

@@ -31,7 +31,6 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         super().__init__(data=sim_object.data, model_struct=sim_object.model_struct)
         self.sim_object = sim_object
         self.test = sim_object.test
-        self.sim_state = None
 
     def get_basic_ode(self):
         A_mul = self.get_mul_method(self.A)
@@ -78,11 +77,14 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         if spb is None:
             return
         # Params in B
-        distr_params = [
-            distr for trans in self.trans_data if trans.get("distr") for distr in trans.get("distr")
+        trans_params = [
+            param
+            for trans in self.trans_data
+            if trans.get("params")
+            for param in trans.get("params")
         ]
-        trans_params = [trans["param"] for trans in self.trans_data]
-        linear_params = [param for param in spb if param in trans_params + distr_params]
+        trans_rates = [trans["rate"] for trans in self.trans_data]
+        linear_params = [param for param in spb if param in trans_rates + trans_params]
         # Params in T_1
         susc_params = [
             param for tms_rule in self.tms_rules for param in tms_rule.get("susc_params", [])

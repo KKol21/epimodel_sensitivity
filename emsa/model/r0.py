@@ -130,9 +130,9 @@ class R0Generator:
         for trans in inf_trans:
             source = end_state_dict[trans["source"]]
             target = f"{trans['target']}_0"
-            param = self.params[trans["param"]]
+            param = self.params[trans["rate"]]
             n_substates = self.state_data[trans["source"]].get("n_substates", 1)
-            distr = get_distr_mul(distr=trans.get("distr"), params=self.params)
+            distr = get_distr_mul(distr=trans.get("params"), params=self.params)
             trans_mtx[idx(source), idx(target)] = param * distr * n_substates
         return torch.linalg.inv(trans_mtx)
 

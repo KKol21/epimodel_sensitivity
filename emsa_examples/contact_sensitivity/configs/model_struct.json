@@ -43,42 +43,42 @@
     {
       "source": "l",
       "target": "ip",
-      "param": "alpha_l"
+      "rate": "alpha_l"
     },
     {
       "source": "ip",
       "target": "ia",
-      "param": "alpha_p",
-      "distr": [
+      "rate": "alpha_p",
+      "params": [
         "p"
       ]
     },
     {
       "source": "ia",
       "target": "r",
-      "param": "gamma_a"
+      "rate": "gamma_a"
     },
     {
       "source": "ip",
       "target": "is",
-      "param": "alpha_p",
-      "distr": [
+      "rate": "alpha_p",
+      "params": [
         "p_"
       ]
     },
     {
       "source": "is",
       "target": "r",
-      "param": "gamma_s",
-      "distr": [
+      "rate": "gamma_s",
+      "params": [
         "h_"
       ]
     },
     {
       "source": "is",
       "target": "h",
-      "param": "gamma_s",
-      "distr": [
+      "rate": "gamma_s",
+      "params": [
         "h",
         "xi_"
       ]
@@ -86,13 +86,13 @@
     {
       "source": "h",
       "target": "r",
-      "param": "gamma_h"
+      "rate": "gamma_h"
     },
     {
       "source": "is",
       "target": "ic",
-      "param": "gamma_s",
-      "distr": [
+      "rate": "gamma_s",
+      "params": [
         "h",
         "xi"
       ]
@@ -100,21 +100,21 @@
     {
       "source": "icr",
       "target": "r",
-      "param": "gamma_cr"
+      "rate": "gamma_cr"
     },
     {
       "source": "ic",
       "target": "d",
-      "param": "gamma_c",
-      "distr": [
+      "rate": "gamma_c",
+      "params": [
         "mu"
       ]
     },
     {
       "source": "ic",
       "target": "icr",
-      "param": "gamma_c",
-      "distr": [
+      "rate": "gamma_c",
+      "params": [
         "mu_"
       ]
     }

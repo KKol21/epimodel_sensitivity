@@ -38,12 +38,12 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
 
     # Add edges from transitions
     def get_edge_label(trans):
-        if trans.get("distr"):
+        if trans.get("params"):
             distr_muls = [
-                distr if distr[-1] != "_" else f"(1 - {distr[:-1]})" for distr in trans["distr"]
+                distr if distr[-1] != "_" else f"(1 - {distr[:-1]})" for distr in trans["params"]
             ]
-            return " * ".join(distr_muls + [trans["param"]])
-        return trans.get("param", trans.get("type"))
+            return " * ".join(distr_muls + [trans["rate"]])
+        return trans.get("rate", trans.get("type"))
 
     trans_edges = [
         (
@@ -89,7 +89,7 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
     )
 
     # Draw full edges with labels
-    labels = nx.get_edge_attributes(G, "param")
+    labels = nx.get_edge_attributes(G, "rate")
     nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=7)
 
     # Draw dashed edges and label

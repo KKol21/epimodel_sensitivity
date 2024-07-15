@@ -17,12 +17,12 @@
     {
       "source": "i",
       "target": "r",
-      "param": "gamma"
+      "rate": "gamma"
     },
     {
       "source": "e",
       "target": "i",
-      "param": "alpha"
+      "rate": "alpha"
     }
   ],
   "tms_rules": [

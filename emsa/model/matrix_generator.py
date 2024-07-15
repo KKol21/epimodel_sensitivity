@@ -27,10 +27,10 @@ def generate_transition_block(transition_param: float, n_states: int) -> torch.T
     return trans_block
 
 
-def get_trans_param(state: str, trans_data: List[Dict[str, Any]]) -> str:
+def get_trans_rate(state: str, trans_data: List[Dict[str, Any]]) -> str:
     for trans in trans_data:
         if trans["source"] == state:
-            return trans["param"]
+            return trans["rate"]
     raise Exception(f"No transition parameter was provided for state {state}")
 
 
@@ -60,7 +60,7 @@ def generate_transition_matrix(
     for age_group in range(n_age):
         for state, data in states_dict.items():
             n_states = data.get("n_substates", 1)
-            trans_param = parameters[get_trans_param(state, trans_data)]
+            trans_param = parameters[get_trans_rate(state, trans_data)]
             diag_idx = age_group * n_comp + c_idx[f"{state}_0"]
             block_slice = slice(diag_idx, diag_idx + n_states)
             # Fill in transition block of each transitional state
@@ -275,10 +275,10 @@ class MatrixGenerator:
         }
         for trans in [trans for trans in trans_data if trans.get("type", "basic") == "basic"]:
             # Iterate over the linear transitions
-            trans_param = ps[trans["param"]]
+            trans_param = ps[trans["rate"]]
             # Multiply the transition parameter by the distribution(s) given
             trans_param = trans_param * get_distr_mul(
-                trans.get("distr"), self.ps
+                trans.get("params"), self.ps
             )  # Throws shape error with *= in some cases
             source = end_state[trans["source"]]
             target = f"{trans['target']}_0"

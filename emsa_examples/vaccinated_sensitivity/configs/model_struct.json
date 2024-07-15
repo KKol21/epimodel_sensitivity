@@ -37,21 +37,21 @@
     {
       "source": "i",
       "target": "r",
-      "param": "gamma",
-      "distr": [
+      "rate": "gamma",
+      "params": [
         "h_"
       ]
     },
     {
       "source": "icr",
       "target": "r",
-      "param": "gamma_cr"
+      "rate": "gamma_cr"
     },
     {
       "source": "i",
       "target": "ic",
-      "param": "gamma",
-      "distr": [
+      "rate": "gamma",
+      "params": [
         "h",
         "xi"
       ]
@@ -59,8 +59,8 @@
     {
       "source": "ic",
       "target": "d",
-      "param": "gamma_c",
-      "distr": [
+      "rate": "gamma_c",
+      "params": [
         "mu"
       ]
     },
@@ -72,8 +72,8 @@
     {
       "source": "i",
       "target": "h",
-      "param": "gamma",
-      "distr": [
+      "rate": "gamma",
+      "params": [
         "h",
         "xi_"
       ]
@@ -81,20 +81,20 @@
     {
       "source": "h",
       "target": "r",
-      "param": "gamma_h"
+      "rate": "gamma_h"
     },
     {
       "source": "ic",
       "target": "icr",
-      "param": "gamma_c",
-      "distr": [
+      "rate": "gamma_c",
+      "params": [
         "mu_"
       ]
     },
     {
       "source": "e",
       "target": "i",
-      "param": "alpha"
+      "rate": "alpha"
     }
   ]
 }
