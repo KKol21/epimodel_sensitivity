@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - name: Install dependencies
         run: pip install flake8 black
@@ -24,7 +24,7 @@ jobs:
         run: flake8 . --ignore E501,W503,F401
 
       - name: Format with black
-        run: black --check --line-length=100
+        run: black emsa emsa_examples tests --line-length=100
 
   test:
     runs-on: ubuntu-latest
@@ -35,7 +35,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - name: Install dependencies
         run: |
@@ -59,12 +59,12 @@ jobs:
       - name: Bump version and push tag
         uses: jaumann/github-bumpversion-action@v0.0.7
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
 
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GHUB_TOKEN }}
           tags: true
 
   build-and-publish:
@@ -76,18 +76,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
       - name: Install dependencies
-        run: pip install twine
+        run: |
+          python -m pip install --upgrade pip
+          pip install twine
 
       - name: Build package
         run: python setup.py sdist bdist_wheel
+  
+      - name: Publish to PyPI
+        env:
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          twine upload --verbose dist/*
 
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Clean up
+        run: |
+          rm -rf build/
+          rm -rf dist/
