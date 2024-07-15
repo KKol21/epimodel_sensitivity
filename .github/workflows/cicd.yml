@@ -10,11 +10,11 @@ jobs:
       - name: Bump version and push tag
         uses: QustodioPablo/github-bumpversion-action@v1.0.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GHUB_TOKEN }}
           tags: true
   
   build:
