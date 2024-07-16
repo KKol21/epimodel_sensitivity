@@ -54,7 +54,7 @@ jobs:
 
   bump:
     runs-on: ubuntu-latest
-    needs: [test, lint]
+    needs: test
     steps:
       - uses: actions/checkout@v3
       
