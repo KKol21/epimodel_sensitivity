@@ -12,12 +12,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/KKol21/epimodel_sensitivity",
-    packages=find_packages(
-        exclude=(
-            "tests",
-            "tests.*",
-        )
-    ),
+    packages=find_packages(exclude=("tests", "tests.*", "emsa_examples", "emsa_examples.*")),
     install_requires=[
         "smt~=1.3.0",
         "tqdm",
