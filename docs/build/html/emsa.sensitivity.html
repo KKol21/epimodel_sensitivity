@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sensitivity module &mdash; EMSA 0.1.27 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=dc233e31"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+</head>
+
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+
+          <a href="index.html" class="icon icon-home">
+            EMSA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Sensitivity module</a><ul>
+<li><a class="reference internal" href="#module-emsa.sensitivity.prcc">PRCC calculator</a><ul>
+<li><a class="reference internal" href="#emsa.sensitivity.prcc.get_prcc_values"><code class="docutils literal notranslate"><span class="pre">get_prcc_values()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-emsa.sensitivity.sampler_base">Sampler base</a><ul>
+<li><a class="reference internal" href="#emsa.sensitivity.sampler_base.SamplerBase"><code class="docutils literal notranslate"><span class="pre">SamplerBase</span></code></a><ul>
+<li><a class="reference internal" href="#emsa.sensitivity.sampler_base.SamplerBase.sim_object"><code class="docutils literal notranslate"><span class="pre">SamplerBase.sim_object</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sampler_base.SamplerBase.lhs_bounds_dict"><code class="docutils literal notranslate"><span class="pre">SamplerBase.lhs_bounds_dict</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sampler_base.SamplerBase.run_sampling"><code class="docutils literal notranslate"><span class="pre">SamplerBase.run_sampling()</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sampler_base.SamplerBase.get_lhs_table"><code class="docutils literal notranslate"><span class="pre">SamplerBase.get_lhs_table()</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sampler_base.SamplerBase.get_sim_output"><code class="docutils literal notranslate"><span class="pre">SamplerBase.get_sim_output()</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sampler_base.SamplerBase.run"><code class="docutils literal notranslate"><span class="pre">SamplerBase.run()</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sampler_base.SamplerBase.save_output"><code class="docutils literal notranslate"><span class="pre">SamplerBase.save_output()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#emsa.sensitivity.sampler_base.create_latin_table"><code class="docutils literal notranslate"><span class="pre">create_latin_table()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-emsa.sensitivity.sensitivity_model_base">Sensitivity model base</a><ul>
+<li><a class="reference internal" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase"><code class="docutils literal notranslate"><span class="pre">SensitivityModelBase</span></code></a><ul>
+<li><a class="reference internal" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.generate_3D_matrices"><code class="docutils literal notranslate"><span class="pre">SensitivityModelBase.generate_3D_matrices()</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_basic_ode"><code class="docutils literal notranslate"><span class="pre">SensitivityModelBase.get_basic_ode()</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_initial_values"><code class="docutils literal notranslate"><span class="pre">SensitivityModelBase.get_initial_values()</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_matrix_from_lhs"><code class="docutils literal notranslate"><span class="pre">SensitivityModelBase.get_matrix_from_lhs()</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_mul_method"><code class="docutils literal notranslate"><span class="pre">SensitivityModelBase.get_mul_method()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#emsa.sensitivity.sensitivity_model_base.get_lhs_dict"><code class="docutils literal notranslate"><span class="pre">get_lhs_dict()</span></code></a></li>
+<li><a class="reference internal" href="#emsa.sensitivity.sensitivity_model_base.get_params_col_idx"><code class="docutils literal notranslate"><span class="pre">get_params_col_idx()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-emsa.sensitivity">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EMSA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Sensitivity module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/emsa.sensitivity.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+
+  <section id="sensitivity-module">
+<h1>Sensitivity module<a class="headerlink" href="#sensitivity-module" title="Link to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="emsa.sensitivity.target_calc.html">emsa.sensitivity.target_calc package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="emsa.sensitivity.target_calc.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="emsa.sensitivity.target_calc.html#module-emsa.sensitivity.target_calc.output_generator">emsa.sensitivity.target_calc.output_generator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.output_generator.OutputGenerator"><code class="docutils literal notranslate"><span class="pre">OutputGenerator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.output_generator.OutputGenerator.get_output"><code class="docutils literal notranslate"><span class="pre">OutputGenerator.get_output()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="emsa.sensitivity.target_calc.html#module-emsa.sensitivity.target_calc.r0calculator">emsa.sensitivity.target_calc.r0calculator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.r0calculator.R0Calculator"><code class="docutils literal notranslate"><span class="pre">R0Calculator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.r0calculator.R0Calculator.sim_object"><code class="docutils literal notranslate"><span class="pre">R0Calculator.sim_object</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.r0calculator.R0Calculator.get_output"><code class="docutils literal notranslate"><span class="pre">R0Calculator.get_output()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="emsa.sensitivity.target_calc.html#module-emsa.sensitivity.target_calc.sol_based_target_calc">emsa.sensitivity.target_calc.sol_based_target_calc module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.sol_based_target_calc.TargetCalc"><code class="docutils literal notranslate"><span class="pre">TargetCalc</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.sol_based_target_calc.TargetCalc.get_batch_solution"><code class="docutils literal notranslate"><span class="pre">TargetCalc.get_batch_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.sol_based_target_calc.TargetCalc.get_output"><code class="docutils literal notranslate"><span class="pre">TargetCalc.get_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.sol_based_target_calc.TargetCalc.get_true_finished"><code class="docutils literal notranslate"><span class="pre">TargetCalc.get_true_finished()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.sol_based_target_calc.TargetCalc.max_metric"><code class="docutils literal notranslate"><span class="pre">TargetCalc.max_metric()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.sol_based_target_calc.TargetCalc.max_stopping_condition"><code class="docutils literal notranslate"><span class="pre">TargetCalc.max_stopping_condition()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.sol_based_target_calc.TargetCalc.save_finished_indices"><code class="docutils literal notranslate"><span class="pre">TargetCalc.save_finished_indices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.sol_based_target_calc.TargetCalc.save_output_for_finished"><code class="docutils literal notranslate"><span class="pre">TargetCalc.save_output_for_finished()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.sol_based_target_calc.TargetCalc.sup_metric"><code class="docutils literal notranslate"><span class="pre">TargetCalc.sup_metric()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="emsa.sensitivity.target_calc.html#emsa.sensitivity.target_calc.sol_based_target_calc.TargetCalc.sup_stopping_condition"><code class="docutils literal notranslate"><span class="pre">TargetCalc.sup_stopping_condition()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="emsa.sensitivity.target_calc.html#module-emsa.sensitivity.target_calc">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="module-emsa.sensitivity.prcc">
+<span id="prcc-calculator"></span><h2>PRCC calculator<a class="headerlink" href="#module-emsa.sensitivity.prcc" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="emsa.sensitivity.prcc.get_prcc_values">
+<span class="sig-prename descclassname"><span class="pre">emsa.sensitivity.prcc.</span></span><span class="sig-name descname"><span class="pre">get_prcc_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs_output_table</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.prcc.get_prcc_values" title="Link to this definition"></a></dt>
+<dd><p>Calculates the Partial Rank Correlation Coefficient (PRCC) values
+for the last column of an ndarray based on the preceding columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>lhs_output_table</strong> (<em>ndarray</em>) – Input ndarray containing the LHS samples and simulation results.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>PRCC values for the last column.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-emsa.sensitivity.sampler_base">
+<span id="sampler-base"></span><h2>Sampler base<a class="headerlink" href="#module-emsa.sensitivity.sampler_base" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="emsa.sensitivity.sampler_base.SamplerBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">emsa.sensitivity.sampler_base.</span></span><span class="sig-name descname"><span class="pre">SamplerBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim_object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sampler_base.SamplerBase" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Base class for performing sampling-based simulations.</p>
+<p>This abstract class defines the common structure and interface for samplers used to explore
+parameter combinations and collect simulation results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sim_object</strong> – The simulation object representing the underlying simulation model.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="emsa.sensitivity.sampler_base.SamplerBase.sim_object">
+<span class="sig-name descname"><span class="pre">sim_object</span></span><a class="headerlink" href="#emsa.sensitivity.sampler_base.SamplerBase.sim_object" title="Link to this definition"></a></dt>
+<dd><p>The simulation object representing the underlying simulation model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="emsa.sensitivity.sampler_base.SamplerBase.lhs_bounds_dict">
+<span class="sig-name descname"><span class="pre">lhs_bounds_dict</span></span><a class="headerlink" href="#emsa.sensitivity.sampler_base.SamplerBase.lhs_bounds_dict" title="Link to this definition"></a></dt>
+<dd><p>The boundaries for Latin Hypercube Sampling (LHS) parameter ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emsa.sensitivity.sampler_base.SamplerBase.run_sampling">
+<span class="sig-name descname"><span class="pre">run_sampling</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sampler_base.SamplerBase.run_sampling" title="Link to this definition"></a></dt>
+<dd><p>Runs the sampling-based simulation to explore different parameter combinations
+and collect simulation results.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emsa.sensitivity.sampler_base.SamplerBase.get_lhs_table">
+<span class="sig-name descname"><span class="pre">get_lhs_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sampler_base.SamplerBase.get_lhs_table" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emsa.sensitivity.sampler_base.SamplerBase.get_sim_output">
+<span class="sig-name descname"><span class="pre">get_sim_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sampler_base.SamplerBase.get_sim_output" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emsa.sensitivity.sampler_base.SamplerBase.run">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sampler_base.SamplerBase.run" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emsa.sensitivity.sampler_base.SamplerBase.save_output">
+<span class="sig-name descname"><span class="pre">save_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sampler_base.SamplerBase.save_output" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="emsa.sensitivity.sampler_base.create_latin_table">
+<span class="sig-prename descclassname"><span class="pre">emsa.sensitivity.sampler_base.</span></span><span class="sig-name descname"><span class="pre">create_latin_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_of_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sampler_base.create_latin_table" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-emsa.sensitivity.sensitivity_model_base">
+<span id="sensitivity-model-base"></span><h2>Sensitivity model base<a class="headerlink" href="#module-emsa.sensitivity.sensitivity_model_base" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="emsa.sensitivity.sensitivity_model_base.SensitivityModelBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">emsa.sensitivity.sensitivity_model_base.</span></span><span class="sig-name descname"><span class="pre">SensitivityModelBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim_object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="emsa.model.html#emsa.model.model_base.EpidemicModelBase" title="emsa.model.model_base.EpidemicModelBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">EpidemicModelBase</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Base class for implementing epidemic models with the capacity
+to run sample based simulations for sensitivity analysis.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.generate_3D_matrices">
+<span class="sig-name descname"><span class="pre">generate_3D_matrices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.generate_3D_matrices" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_basic_ode">
+<span class="sig-name descname"><span class="pre">get_basic_ode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_basic_ode" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_initial_values">
+<span class="sig-name descname"><span class="pre">get_initial_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_initial_values" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_matrix_from_lhs">
+<span class="sig-name descname"><span class="pre">get_matrix_from_lhs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_matrix_from_lhs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_mul_method">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_mul_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sensitivity_model_base.SensitivityModelBase.get_mul_method" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="emsa.sensitivity.sensitivity_model_base.get_lhs_dict">
+<span class="sig-prename descclassname"><span class="pre">emsa.sensitivity.sensitivity_model_base.</span></span><span class="sig-name descname"><span class="pre">get_lhs_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lhs_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_col_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#emsa.sensitivity.sensitivity_model_base.get_lhs_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="emsa.sensitivity.sensitivity_model_base.get_params_col_idx">
+<span class="sig-prename descclassname"><span class="pre">emsa.sensitivity.sensitivity_model_base.</span></span><span class="sig-name descname"><span class="pre">get_params_col_idx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampled_params_boundaries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emsa.sensitivity.sensitivity_model_base.get_params_col_idx" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-emsa.sensitivity">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-emsa.sensitivity" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, KKol21.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+</body>
+</html>
