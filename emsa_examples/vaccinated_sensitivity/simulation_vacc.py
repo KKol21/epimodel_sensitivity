@@ -5,8 +5,8 @@ from emsa_examples.vaccinated_sensitivity.sampler_vaccinated import SamplerVacci
 from .sensitivity_model_vaccinated import (
     VaccinatedModel,
 )
-from emsa.dataloader import PROJECT_PATH
-from emsa.simulation_base import SimulationBase
+from emsa.utils.dataloader import PROJECT_PATH
+from emsa.utils.simulation_base import SimulationBase
 
 
 class SimulationVaccinated(SimulationBase):

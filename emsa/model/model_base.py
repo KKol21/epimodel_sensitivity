@@ -66,7 +66,7 @@ class EpidemicModelBase(ABC):
         self.B = mtx_gen.get_B()
 
     def visualize_transmission_graph(self):
-        from emsa.plotter import visualize_transmission_graph
+        from emsa.utils.plotter import visualize_transmission_graph
 
         visualize_transmission_graph(
             state_data=self.state_data,

@@ -29,11 +29,3 @@ Sensitivity model base
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: emsa.sensitivity
-   :members:
-   :undoc-members:
-   :show-inheritance:

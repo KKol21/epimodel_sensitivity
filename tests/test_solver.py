@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from emsa.dataloader import PROJECT_PATH
+from emsa.utils.dataloader import PROJECT_PATH
 from emsa.model.epidemic_model import EpidemicModel
 from emsa_examples.utils.dataloader_16_ag import DataLoader
 from tests.mock_models import (
