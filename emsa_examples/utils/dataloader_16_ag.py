@@ -4,7 +4,7 @@ from os.path import join
 import torch
 import xlrd
 
-from emsa.dataloader import DataLoaderBase
+from emsa.utils.dataloader import DataLoaderBase
 
 
 class DataLoader(DataLoaderBase):

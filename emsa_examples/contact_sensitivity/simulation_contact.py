@@ -4,8 +4,8 @@ import numpy as np
 
 from emsa_examples.contact_sensitivity.sampler_contact import SamplerContact
 from emsa_examples.contact_sensitivity.sensitivity_model_contact import ContactModel
-from emsa.plotter import plot_prcc_p_values_as_heatmap
-from emsa.simulation_base import SimulationBase, PROJECT_PATH
+from emsa.utils.plotter import plot_prcc_p_values_as_heatmap
+from emsa.utils.simulation_base import SimulationBase, PROJECT_PATH
 
 
 class SimulationContact(SimulationBase):

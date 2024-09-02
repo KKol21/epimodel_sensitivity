@@ -1,14 +1,15 @@
-emsa package
-============
+EMSA Package Documentation
+===========================
 
 Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    emsa.model
    emsa.sensitivity
+   emsa.utils
 
 Submodules
 ----------
@@ -29,18 +30,10 @@ emsa.plotter module
    :undoc-members:
    :show-inheritance:
 
-emsa.simulation\_base module
+emsa.simulation_base module
 ----------------------------
 
 .. automodule:: emsa.simulation_base
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: emsa
    :members:
    :undoc-members:
    :show-inheritance:
