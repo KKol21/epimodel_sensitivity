@@ -14,10 +14,12 @@ setup(
     url="https://github.com/KKol21/epimodel_sensitivity",
     packages=find_packages(exclude=("tests", "tests.*", "emsa_examples", "emsa_examples.*")),
     install_requires=[
-        "smt~=1.3.0",
-        "tqdm",
-        "xlrd==1.2.0",
+        "torch~=2.3.0",
         "torchode~=0.2.0",
+        "numpy~=1.26.4",
+        "matplotlib~=3.7.5",
+        "tqdm~=4.66.5",
+        "smt~=2.6.3"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
