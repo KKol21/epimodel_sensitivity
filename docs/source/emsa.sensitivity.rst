@@ -2,17 +2,10 @@ Sensitivity module
 ========================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    emsa.sensitivity.target_calc
 
-PRCC calculator
-----------------------------
-
-.. automodule:: emsa.sensitivity.prcc
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 Sampler base
 -------------------------------------
@@ -26,6 +19,14 @@ Sensitivity model base
 ------------------------------------------------
 
 .. automodule:: emsa.sensitivity.sensitivity_model_base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+PRCC calculator
+----------------------------
+
+.. automodule:: emsa.sensitivity.prcc
    :members:
    :undoc-members:
    :show-inheritance:

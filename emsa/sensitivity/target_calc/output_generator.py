@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-from emsa.sensitivity.target_calc.r0calculator import R0Calculator
+from emsa.sensitivity.target_calc.r0_calculator_lhs import R0Calculator
 from emsa.sensitivity.target_calc.sol_based_target_calc import TargetCalc
 from typing import Dict
 

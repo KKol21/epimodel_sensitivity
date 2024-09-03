@@ -1,7 +1,7 @@
 import torch
 from tqdm import tqdm
 
-from emsa.model.r0 import R0Generator
+from emsa.model.r0_calculator import R0Generator
 from emsa.sensitivity.sensitivity_model_base import get_params_col_idx, get_lhs_dict
 from emsa.utils.simulation_base import SimulationBase
 

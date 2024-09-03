@@ -1,26 +1,7 @@
-emsa.model package
+Model module
 ==================
 
-Submodules
-----------
-
-emsa.model.epidemic\_model module
----------------------------------
-
-.. automodule:: emsa.model.epidemic_model
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-emsa.model.matrix\_generator module
------------------------------------
-
-.. automodule:: emsa.model.matrix_generator
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-emsa.model.model\_base module
+Model base
 -----------------------------
 
 .. automodule:: emsa.model.model_base
@@ -28,18 +9,26 @@ emsa.model.model\_base module
    :undoc-members:
    :show-inheritance:
 
-emsa.model.r0 module
---------------------
+Epidemic model
+---------------------------------
 
-.. automodule:: emsa.model.r0
+.. automodule:: emsa.model.epidemic_model
    :members:
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+Matrix generator
+-----------------------------------
 
-.. automodule:: emsa.model
+.. automodule:: emsa.model.matrix_generator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+R0 calculator
+--------------------
+
+.. automodule:: emsa.model.r0_calculator
    :members:
    :undoc-members:
    :show-inheritance:

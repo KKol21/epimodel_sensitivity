@@ -1,10 +1,8 @@
-emsa.sensitivity.target\_calc package
+Target calculator module
 =====================================
 
-Submodules
-----------
 
-emsa.sensitivity.target\_calc.output\_generator module
+Output generator
 ------------------------------------------------------
 
 .. automodule:: emsa.sensitivity.target_calc.output_generator
@@ -12,26 +10,18 @@ emsa.sensitivity.target\_calc.output\_generator module
    :undoc-members:
    :show-inheritance:
 
-emsa.sensitivity.target\_calc.r0calculator module
+R0 calculator (LHS)
 -------------------------------------------------
 
-.. automodule:: emsa.sensitivity.target_calc.r0calculator
+.. automodule:: emsa.sensitivity.target_calc.r0_calculator_lhs
    :members:
    :undoc-members:
    :show-inheritance:
 
-emsa.sensitivity.target\_calc.sol\_based\_target\_calc module
+Solution based target calculator
 -------------------------------------------------------------
 
 .. automodule:: emsa.sensitivity.target_calc.sol_based_target_calc
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: emsa.sensitivity.target_calc
    :members:
    :undoc-members:
    :show-inheritance:

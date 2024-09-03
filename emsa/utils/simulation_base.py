@@ -8,7 +8,7 @@ from scipy import stats as ss
 from torch import atleast_2d
 
 from emsa.utils.dataloader import PROJECT_PATH
-from emsa.model.r0 import R0Generator
+from emsa.model.r0_calculator import R0Generator
 from emsa.utils.plotter import generate_tornado_plot
 from emsa.sensitivity.prcc import get_prcc_values
 
