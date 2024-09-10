@@ -42,7 +42,7 @@ These inputs are processed through the following steps:
 2. **Model Evaluation:** Each parameter set is evaluated using the specified epidemic model.
 3. **Sensitivity Measure:** Partial Rank Correlation Coefficient (PRCC) is calculated to assess parameter sensitivity.
 
-![Flowchart](https://i.ibb.co/ScqNPFz/emsa-flow.png)
+![Flowchart](/images/Flowchart.png)
 
 
 ## Documentation and Examples
