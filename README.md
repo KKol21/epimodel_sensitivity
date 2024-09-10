@@ -1,9 +1,8 @@
 # EMSA - Epidemic Modeling, Sensitivity Analysis
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![License](https://img.shields.io/badge/license-MIT-blue)
 
-
 ## Introduction
-EMSA (Epidemic Modeling, Sensitivity Analysis) is a Python package designed to simplify and optimize sensitivity
+EMSA is a Python package designed to simplify and optimize sensitivity
 analysis for deterministic compartmental epidemic models. By leveraging CUDA for parallel processing, EMSA allows
 users to efficiently evaluate how different parameters affect model outcomes, making it a powerful tool for researchers
 and public health officials. Potential applications include outbreak forecasting, intervention planning, and 
@@ -15,16 +14,19 @@ we use the package `torchode`, and we represent the ODE system corresponding to 
 enabling parallel evaluation of the sampled parameter configurations.
 
 
+- [*Documentation*](https://torchode.readthedocs.org)
+
+If you get stuck at some point, you think the library should have an example on _x_ or you
+want to suggest some other type of improvement, please open an [issue on
+github](https://github.com/KKol21/epimodel-sensitivity/issues/new).
+
+
 ## Installation
 You can install EMSA via pip:
 
 ```sh
 pip install emsa
 ```
-
-
-## Usage
-
 
 
 ## Pipeline Overview
@@ -40,7 +42,7 @@ These inputs are processed through the following steps:
 2. **Model Evaluation:** Each parameter set is evaluated using the specified epidemic model.
 3. **Sensitivity Measure:** Partial Rank Correlation Coefficient (PRCC) is calculated to assess parameter sensitivity.
 
-![Flowchart](https://ibb.co/HCm7V5j)
+![Flowchart](https://i.ibb.co/ScqNPFz/emsa-flow.png)
 
 
 ## Documentation and Examples
@@ -48,3 +50,7 @@ Full documentation is available at [Read the Docs](https://epimodel-sensitivity.
 
 Explore the `examples/` directory to see how EMSA can be applied to various epidemic models,
 or check out [this]() Google Collaboratory notebook to get started!
+
+## Contributing
+
+We welcome contributions to EMSA! To contribute, please open an issue first discussing the proposed changes. 
