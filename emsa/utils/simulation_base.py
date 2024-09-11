@@ -13,11 +13,6 @@ from emsa.utils.plotter import generate_tornado_plot
 from emsa.sensitivity.prcc import get_prcc_values
 
 
-def merge_dicts(ds):
-    d_out = {key: value for d in ds for key, value in d.items()}
-    return d_out
-
-
 class SimulationBase(ABC):
     def __init__(self, data, model_struct_path, config_path):
         # Load data
@@ -69,7 +64,7 @@ class SimulationBase(ABC):
 
         flattened_vpd = [self.flatten_dict(vpd, key) for key in vpd.keys()]
         variable_params_product = list(itertools.product(*flattened_vpd))
-        return [merge_dicts(variable_params) for variable_params in variable_params_product]
+        return [self.merge_dicts(variable_params) for variable_params in variable_params_product]
 
     def flatten_dict(self, d, key):
         if isinstance(d[key], dict):
@@ -84,6 +79,11 @@ class SimulationBase(ABC):
     @staticmethod
     def flatten_dict_in_dict(d, key):
         return [{key: {subkey: value}} for subkey, value in d[key].items()]
+
+    @staticmethod
+    def merge_dicts(ds):
+        d_out = {key: value for d in ds for key, value in d.items()}
+        return d_out
 
     @abstractmethod
     def run_sampling(self):
