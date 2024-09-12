@@ -30,6 +30,8 @@ class DataLoader(DataLoaderBase):
         self._get_model_parameters_data()
         self._get_contact_mtx()
 
+        self.device = 'cpu'
+
     def _get_age_data(self):
         wb = xlrd.open_workbook(self._age_data_file)
         sheet = wb.sheet_by_index(0)
