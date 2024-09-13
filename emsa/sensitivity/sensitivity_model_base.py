@@ -83,7 +83,7 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
             if trans.get("params")
             for param in trans.get("params")
         ]
-        trans_rates = [trans["rate"] for trans in self.trans_data]
+        trans_rates = [self.state_data[trans["source"]]["rate"] for trans in self.trans_data]
         linear_params = [param for param in spb if param in trans_rates + trans_params]
         # Params in T_1
         susc_params = [

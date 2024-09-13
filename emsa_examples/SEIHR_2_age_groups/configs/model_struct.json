@@ -4,13 +4,16 @@
       "type": "susceptible"
     },
     "e": {
-      "type": "infected"
+      "type": "infected",
+      "rate": "alpha"
     },
     "i": {
-      "type": "infected"
+      "type": "infected",
+      "rate": "gamma"
     },
     "h": {
-      "n_substates": 1
+      "n_substates": 1,
+      "rate": "gamma"
     },
     "r": {
       "type": "recovered"
@@ -19,13 +22,11 @@
   "trans_data": [
     {
       "source": "i",
-      "target": "r",
-      "rate": "gamma"
+      "target": "r"
     },
     {
       "source": "e",
       "target": "i",
-      "rate": "alpha",
       "params": [
         "eta_"
       ]
@@ -33,15 +34,13 @@
     {
       "source": "e",
       "target": "h",
-      "rate": "alpha",
       "params": [
         "eta"
       ]
     },
     {
       "source": "h",
-      "target": "r",
-      "rate": "gamma"
+      "target": "r"
     }
   ],
   "tms_rules": [

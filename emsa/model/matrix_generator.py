@@ -27,16 +27,8 @@ def generate_transition_block(transition_param: float, n_states: int) -> torch.T
     return trans_block
 
 
-def get_trans_rate(state: str, trans_data: List[Dict[str, Any]]) -> str:
-    for trans in trans_data:
-        if trans["source"] == state:
-            return trans["rate"]
-    raise Exception(f"No transition parameter was provided for state {state}")
-
-
 def generate_transition_matrix(
     states_dict: Dict[str, Any],
-    trans_data: List[Dict[str, Any]],
     parameters: Dict[str, float],
     n_age: int,
     n_comp: int,
@@ -47,7 +39,6 @@ def generate_transition_matrix(
 
     Args:
         states_dict (Dict[str, Any]): Dictionary of states.
-        trans_data (List[Dict[str, Any]]): Transition data.
         parameters (Dict[str, float]): A dictionary containing model parameters.
         n_age (int): The number of age groups.
         n_comp (int): The number of compartments.
@@ -60,7 +51,7 @@ def generate_transition_matrix(
     for age_group in range(n_age):
         for state, data in states_dict.items():
             n_states = data.get("n_substates", 1)
-            trans_param = parameters[get_trans_rate(state, trans_data)]
+            trans_param = parameters[data["rate"]]
             diag_idx = age_group * n_comp + c_idx[f"{state}_0"]
             block_slice = slice(diag_idx, diag_idx + n_states)
             # Fill in transition block of each transitional state
@@ -104,25 +95,25 @@ def get_inf_mul(tms_rule: dict, data) -> torch.Tensor:
     return inf_mul
 
 
-def get_distr_mul(distr: List[str], params: dict) -> float:
+def get_param_mul(trans_params: List[str], params: dict) -> float:
     """
-    Get the distribution multiplier.
+    Get the transition parameters multiplier.
 
     Args:
-        distr (List[str]): Distribution parameters.
+        trans_params (List[str]): Distribution parameters keys.
         params (Dict[str, float]): Model parameters.
 
     Returns:
-        float: Distribution multiplier.
+        float: Transition parameters  multiplier.
     """
-    if not distr:
+    if not trans_params:
         return 1
     result = 1
-    for distr_param in distr:
-        if distr_param[-1] == "_":
-            result *= 1 - params[distr_param[:-1]]
+    for trans_param in trans_params:
+        if trans_param[-1] == "_":
+            result *= 1 - params[trans_param[:-1]]
         else:
-            result *= params[distr_param]
+            result *= params[trans_param]
     return result
 
 
@@ -247,8 +238,7 @@ class MatrixGenerator:
         state_data = self.state_data
         trans_data = self.trans_data
 
-        # B is the tensor representing the first-order elements of the ODE system. We begin by
-        # filling in the transition blocks of the intermediate states
+        # We begin by filling in the transition blocks of the intermediate states
         intermediate_states = {
             state: data
             for state, data in state_data.items()
@@ -261,7 +251,6 @@ class MatrixGenerator:
         }
         B = generate_transition_matrix(
             states_dict=intermediate_states,
-            trans_data=trans_data,
             parameters=ps,
             n_age=self.n_age,
             n_comp=self.n_comp,
@@ -273,17 +262,16 @@ class MatrixGenerator:
         end_state = {
             state: f"{state}_{data.get('n_substates', 1) - 1}" for state, data in state_data.items()
         }
+        # Iterate over the linear transitions
         for trans in [trans for trans in trans_data if trans.get("type", "basic") == "basic"]:
-            # Iterate over the linear transitions
-            trans_param = ps[trans["rate"]]
-            # Multiply the transition parameter by the distribution(s) given
-            trans_param = trans_param * get_distr_mul(
-                trans.get("params"), self.ps
-            )  # Throws shape error with *= in some cases
-            source = end_state[trans["source"]]
+            source = trans["source"]
+            trans_param = ps[state_data[source]["rate"]]
+            # Multiply the transition parameter by the parameter(s) given
+            trans_param = trans_param * get_param_mul(trans.get("params"),
+                                                      self.ps)  # Throws shape error with *= in some cases
             target = f"{trans['target']}_0"
             n_substates = state_data[trans["source"]].get("n_substates", 1)
-            B[idx(source), idx(target)] = trans_param * n_substates
+            B[idx(end_state[source]), idx(target)] = trans_param * n_substates
         return B
 
     def get_V_1(self, daily_vac=None) -> torch.Tensor:
