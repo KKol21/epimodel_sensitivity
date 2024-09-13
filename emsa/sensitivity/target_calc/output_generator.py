@@ -7,10 +7,9 @@ from typing import Dict
 
 
 class OutputGenerator:
-    def __init__(self, sim_object, variable_params: dict):
+    def __init__(self, sim_object):
         self.batch_size = sim_object.batch_size
         self.sim_object = sim_object
-        self.variable_params = variable_params
 
     def get_output(self, lhs_table: np.ndarray) -> Dict[str, torch.Tensor]:
         lhs = torch.from_numpy(lhs_table).float().to(self.sim_object.device)

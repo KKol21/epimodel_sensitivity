@@ -28,9 +28,9 @@ class SamplerBase(ABC):
             and collect simulation results.
     """
 
-    def __init__(self, sim_object, variable_params):
+    def __init__(self, sim_object, variable_params=None):
         self.sim_object = sim_object
-        self.variable_params = variable_params
+        self.variable_params = variable_params or {}
         self.sampled_params_boundaries = sim_object.sampled_params_boundaries
         self._process_sampling_config()
 
@@ -92,9 +92,7 @@ class SamplerBase(ABC):
         )
         print(f"Batch size: {self.batch_size}\n")
 
-        output_generator = OutputGenerator(
-            sim_object=self.sim_object, variable_params=self.variable_params
-        )
+        output_generator = OutputGenerator(sim_object=self.sim_object)
         sim_outputs = output_generator.get_output(lhs_table=lhs_table)
         if sim_outputs == {}:
             raise Exception("No output was produced by OutputGenerator instance!")

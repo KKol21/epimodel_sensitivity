@@ -42,9 +42,10 @@ class SimulationBase(ABC):
     def _load_config(self, config_path):
         with open(config_path) as f:
             config = json.load(f)
+
         self.target_vars = config["target_vars"]
 
-        self.variable_params_dict = config["variable_params"]
+        self.variable_params_dict = config.get("variable_params", {})
 
         self.variable_param_combinations = self.process_variable_params()
 
@@ -99,7 +100,7 @@ class SimulationBase(ABC):
     def get_filename(self, variable_params):
         return "_".join(
             [self.parse_param_name(variable_params, key) for key in variable_params.keys()]
-        )
+        ) if variable_params else ""
 
     @staticmethod
     def parse_param_name(variable_params: dict, key):
