@@ -74,7 +74,7 @@ def get_susc_mul(tms_rule: dict, data) -> torch.Tensor:
     """
     susc_mul = torch.ones(data.n_age).to(data.device)
     for susc_param in tms_rule.get("susc_params", []):
-        susc_mul *= data["params"][susc_param]
+        susc_mul *= data.params[susc_param]
     return susc_mul
 
 
@@ -91,7 +91,7 @@ def get_inf_mul(tms_rule: dict, data) -> torch.Tensor:
     """
     inf_mul = torch.ones(data.n_age).to(data.device)
     for inf_param in tms_rule.get("infection_params", []):
-        inf_mul *= data["params"][inf_param]
+        inf_mul *= data.params[inf_param]
     return inf_mul
 
 

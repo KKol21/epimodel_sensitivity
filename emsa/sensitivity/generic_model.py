@@ -1,7 +1,7 @@
 from emsa.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 
-class SEIRModel(SensitivityModelBase):
+class GenericModel(SensitivityModelBase):
     def __init__(self, sim_object):
         super().__init__(sim_object=sim_object)
 
