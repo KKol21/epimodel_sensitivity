@@ -1,7 +1,7 @@
 import os
 
-from emsa.sensitivity.generic_model import GenericModel
-from emsa.sensitivity.generic_sampler import GenericSampler
+from emsa.generics.generic_model import GenericModel
+from emsa.generics.generic_sampler import GenericSampler
 from emsa.utils.dataloader import PROJECT_PATH
 from emsa.utils.simulation_base import SimulationBase
 
@@ -15,7 +15,7 @@ class SimulationSEIR(SimulationBase):
             PROJECT_PATH,
             "emsa_examples/SEIR_no_age_groups/configs/sampling_config.json",
         )
-        super().__init__(data, model_struct_path=model_struct_path, config_path=config_path)
+        super().__init__(data, model_struct_path=model_struct_path, sampling_config_path=config_path)
         self.folder_name = os.path.join(self.folder_name, "sens_data_SEIR_no_ag")
 
         # Initalize model
