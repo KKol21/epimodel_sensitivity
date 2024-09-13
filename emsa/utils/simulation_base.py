@@ -55,9 +55,12 @@ class SimulationBase(ABC):
 
         self.test = config.get("test") or True
         self.init_vals = config["init_vals"]
-        self.tlim = config.get("tlim") or 300
-        self.tmax = config.get("tmax") or 5000
-        self.tdiff = config.get("tdelta") or 50
+
+        self.target_calc_config = {
+            "tlim_ini": config.get("tlim_ini") or 300,
+            "tlim_final": config.get("tlim_final") or 5000,
+            "tdelta": config.get("tdelta") or 50,
+        }
 
     def process_variable_params(self):
         vpd = self.variable_params_dict

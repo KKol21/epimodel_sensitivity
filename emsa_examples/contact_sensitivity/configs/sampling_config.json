@@ -9,10 +9,8 @@
     "d_sup",
     "r_sup"
   ],
-  "sampled_params_boundaries": null,
   "batch_size": 100,
   "n_samples": 200,
-  "test": true,
   "init_vals": {
     "l": [
       0,
