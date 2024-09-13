@@ -4,7 +4,7 @@ from os.path import join
 import torch
 import xlrd
 
-from emsa.dataloader import DataLoaderBase
+from emsa.utils.dataloader import DataLoaderBase
 
 
 class DataLoader(DataLoaderBase):
@@ -29,6 +29,8 @@ class DataLoader(DataLoaderBase):
         self._get_age_data()
         self._get_model_parameters_data()
         self._get_contact_mtx()
+
+        self.device = 'cpu'
 
     def _get_age_data(self):
         wb = xlrd.open_workbook(self._age_data_file)

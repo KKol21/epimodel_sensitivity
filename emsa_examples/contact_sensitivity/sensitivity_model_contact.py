@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from emsa.model.r0 import R0Generator
+from emsa.model.r0_calculator import R0Generator
 from emsa.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 

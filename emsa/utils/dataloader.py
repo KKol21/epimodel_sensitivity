@@ -1,7 +1,7 @@
 from abc import ABC
 from os.path import dirname, realpath
 
-PROJECT_PATH = dirname(dirname(realpath(__file__))).replace("\\", "/")
+PROJECT_PATH = dirname(dirname(dirname(realpath(__file__))))
 
 
 class DataLoaderBase(ABC):
@@ -10,5 +10,4 @@ class DataLoaderBase(ABC):
         self.age_data = None
         self.cm = None
         self.params = None
-
-        self.device = "cpu"  # 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = None

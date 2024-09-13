@@ -2,8 +2,8 @@ import os
 
 from emsa_examples.SEIR_no_age_groups.model_seir import SEIRModel
 from emsa_examples.SEIR_no_age_groups.sampler_seir import SamplerSEIR
-from emsa.dataloader import PROJECT_PATH
-from emsa.simulation_base import SimulationBase
+from emsa.utils.dataloader import PROJECT_PATH
+from emsa.utils.simulation_base import SimulationBase
 
 
 class SimulationSEIR(SimulationBase):

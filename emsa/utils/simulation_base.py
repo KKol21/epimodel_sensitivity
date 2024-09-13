@@ -7,15 +7,10 @@ import numpy as np
 from scipy import stats as ss
 from torch import atleast_2d
 
-from emsa.dataloader import PROJECT_PATH
-from emsa.model.r0 import R0Generator
-from emsa.plotter import generate_tornado_plot
+from emsa.utils.dataloader import PROJECT_PATH
+from emsa.model.r0_calculator import R0Generator
+from emsa.utils.plotter import generate_tornado_plot
 from emsa.sensitivity.prcc import get_prcc_values
-
-
-def merge_dicts(ds):
-    d_out = {key: value for d in ds for key, value in d.items()}
-    return d_out
 
 
 class SimulationBase(ABC):
@@ -47,9 +42,10 @@ class SimulationBase(ABC):
     def _load_config(self, config_path):
         with open(config_path) as f:
             config = json.load(f)
+
         self.target_vars = config["target_vars"]
 
-        self.variable_params_dict = config["variable_params"]
+        self.variable_params_dict = config.get("variable_params", {})
 
         self.variable_param_combinations = self.process_variable_params()
 
@@ -69,7 +65,7 @@ class SimulationBase(ABC):
 
         flattened_vpd = [self.flatten_dict(vpd, key) for key in vpd.keys()]
         variable_params_product = list(itertools.product(*flattened_vpd))
-        return [merge_dicts(variable_params) for variable_params in variable_params_product]
+        return [self.merge_dicts(variable_params) for variable_params in variable_params_product]
 
     def flatten_dict(self, d, key):
         if isinstance(d[key], dict):
@@ -85,6 +81,11 @@ class SimulationBase(ABC):
     def flatten_dict_in_dict(d, key):
         return [{key: {subkey: value}} for subkey, value in d[key].items()]
 
+    @staticmethod
+    def merge_dicts(ds):
+        d_out = {key: value for d in ds for key, value in d.items()}
+        return d_out
+
     @abstractmethod
     def run_sampling(self):
         pass
@@ -99,7 +100,7 @@ class SimulationBase(ABC):
     def get_filename(self, variable_params):
         return "_".join(
             [self.parse_param_name(variable_params, key) for key in variable_params.keys()]
-        )
+        ) if variable_params else ""
 
     @staticmethod
     def parse_param_name(variable_params: dict, key):
