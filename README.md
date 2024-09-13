@@ -14,7 +14,7 @@ we use the package `torchode`, and we represent the ODE system corresponding to 
 enabling parallel evaluation of the sampled parameter configurations.
 
 
-- [*Documentation*](https://torchode.readthedocs.org)
+- [*Documentation*](https://epimodel-sensitivity.readthedocs.io/)
 
 If you get stuck at some point, you think the library should have an example on _x_ or you
 want to suggest some other type of improvement, please open an [issue on
@@ -28,13 +28,19 @@ You can install EMSA via pip:
 pip install emsa
 ```
 
+Or clone the development version using git:
+
+```sh
+git clone https://github.com/KKol21/epimodel-sensitivity
+```
+
 
 ## Pipeline Overview
 EMSA requires the following inputs:
 - **Model Parameters:** Key values that define the dynamics of the epidemic model.
 - **Model Structure:** The compartments and transitions between them.
-- **Simulation Configuration:** Timeframe, solver settings, and other configurations.
-- **Population Distribution:** Initial population in each compartment.
+- **Sampling Configuration:** Initial values of the simulation, sampled parameters and their ranges, etc.
+- **Age Vector:** Age distribution of the population.  
 - **Contact Matrix:** Interaction rates between different population groups.
 
 These inputs are processed through the following steps:
@@ -46,11 +52,17 @@ These inputs are processed through the following steps:
 
 
 ## Documentation and Examples
-Full documentation is available at [Read the Docs](https://epimodel-sensitivity.readthedocs.io/en/latest/index.html).
+Full documentation is available on [Read the Docs](https://epimodel-sensitivity.readthedocs.io/).
 
 Explore the `examples/` directory to see how EMSA can be applied to various epidemic models,
-or check out [this]() Google Collaboratory notebook to get started!
+or check out the 
+["Introduction to EMSA"](https://colab.research.google.com/drive/1TYhzxvmqc2MLg1ie5vhzmW0UNq8CXJos?usp=sharing)
+Google Collaboratory notebook to get started. For general usage, try the
+["EMSA template"](https://colab.research.google.com/drive/15qE-WYD_ZfVtYohcfkIaObj5kLQy-ro0?usp=sharing)
+notebook!
+
 
 ## Contributing
 
-We welcome contributions to EMSA! To contribute, please open an issue first discussing the proposed changes. 
+We welcome contributions to EMSA! To contribute, please open an issue first to discuss the proposed changes. Afterwards
+you can fork the repository, and create a merge request in order for your changes to be merged into the package. 
