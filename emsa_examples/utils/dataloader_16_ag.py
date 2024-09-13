@@ -11,17 +11,17 @@ class DataLoader(DataLoaderBase):
     def __init__(self, params_path=None, contact_data_path=None, age_data_path=None):
         super().__init__()
         self._model_parameters_data_file = (
-            join(self.project_path, "data/model_parameters.json")
+            join(self.project_path, "emsa_examples/data/model_parameters.json")
             if params_path is None
             else params_path
         )
         self._contact_data_file = (
-            join(self.project_path, "data/contact_matrices.xls")
+            join(self.project_path, "emsa_examples/data/contact_matrices.xls")
             if contact_data_path is None
             else contact_data_path
         )
         self._age_data_file = (
-            join(self.project_path, "data/age_distribution.xls")
+            join(self.project_path, "emsa_examples/data/age_distribution.xls")
             if age_data_path is None
             else age_data_path
         )
