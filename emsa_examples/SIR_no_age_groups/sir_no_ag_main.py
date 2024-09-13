@@ -29,7 +29,9 @@ def main():
         "emsa_examples/SIR_no_age_groups/configs/sampling_config.json",
     )
 
-    sim = SimulationGeneric(data=data, model_struct_path=model_struct_path, sampling_config_path=sampling_config_path)
+    sim = SimulationGeneric(
+        data=data, model_struct_path=model_struct_path, sampling_config_path=sampling_config_path
+    )
     sim.run_sampling()
     sim.calculate_all_prcc()
     sim.calculate_all_p_values()

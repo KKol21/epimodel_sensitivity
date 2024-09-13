@@ -267,8 +267,9 @@ class MatrixGenerator:
             source = trans["source"]
             trans_param = ps[state_data[source]["rate"]]
             # Multiply the transition parameter by the parameter(s) given
-            trans_param = trans_param * get_param_mul(trans.get("params"),
-                                                      self.ps)  # Throws shape error with *= in some cases
+            trans_param = trans_param * get_param_mul(
+                trans.get("params"), self.ps
+            )  # Throws shape error with *= in some cases
             target = f"{trans['target']}_0"
             n_substates = state_data[trans["source"]].get("n_substates", 1)
             B[idx(end_state[source]), idx(target)] = trans_param * n_substates

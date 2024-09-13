@@ -20,9 +20,11 @@ class OutputGenerator:
         target_endings = [target[-3:] for target in targets if target != "r0"]
 
         if "max" in target_endings or "sup" in target_endings:
-            target_calc = TargetCalc(model=self.sim_object.model,
-                                     targets=targets,
-                                     config=self.sim_object.target_calc_config)
+            target_calc = TargetCalc(
+                model=self.sim_object.model,
+                targets=targets,
+                config=self.sim_object.target_calc_config,
+            )
             sol_based_output = target_calc.get_output(lhs_table=lhs, batch_size=self.batch_size)
             output.update(sol_based_output)
 

@@ -17,7 +17,9 @@ class SimulationSEIHR(SimulationBase):
             PROJECT_PATH,
             "emsa_examples/SEIHR_2_age_groups/configs/sampling_config.json",
         )
-        super().__init__(data=data, model_struct_path=model_struct_path, sampling_config_path=config_path)
+        super().__init__(
+            data=data, model_struct_path=model_struct_path, sampling_config_path=config_path
+        )
         self.folder_name += "/sens_data_SEIR_2_ag"
 
         # Initalize model

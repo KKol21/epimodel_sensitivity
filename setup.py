@@ -19,7 +19,7 @@ setup(
         "numpy~=1.26.4",
         "matplotlib~=3.7.5",
         "tqdm~=4.66.5",
-        "smt~=2.6.3"
+        "smt~=2.6.3",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

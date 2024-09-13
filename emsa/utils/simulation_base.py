@@ -104,9 +104,13 @@ class SimulationBase(ABC):
             func(filename)
 
     def get_filename(self, variable_params):
-        return "_".join(
-            [self.parse_param_name(variable_params, key) for key in variable_params.keys()]
-        ) if variable_params else ""
+        return (
+            "_".join(
+                [self.parse_param_name(variable_params, key) for key in variable_params.keys()]
+            )
+            if variable_params
+            else ""
+        )
 
     @staticmethod
     def parse_param_name(variable_params: dict, key):

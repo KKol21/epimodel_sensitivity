@@ -9,12 +9,8 @@ from emsa.sensitivity.sensitivity_model_base import SensitivityModelBase
 class TargetCalc:
     def __init__(self, model: SensitivityModelBase, targets, config: Dict[str, int]):
         self.model = model
-        self.max_targets = [
-            target.split("_")[0] for target in targets if target.endswith("max")
-        ]
-        self.sup_targets = [
-            target.split("_")[0] for target in targets if target.endswith("sup")
-        ]
+        self.max_targets = [target.split("_")[0] for target in targets if target.endswith("max")]
+        self.sup_targets = [target.split("_")[0] for target in targets if target.endswith("sup")]
 
         self.tlim_ini = config["tlim_ini"]
         self.tlim_final = config["tlim_final"]
@@ -91,16 +87,16 @@ class TargetCalc:
         }
 
     def get_batch_solution(
-            self, y0: torch.Tensor, t_eval: torch.Tensor, samples: torch.Tensor
+        self, y0: torch.Tensor, t_eval: torch.Tensor, samples: torch.Tensor
     ) -> torch.Tensor:
         sol = self.model.get_solution(y0=y0, t_eval=t_eval, lhs_table=samples).ys
         if self.model.test:
             # Check if population size changed
             if any(
-                    [
-                        abs(self.model.population.sum() - sol[i, -1, :].sum()) > 50
-                        for i in range(sol.shape[0])
-                    ]
+                [
+                    abs(self.model.population.sum() - sol[i, -1, :].sum()) > 50
+                    for i in range(sol.shape[0])
+                ]
             ):
                 raise Exception("Unexpected change in population size!")
         return sol
