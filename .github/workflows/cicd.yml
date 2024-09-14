@@ -52,8 +52,10 @@ jobs:
           coverage report
 
   bump:
-    if: github.ref == 'refs/heads/main'
+    if: ${{ github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip bump]') }}
     runs-on: ubuntu-latest
+    continue-on-error: true  # To enable deployment without bumping
+
     steps:
       - uses: actions/checkout@v3
 
@@ -71,10 +73,10 @@ jobs:
         run: sleep 30
 
   build:
-    if: github.ref == 'refs/heads/main'
     name: Build distribution 📦
-    needs: bump
     runs-on: ubuntu-latest
+    needs: bump
+    if: ${{ needs.bump.result != 'failure' && github.ref == 'refs/heads/main' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -106,7 +108,7 @@ jobs:
 
     environment:
       name: pypi
-      url: https://pypi.org/p/epimodel-sensitivity-test
+      url: https://pypi.org/p/emsa
     permissions:
       id-token: write
 
