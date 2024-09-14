@@ -52,9 +52,10 @@ jobs:
           coverage report
 
   bump:
-    if: ${{ github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip bump]') }}
+    if: |
+      github.ref == 'refs/heads/main' &&
+      !contains(github.event.head_commit.message, '[skip bump]')
     runs-on: ubuntu-latest
-    continue-on-error: true  # To enable deployment without bumping
 
     steps:
       - uses: actions/checkout@v3
@@ -76,7 +77,11 @@ jobs:
     name: Build distribution 📦
     runs-on: ubuntu-latest
     needs: bump
-    if: ${{ needs.bump.result != 'failure' && github.ref == 'refs/heads/main' }}
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      !failure() &&
+      !cancelled()
 
     steps:
     - uses: actions/checkout@v4
