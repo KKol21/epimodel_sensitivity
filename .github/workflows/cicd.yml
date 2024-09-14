@@ -54,7 +54,7 @@ jobs:
   bump:
     if: |
       github.ref == 'refs/heads/main' &&
-      !contains(github.event.head_commit.message, '[skip bump]')
+      contains(github.event.head_commit.message, '[bump]')
     runs-on: ubuntu-latest
 
     steps:
