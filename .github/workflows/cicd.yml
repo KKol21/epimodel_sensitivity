@@ -106,7 +106,9 @@ jobs:
         path: dist/
 
   publish-to-pypi:
-    if: github.ref == 'refs/heads/main'
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main'
     name: Publish Python 🐍 distribution 📦 to PyPI
     needs: build
     runs-on: ubuntu-latest
