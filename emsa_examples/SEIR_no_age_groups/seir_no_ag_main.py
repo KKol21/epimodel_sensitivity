@@ -21,7 +21,6 @@ def main():
 
     sim = SimulationSEIR(data)
     sim.model.visualize_transmission_graph()
-    sim.model.get_initial_values()
     sim.run_sampling()
     sim.calculate_all_prcc()
     sim.calculate_all_p_values()

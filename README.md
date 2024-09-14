@@ -5,7 +5,7 @@
 EMSA is a Python package designed to simplify and optimize sensitivity
 analysis for deterministic compartmental epidemic models. By leveraging CUDA for parallel processing, EMSA allows
 users to efficiently evaluate how different parameters affect model outcomes, making it a powerful tool for researchers
-and public health officials. Potential applications include outbreak forecasting, intervention planning, and 
+and public health officials. Potential applications include outbreak forecasting, intervention planning, and
 understanding the impact of varying disease parameters.
 
 Sensitivity analysis is performed using Latin Hypercube Sampling (LHS) for parameter sampling
@@ -40,7 +40,7 @@ EMSA requires the following inputs:
 - **Model Parameters:** Key values that define the dynamics of the epidemic model.
 - **Model Structure:** The compartments and transitions between them.
 - **Sampling Configuration:** Initial values of the simulation, sampled parameters and their ranges, etc.
-- **Age Vector:** Age distribution of the population.  
+- **Age Vector:** Age distribution of the population.
 - **Contact Matrix:** Interaction rates between different population groups.
 
 These inputs are processed through the following steps:
@@ -55,7 +55,7 @@ These inputs are processed through the following steps:
 Full documentation is available on [Read the Docs](https://epimodel-sensitivity.readthedocs.io/).
 
 Explore the `examples/` directory to see how EMSA can be applied to various epidemic models,
-or check out the 
+or check out the
 ["Introduction to EMSA"](https://colab.research.google.com/drive/1TYhzxvmqc2MLg1ie5vhzmW0UNq8CXJos?usp=sharing)
 Google Collaboratory notebook to get started. For general usage, try the
 ["EMSA template"](https://colab.research.google.com/drive/15qE-WYD_ZfVtYohcfkIaObj5kLQy-ro0?usp=sharing)
@@ -65,4 +65,4 @@ notebook!
 ## Contributing
 
 We welcome contributions to EMSA! To contribute, please open an issue first to discuss the proposed changes. Afterwards
-you can fork the repository, and create a merge request in order for your changes to be merged into the package. 
+you can fork the repository, and create a merge request in order for your changes to be merged into the package.

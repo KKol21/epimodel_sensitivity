@@ -1,8 +1,8 @@
 from emsa.sensitivity.sampler_base import SamplerBase
 
 
-class SamplerSEIR(SamplerBase):
-    def __init__(self, sim_object, variable_params):
+class GenericSampler(SamplerBase):
+    def __init__(self, sim_object, variable_params=None):
         super().__init__(sim_object, variable_params)
 
     def run(self):

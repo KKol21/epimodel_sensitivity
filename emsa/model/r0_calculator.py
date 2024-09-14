@@ -4,7 +4,7 @@ from emsa.model.matrix_generator import (
     generate_transition_matrix,
     get_susc_mul,
     get_inf_mul,
-    get_distr_mul,
+    get_param_mul,
 )
 from emsa.model.model_base import get_substates
 from typing import Dict, Any
@@ -109,7 +109,6 @@ class R0Generator:
         }
         trans_mtx = generate_transition_matrix(
             states_dict=inf_state_dict,
-            trans_data=self.trans_data,
             parameters=self.params,
             n_age=self.n_age,
             n_comp=self.n_states,
@@ -128,12 +127,12 @@ class R0Generator:
         idx = self._idx
 
         for trans in inf_trans:
-            source = end_state_dict[trans["source"]]
+            source = trans["source"]
             target = f"{trans['target']}_0"
-            param = self.params[trans["rate"]]
-            n_substates = self.state_data[trans["source"]].get("n_substates", 1)
-            distr = get_distr_mul(distr=trans.get("params"), params=self.params)
-            trans_mtx[idx(source), idx(target)] = param * distr * n_substates
+            param = self.params[self.state_data[source]["rate"]]
+            n_substates = self.state_data[source].get("n_substates", 1)
+            distr = get_param_mul(trans_params=trans.get("params"), params=self.params)
+            trans_mtx[idx(end_state_dict[source]), idx(target)] = param * distr * n_substates
         return torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:
