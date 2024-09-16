@@ -108,6 +108,7 @@ jobs:
   publish-to-pypi:
     if: |
       always() &&
+      needs.build.result == 'success' &&
       github.ref == 'refs/heads/main'
     name: Publish Python 🐍 distribution 📦 to PyPI
     needs: build
