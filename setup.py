@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="epimodel_sensitivity_test",
-    version="0.1.28",
+    name="emsa",
+    version="1.0.1",
     author="Kolos Kovács",
     author_email="kovkol21@gmail.com",
     description="Efficient sensitivity analysis and evaluation of epidemiological models",
