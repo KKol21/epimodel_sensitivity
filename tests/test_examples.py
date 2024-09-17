@@ -3,6 +3,7 @@ import pytest
 
 from emsa_examples.SEIHR_2_age_groups import seihr_2_ag_main
 from emsa_examples.SEIR_no_age_groups import seir_no_ag_main
+from emsa_examples.SIR_no_age_groups import sir_no_ag_main
 from emsa_examples.contact_sensitivity import contact_main
 from emsa_examples.vaccinated_sensitivity import vaccinated_main
 
@@ -11,8 +12,12 @@ from emsa_examples.vaccinated_sensitivity import vaccinated_main
 def setup():
     # Turn off interactive mode
     plt.ioff()
-    # Use Agg backend (does not require a display)
+    # Use Agg backend (to avoid getting flooded with figures)
     plt.switch_backend("Agg")
+
+
+def test_sir_no_ag_main():
+    sir_no_ag_main.main()
 
 
 def test_seir_no_ag_main():

@@ -2,8 +2,8 @@ import os
 
 import torch
 
-from emsa_examples.SEIR_no_age_groups.model_seir import SEIRModel
-from emsa_examples.SEIR_no_age_groups.sampler_seir import SamplerSEIR
+from emsa.generics.generic_model import GenericModel
+from emsa.generics.generic_sampler import GenericSampler
 from emsa.utils.dataloader import PROJECT_PATH
 from emsa.utils.simulation_base import SimulationBase
 
@@ -17,11 +17,13 @@ class SimulationSEIHR(SimulationBase):
             PROJECT_PATH,
             "emsa_examples/SEIHR_2_age_groups/configs/sampling_config.json",
         )
-        super().__init__(data=data, model_struct_path=model_struct_path, config_path=config_path)
+        super().__init__(
+            data=data, model_struct_path=model_struct_path, sampling_config_path=config_path
+        )
         self.folder_name += "/sens_data_SEIR_2_ag"
 
         # Initalize model
-        self.model = SEIRModel(sim_object=self)
+        self.model = GenericModel(sim_object=self)
 
     def run_sampling(self):
         """
@@ -40,5 +42,5 @@ class SimulationSEIHR(SimulationBase):
             beta = self.get_beta_from_r0(base_r0)
             self.params["beta"] = beta
 
-            param_generator = SamplerSEIR(sim_object=self, variable_params=variable_params)
+            param_generator = GenericSampler(sim_object=self, variable_params=variable_params)
             param_generator.run()

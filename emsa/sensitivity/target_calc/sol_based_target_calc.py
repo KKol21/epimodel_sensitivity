@@ -7,14 +7,14 @@ from emsa.sensitivity.sensitivity_model_base import SensitivityModelBase
 
 
 class TargetCalc:
-    def __init__(self, model: SensitivityModelBase, targets):
+    def __init__(self, model: SensitivityModelBase, targets, config: Dict[str, int]):
         self.model = model
-        self.max_targets = [
-            target.rsplit("_", 1)[0] for target in targets if target.endswith("max")
-        ]
-        self.sup_targets = [
-            target.rsplit("_", 1)[0] for target in targets if target.endswith("sup")
-        ]
+        self.max_targets = [target.split("_")[0] for target in targets if target.endswith("max")]
+        self.sup_targets = [target.split("_")[0] for target in targets if target.endswith("sup")]
+
+        self.tlim_ini = config["tlim_ini"]
+        self.tlim_final = config["tlim_final"]
+        self.tdelta = config["tdelta"]
 
         self.max_targets_finished: Dict[str, torch.Tensor] = {}
         self.sup_finished = None
@@ -42,11 +42,11 @@ class TargetCalc:
         }
         self.sup_finished = torch.BoolTensor(range(0, n_samples)).to(device)
 
-        t_limit = [0, 300]
+        t_limit = [0, self.tlim_ini]
         y0 = torch.stack([model.get_initial_values()] * n_samples).to(device)
         time_start = time()
         # Iterate until all the eqs are solved or we reach t=5000
-        while indices.numel() and t_limit[1] < 5000:
+        while indices.numel() and t_limit[1] < self.tlim_final:
             t_eval = torch.stack([torch.arange(*t_limit)] * len(indices)).to(self.model.device)
             ind_to_keep = []
             print(f"\n Time limit: {t_limit[1]} \n" f" Samples left: {indices.numel()} \n")
@@ -58,14 +58,13 @@ class TargetCalc:
                 curr_indices = indices[batch_slice]
                 batch = lhs_table[curr_indices]
 
-                # Solve for the current batch
                 self.model.generate_3D_matrices(
                     samples=batch
                 )  # Only relevant with automatic sampling
+                # Solve for the current batch
                 solutions = self.get_batch_solution(
                     y0=y0[curr_indices], t_eval=t_eval[batch_slice], samples=batch
                 )
-                # Save finished indices and outputs
                 self.save_finished_indices(solutions=solutions, indices=curr_indices)
                 self.save_output_for_finished(solutions=solutions, indices=curr_indices)
 
@@ -78,7 +77,7 @@ class TargetCalc:
                 ind_to_keep += batch_unfinished_indices
             # Adjust time period
             t_limit[0] = t_limit[1]
-            t_limit[1] += 50
+            t_limit[1] += self.tdelta
             # Remove indices of completed simulations
             indices = indices[torch.isin(indices, torch.Tensor(ind_to_keep).to(device))]
         print("\n Elapsed time: ", time() - time_start)
@@ -112,7 +111,8 @@ class TargetCalc:
             self.max_targets_finished[comp][indices] = self.max_stopping_condition(
                 comp=comp, last_diff=last_diff
             )
-        self.sup_finished[indices] = self.sup_stopping_condition(last_val)
+        if self.sup_targets:
+            self.sup_finished[indices] = self.sup_stopping_condition(last_val)
 
     def max_stopping_condition(self, comp, last_diff):
         comp_idx = self.model.idx(f"{comp}_0")
@@ -159,7 +159,7 @@ class TargetCalc:
 
     def get_true_finished(self) -> torch.BoolTensor:
         finished = self.finished
-        finished = finished | self.sup_finished
         for comp in self.max_targets:
             finished &= self.max_targets_finished[comp]
+        finished = finished | self.sup_finished
         return finished

@@ -1,28 +1,22 @@
 {
-  "variable_params": {
-    "r0": [
-      1.8,
-      3
-    ]
-  },
   "target_vars": [
     "i_max",
     "r_sup"
   ],
   "sampled_params_boundaries": {
+    "beta": [
+      0.1,
+      2
+    ],
     "gamma": [
       0.1,
-      0.33333
-    ],
-    "alpha": [
-      0.2,
-      0.5
+      0.9
     ]
   },
   "batch_size": 200,
-  "n_samples": 100,
+  "n_samples": 1000,
   "init_vals": {
-    "e": [
+    "i": [
       10
     ]
   }

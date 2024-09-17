@@ -3,10 +3,6 @@
     "s": {
       "type": "susceptible"
     },
-    "e": {
-      "type": "infected",
-      "rate": "alpha"
-    },
     "i": {
       "type": "infected",
       "rate": "gamma"
@@ -15,23 +11,19 @@
       "type": "recovered"
     }
   },
+  "tms_rules": [
+    {
+      "source": "s",
+      "target": "i",
+      "actors-params": {
+        "i": null
+      }
+    }
+  ],
   "trans_data": [
     {
       "source": "i",
       "target": "r"
-    },
-    {
-      "source": "e",
-      "target": "i"
-    }
-  ],
-  "tms_rules": [
-    {
-      "source": "s",
-      "target": "e",
-      "actors-params": {
-        "i": null
-      }
     }
   ]
 }

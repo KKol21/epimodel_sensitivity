@@ -35,7 +35,7 @@ class SimulationVaccinated(SimulationBase):
             PROJECT_PATH,
             "emsa_examples/vaccinated_sensitivity/configs/sampling_config.json",
         )
-        super().__init__(data, model_struct_path=struct_path, config_path=config_path)
+        super().__init__(data, model_struct_path=struct_path, sampling_config_path=config_path)
 
         self.folder_name = os.path.join(self.folder_name, "sens_data_vacc")
         self.model = VaccinatedModel(sim_object=self)

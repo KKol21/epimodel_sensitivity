@@ -14,14 +14,14 @@ from emsa.sensitivity.prcc import get_prcc_values
 
 
 class SimulationBase(ABC):
-    def __init__(self, data, model_struct_path, config_path):
+    def __init__(self, data, model_struct_path, sampling_config_path):
         # Load data
         self.data = data
         self.device = data.device
         self.model = None
 
         self._load_simulation_data()
-        self._load_config(config_path)
+        self._load_config(sampling_config_path)
         self._load_model_structure(model_struct_path)
 
     @property
@@ -49,12 +49,18 @@ class SimulationBase(ABC):
 
         self.variable_param_combinations = self.process_variable_params()
 
-        spb = config["sampled_params_boundaries"]
-        self.sampled_params_boundaries = spb
+        self.sampled_params_boundaries = config.get("sampled_params_boundaries") or {}
         self.n_samples = config["n_samples"]
         self.batch_size = config["batch_size"]
-        self.test = config["test"]
+
+        self.test = config.get("test") or True
         self.init_vals = config["init_vals"]
+
+        self.target_calc_config = {
+            "tlim_ini": config.get("tlim_ini") or 300,
+            "tlim_final": config.get("tlim_final") or 5000,
+            "tdelta": config.get("tdelta") or 50,
+        }
 
     def process_variable_params(self):
         vpd = self.variable_params_dict
@@ -98,9 +104,13 @@ class SimulationBase(ABC):
             func(filename)
 
     def get_filename(self, variable_params):
-        return "_".join(
-            [self.parse_param_name(variable_params, key) for key in variable_params.keys()]
-        ) if variable_params else ""
+        return (
+            "_".join(
+                [self.parse_param_name(variable_params, key) for key in variable_params.keys()]
+            )
+            if variable_params
+            else ""
+        )
 
     @staticmethod
     def parse_param_name(variable_params: dict, key):

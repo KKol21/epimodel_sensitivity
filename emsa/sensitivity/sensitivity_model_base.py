@@ -74,6 +74,9 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
 
     def generate_3D_matrices(self, samples: torch.Tensor):
         spb = self.sim_object.sampled_params_boundaries
+        # If the matrix containing the analysed parameter isn't part of the basic representation,
+        # the 3D version has to be generated manually. If a matrix isn't used, the desired effect
+        # needs to be incorporated somehow else in the odefun used in the solver.
         if spb is None:
             return
         # Params in B
@@ -83,7 +86,7 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
             if trans.get("params")
             for param in trans.get("params")
         ]
-        trans_rates = [trans["rate"] for trans in self.trans_data]
+        trans_rates = [self.state_data[trans["source"]]["rate"] for trans in self.trans_data]
         linear_params = [param for param in spb if param in trans_rates + trans_params]
         # Params in T_1
         susc_params = [

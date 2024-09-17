@@ -5,15 +5,23 @@
     },
     "e": {
       "type": "infected",
-      "n_substates": 3
+      "n_substates": 3,
+      "rate": "alpha"
     },
     "i": {
       "type": "infected",
-      "n_substates": 5
+      "n_substates": 5,
+      "rate": "gamma"
     },
-    "h": {},
-    "ic": {},
-    "icr": {},
+    "h": {
+      "rate": "gamma_h"
+    },
+    "ic": {
+      "rate": "gamma_c"
+    },
+    "icr": {
+      "rate": "gamma_cr"
+    },
     "r": {
       "type": "recovered"
     },
@@ -37,20 +45,17 @@
     {
       "source": "i",
       "target": "r",
-      "rate": "gamma",
       "params": [
         "h_"
       ]
     },
     {
       "source": "icr",
-      "target": "r",
-      "rate": "gamma_cr"
+      "target": "r"
     },
     {
       "source": "i",
       "target": "ic",
-      "rate": "gamma",
       "params": [
         "h",
         "xi"
@@ -59,20 +64,13 @@
     {
       "source": "ic",
       "target": "d",
-      "rate": "gamma_c",
       "params": [
         "mu"
       ]
     },
     {
-      "source": "s",
-      "target": "v",
-      "type": "vaccination"
-    },
-    {
       "source": "i",
       "target": "h",
-      "rate": "gamma",
       "params": [
         "h",
         "xi_"
@@ -80,21 +78,18 @@
     },
     {
       "source": "h",
-      "target": "r",
-      "rate": "gamma_h"
+      "target": "r"
     },
     {
       "source": "ic",
       "target": "icr",
-      "rate": "gamma_c",
       "params": [
         "mu_"
       ]
     },
     {
       "source": "e",
-      "target": "i",
-      "rate": "alpha"
+      "target": "i"
     }
   ]
 }
