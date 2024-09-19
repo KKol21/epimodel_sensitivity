@@ -2,7 +2,7 @@ General Usage
 =============
 
 Inputs
-------
+******
 
 No matter which use case you choose, EMSA will always need the following inputs:
 
@@ -12,71 +12,78 @@ No matter which use case you choose, EMSA will always need the following inputs:
 - **Contact Matrix:** Interaction rates between different population groups.
 
 In addition, if you are performing sensitivity analysis, you will need to provide a
-sampling configuration, which can include data such as the initial values of the simulation,
+**sampling configuration**, which can include data such as the initial values of the simulation,
 sampled parameters and their ranges, varying hyperparameters, and target variables.
 
+For further description see :doc:`Inputs <./inputs>`.
 
-Model Structure
+
+Passing the inputs to the package
+=================================
+
+Model data
+----------
+
+For the more 'static' part of the inputs (age vector, contact matrix, model parameters), we need to create an object,
+which will contain these as member variables, allowing us to . For this, you can either:
+
+
+1. Create a class called e.g. "DataLoader", inheriting from :ref:`DataLoaderBase <dataloader_section>`.
+
+Example: DataLoader class with separate methods for loading different parts of model data
+
+    .. code-block:: python
+
+       import torch
+       from emsa.utils.dataloader import DataLoaderBase
+
+       # Custom DataLoader class
+       class DataLoader(DataLoaderBase):
+           def __init__(self):
+               super().__init__()
+
+               # Load age data, model parameters, and contact matrix
+               self._get_age_data()
+               self._get_model_parameters_data()
+               self._get_contact_mtx()
+
+               # Set the computation device to CPU
+               self.device = "cpu"
+
+           # Implementation of the methods need to load and preprocess the data
+
+2. Load them into a dictionary and create a SimpleNamespace instance from that dictionary
+
+Example: Model data namespace for an SIR model without age groups
+
+    .. code-block:: python
+
+       import torch
+       from types import SimpleNamespace
+
+       # Model parameters
+       params = {"gamma": 0.2, "alpha": 0.3}
+
+       # Contact matrix (1D tensor for simplicity)
+       contact_data = torch.tensor(1)
+
+       # Age distribution (single age group with population size of 10,000)
+       age_data = torch.tensor([10000])
+
+       # Combine data into a namespace
+       data = SimpleNamespace(
+           **{
+               "params": params,           # Model parameters
+               "cm": contact_data,         # Contact matrix
+               "age_data": age_data,       # Age distribution
+               "n_age": 1,                 # Number of age groups
+               "device": "cpu"             # Computation device (CPU)
+           }
+       )
+
+
+The first option is more pythonic, however if the data loading logic is simple, option 2 can suffice.
+
+
+Model structure
 ---------------
-
-To define the compartments and transitions in your epidemic model, you can refer to the
-:doc:`Model structure templates <./model_struct>`. These templates will guide you through how to create
-states, transitions, and transmission rules for your model configuration.
-
-Model Parameters
-----------------
-
-Model parameters represent the rates or probabilities that govern transitions between states in the epidemic model.
-They are provided as key-value pairs where the key represents the parameter name and the value is the corresponding
-numeric value (e.g., a rate of recovery, transmission probability, etc.).
-
-Example of model parameters in JSON format:
-
-.. code-block:: json
-
-   {
-     "gamma": 0.2,   // Recovery rate
-     "alpha": 0.3    // Incubation rate
-   }
-
-- **gamma**: This parameter could represent the recovery rate for an infected individual transitioning to the recovered state.
-- **alpha**: This parameter might represent the rate at which individuals leave the incubation stage and become infectious.
-
-
-Age Vector
------------
-
-This is a 1D array (or list) representing the population distribution across different age groups.
-Each entry in the vector corresponds to the proportion or number of individuals in a specific age group.
-
-
-Contact matrix
---------------
-
-The contact matrix is a 2D array representing interaction rates between different age groups. Symmetrization is
-performed to ensure that the interaction rates between age groups are more consistent by averaging the elements
-of the matrix with the elements of its transpose, and then adjusting for population size. This step ensures that
-the contact matrix reflects realistic interaction rates between age groups, especially when the sizes of those age
-groups differ significantly.
-
-Symmetrization Process:
-***********************
-
-1. **Averaging with Transpose**: The contact matrix is symmetrized by averaging the element at position `C[i, j]`
-with the corresponding element at `C[j, i]`. This step ensures that the interaction rate between age group `i` and
-age group `j` is consistent from both perspectives.
-
-2. **Adjustment by Population Size**: After averaging, each row of the matrix is normalized by dividing it by
-the size of the age group corresponding to that row. This step accounts for differences in the population sizes
-of each age group.
-
-After these operations, the following will hold:
-
-   .. math::
-
-     C'[i, j] = \frac{C[i, j] N_i + C[i, j] N_j}{2N_i},
-
-where the element `C[i, j]` represents the *average number of interactions* a member of age
-group `i` has with members of age group `j`. Likewise, `C[j, i]` represents the average number of interactions
-a member of age group `j` has with members of age group `i`.
-
