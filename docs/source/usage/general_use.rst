@@ -42,7 +42,6 @@ Example of model parameters in JSON format:
 - **gamma**: This parameter could represent the recovery rate for an infected individual transitioning to the recovered state.
 - **alpha**: This parameter might represent the rate at which individuals leave the incubation stage and become infectious.
 
-You can define as many parameters as required by your model.
 
 Age Vector
 -----------
