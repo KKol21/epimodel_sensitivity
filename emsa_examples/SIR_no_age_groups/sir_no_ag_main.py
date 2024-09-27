@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import torch
 
-from emsa.generics.simulation_generic import SimulationGeneric
+from emsa.generics import SimulationGeneric
 from emsa.utils.dataloader import PROJECT_PATH
 
 
@@ -30,7 +30,9 @@ def main():
     )
 
     sim = SimulationGeneric(
-        data=data, model_struct_path=model_struct_path, sampling_config_path=sampling_config_path
+        data=data,
+        model_struct_path=model_struct_path,
+        sampling_config_path=sampling_config_path
     )
     sim.run_sampling()
     sim.calculate_all_prcc()
