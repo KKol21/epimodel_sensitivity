@@ -6,10 +6,6 @@ from matplotlib import pyplot as plt, colors
 from matplotlib.cm import ScalarMappable
 from matplotlib.tri import Triangulation
 
-from emsa_examples.contact_sensitivity.sensitivity_model_contact import (
-    get_rectangular_matrix_from_upper_triu,
-)
-
 
 def visualize_transmission_graph(state_data, trans_data, tms_rules):
     plt.figure(figsize=(10, 8))
@@ -40,7 +36,8 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
     def get_edge_label(trans):
         if trans.get("params"):
             distr_muls = [
-                distr if distr[-1] != "_" else f"(1 - {distr[:-1]})" for distr in trans["params"]
+                distr if distr[-1] != "_" else f"(1 - {distr[:-1]})"
+                for distr in trans["params"]
             ]
             return " * ".join(distr_muls + [state_data[trans["source"]]["rate"]])
         return state_data[trans["source"]].get("rate", "")
@@ -94,7 +91,9 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
 
     # Draw dashed edges and label
     dashed_edge_labels = {(edge[0], edge[1]): edge[2] for edge in tms_edges}
-    nx.draw_networkx_edges(G, pos, edgelist=tms_edges + tms_edges_unpar, width=1, style=":")
+    nx.draw_networkx_edges(
+        G, pos, edgelist=tms_edges + tms_edges_unpar, width=1, style=":"
+    )
     nx.draw_networkx_edge_labels(G, pos, edge_labels=dashed_edge_labels, font_size=7)
 
     plt.title("Transmission Graph")
@@ -160,7 +159,9 @@ def generate_tornado_plot(
         plt.title(title)
     if verbose and title is None:
         plt.title(f"PRCC values for {filename}")
-    plot_path = os.path.join(sim_object.folder_name, f"prcc_plots/prcc_tornado_plot_{filename}.pdf")
+    plot_path = os.path.join(
+        sim_object.folder_name, f"prcc_plots/prcc_tornado_plot_{filename}.pdf"
+    )
     plt.savefig(plot_path, format="pdf", bbox_inches="tight")
     plt.show()
 
@@ -194,12 +195,17 @@ def construct_triangle_grid(n_age):
         for i in range(n_age)
     ]
     triang = [
-        Triangulation(x, y, triangles, mask=None) for triangles in [triangles_prcc, triangles_p]
+        Triangulation(x, y, triangles, mask=None)
+        for triangles in [triangles_prcc, triangles_p]
     ]
     return triang
 
 
 def get_prcc_and_p_values(n_age, prcc_vector, p_values):
+    from emsa_examples.contact_sensitivity.sensitivity_model_contact import (
+        get_rectangular_matrix_from_upper_triu,
+    )
+
     prcc_mtx = np.array(
         get_rectangular_matrix_from_upper_triu(rvector=prcc_vector, matrix_size=n_age)
     )
@@ -210,7 +216,9 @@ def get_prcc_and_p_values(n_age, prcc_vector, p_values):
     return values
 
 
-def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save, plot_title):
+def plot_prcc_p_values_as_heatmap(
+    n_age, prcc_vector, p_values, filename_to_save, plot_title
+):
     p_value_cmap = colors.ListedColormap(["Orange", "red", "darkred"])
     cmaps = ["Greens", p_value_cmap]
 
@@ -222,13 +230,17 @@ def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save
 
     fig, ax = plt.subplots()
     triang = construct_triangle_grid(n_age=n_age)
-    mask = get_prcc_and_p_values(n_age=n_age, prcc_vector=prcc_vector, p_values=p_values)
+    mask = get_prcc_and_p_values(
+        n_age=n_age, prcc_vector=prcc_vector, p_values=p_values
+    )
     images = [
         ax.tripcolor(t, np.ravel(val), cmap=cmap, ec="white")
         for t, val, cmap in zip(triang, mask, cmaps)
     ]
 
-    fig.colorbar(images[0], ax=ax, shrink=0.7, aspect=20 * 0.7, label="PRCC")  # for the prcc values
+    fig.colorbar(
+        images[0], ax=ax, shrink=0.7, aspect=20 * 0.7, label="PRCC"
+    )  # for the prcc values
     fig.colorbar(
         images[1], ax=ax, shrink=0.7, aspect=20 * 0.7, pad=0.1, label="p-value"
     )  # p-values

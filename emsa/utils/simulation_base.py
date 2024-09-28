@@ -7,10 +7,8 @@ import numpy as np
 from scipy import stats as ss
 from torch import atleast_2d
 
-from emsa.utils.dataloader import PROJECT_PATH
-from emsa.model.r0_calculator import R0Generator
-from emsa.utils.plotter import generate_tornado_plot
-from emsa.sensitivity.prcc import get_prcc_values
+from .dataloader import PROJECT_PATH
+from .plotter import generate_tornado_plot
 
 
 class SimulationBase(ABC):
@@ -71,7 +69,10 @@ class SimulationBase(ABC):
 
         flattened_vpd = [self.flatten_dict(vpd, key) for key in vpd.keys()]
         variable_params_product = list(itertools.product(*flattened_vpd))
-        return [self.merge_dicts(variable_params) for variable_params in variable_params_product]
+        return [
+            self.merge_dicts(variable_params)
+            for variable_params in variable_params_product
+        ]
 
     def flatten_dict(self, d, key):
         if isinstance(d[key], dict):
@@ -106,7 +107,10 @@ class SimulationBase(ABC):
     def get_filename(self, variable_params):
         return (
             "_".join(
-                [self.parse_param_name(variable_params, key) for key in variable_params.keys()]
+                [
+                    self.parse_param_name(variable_params, key)
+                    for key in variable_params.keys()
+                ]
             )
             if variable_params
             else ""
@@ -121,6 +125,8 @@ class SimulationBase(ABC):
             return f"{key}-{variable_params[key]}"
 
     def get_beta_from_r0(self, base_r0):
+        from emsa.model import R0Generator
+
         r0generator = R0Generator(self.data, self.model_struct)
         if isinstance(base_r0, tuple):
             base_r0 = base_r0[0]
@@ -139,10 +145,14 @@ class SimulationBase(ABC):
         the PRCC values. The PRCC values are saved in separate files in the 'sens_data_"folder_name"/prcc' directory.
 
         """
+        from emsa.sensitivity import get_prcc_values
+
         folder_name = self.folder_name
         os.makedirs(os.path.join(folder_name, "prcc"), exist_ok=True)
         lhs_path = os.path.join(folder_name, f"lhs/lhs_{filename}.csv")
-        output_path = os.path.join(folder_name, f"simulations/simulations_{filename}_{target}.csv")
+        output_path = os.path.join(
+            folder_name, f"simulations/simulations_{filename}_{target}.csv"
+        )
         lhs_table = np.loadtxt(lhs_path)
         sim_output = np.loadtxt(output_path)
 
@@ -164,7 +174,9 @@ class SimulationBase(ABC):
         p_values = 2 * (1 - ss.t.cdf(x=abs(t), df=dof))
         p_values = np.atleast_1d(p_values)
 
-        p_values_path = os.path.join(self.folder_name, f"p_values/p_values_{filename}.csv")
+        p_values_path = os.path.join(
+            self.folder_name, f"p_values/p_values_{filename}.csv"
+        )
         np.savetxt(fname=p_values_path, X=p_values)
 
         is_first = True
@@ -197,7 +209,9 @@ class SimulationBase(ABC):
             pci = get_params_col_idx(sampled_params_boundaries=spb)
             for param, idx in pci.items():
                 param_label = (
-                    get_aged_param_labels(param) if isinstance(spb[param][0], list) else param
+                    get_aged_param_labels(param)
+                    if isinstance(spb[param][0], list)
+                    else param
                 )
                 if isinstance(param_label, list):
                     labels += param_label
@@ -210,7 +224,9 @@ class SimulationBase(ABC):
         prcc_file = os.path.join(self.folder_name, f"prcc/prcc_{filename}.csv")
         prcc = np.loadtxt(fname=prcc_file)
 
-        p_values_file = os.path.join(self.folder_name, f"p_values/p_values_{filename}.csv")
+        p_values_file = os.path.join(
+            self.folder_name, f"p_values/p_values_{filename}.csv"
+        )
         p_val = np.loadtxt(fname=p_values_file)
 
         generate_tornado_plot(

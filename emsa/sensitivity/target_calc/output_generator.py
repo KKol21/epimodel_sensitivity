@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 
-from emsa.sensitivity.target_calc.r0_calculator_lhs import R0Calculator
-from emsa.sensitivity.target_calc.sol_based_target_calc import TargetCalc
+from .r0_calculator_lhs import R0CalculatorLHS
+from .sol_based_target_calc import TargetCalc
 from typing import Dict
 
 from emsa.utils.simulation_base import SimulationBase
@@ -25,11 +25,12 @@ class OutputGenerator:
                 targets=targets,
                 config=self.sim_object.target_calc_config,
             )
-            sol_based_output = target_calc.get_output(lhs_table=lhs, batch_size=self.batch_size)
+            sol_based_output = target_calc.get_output(
+                lhs_table=lhs, batch_size=self.batch_size
+            )
             output.update(sol_based_output)
 
         if "r0" in targets:
-            r0calc = R0Calculator(self.sim_object)
-            r0s = r0calc.get_output(lhs_table=lhs)
-            output["r0"] = r0s
+            r0calc = R0CalculatorLHS(self.sim_object)
+            output["r0"] = r0calc.get_output(lhs_table=lhs)
         return output

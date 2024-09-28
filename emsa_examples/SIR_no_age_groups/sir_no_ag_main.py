@@ -33,7 +33,7 @@ def main():
         data=data,
         model_struct_path=model_struct_path,
         sampling_config_path=sampling_config_path,
-        folder_name='sens_data_SIR_no_ag'
+        folder_name="sens_data_SIR_no_ag",
     )
     sim.run_sampling()
     sim.calculate_all_prcc()

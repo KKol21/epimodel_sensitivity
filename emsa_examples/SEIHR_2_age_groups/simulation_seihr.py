@@ -18,7 +18,9 @@ class SimulationSEIHR(SimulationBase):
             "emsa_examples/SEIHR_2_age_groups/configs/sampling_config.json",
         )
         super().__init__(
-            data=data, model_struct_path=model_struct_path, sampling_config_path=config_path
+            data=data,
+            model_struct_path=model_struct_path,
+            sampling_config_path=config_path,
         )
         self.folder_name += "/sens_data_SEIR_2_ag"
 
@@ -36,11 +38,15 @@ class SimulationSEIHR(SimulationBase):
 
         """
         for variable_params in self.variable_param_combinations:
-            susc = torch.Tensor(list(variable_params["susc"].values())[0], device=self.device)
+            susc = torch.Tensor(
+                list(variable_params["susc"].values())[0], device=self.device
+            )
             self.params.update({"susc": susc})
             base_r0 = variable_params["r0"]
             beta = self.get_beta_from_r0(base_r0)
             self.params["beta"] = beta
 
-            param_generator = GenericSampler(sim_object=self, variable_params=variable_params)
+            param_generator = GenericSampler(
+                sim_object=self, variable_params=variable_params
+            )
             param_generator.run()

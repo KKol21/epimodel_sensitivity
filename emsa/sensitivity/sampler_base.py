@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 import numpy as np
 from smt.sampling_methods import LHS
 
-from emsa.sensitivity.sensitivity_model_base import get_params_col_idx
-from emsa.sensitivity.target_calc.output_generator import OutputGenerator
+from .sensitivity_model_base import get_params_col_idx
+from .target_calc import OutputGenerator
 
 
 class SamplerBase(ABC):
@@ -65,7 +65,9 @@ class SamplerBase(ABC):
             )
 
     def _get_general_param_bounds(self):
-        return np.array([bound for bound in self.lhs_bounds_dict.values() if len(bound.shape) == 1])
+        return np.array(
+            [bound for bound in self.lhs_bounds_dict.values() if len(bound.shape) == 1]
+        )
 
     def _get_age_spec_param_bounds(self):
         age_spec_bounds = [

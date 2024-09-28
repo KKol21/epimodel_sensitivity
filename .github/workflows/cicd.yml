@@ -26,8 +26,12 @@ jobs:
       - name: Lint with flake8
         run: flake8 . --ignore E501,W503,F401
 
-      - name: Format with black
-        run: black emsa emsa_examples tests --line-length=100
+      - name: Lint with black
+        run: black --check emsa emsa_examples tests --line-length=100
+
+      - name: Notify failure if linting fails
+        if: failure()
+        run: echo "Linting failed. Please run 'black .' and fix flake8 errors locally, then push the changes."
 
   test:
     if: github.ref == 'refs/heads/dev'

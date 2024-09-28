@@ -1,9 +1,9 @@
 import os
 
-from emsa.generics.generic_model import GenericModel
-from emsa.generics.generic_sampler import GenericSampler
+from emsa.generics import GenericModel
+from emsa.generics import GenericSampler
 from emsa.utils.dataloader import PROJECT_PATH
-from emsa.utils.simulation_base import SimulationBase
+from emsa.utils import SimulationBase
 
 
 class SimulationGeneric(SimulationBase):

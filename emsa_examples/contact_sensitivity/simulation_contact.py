@@ -34,7 +34,9 @@ class SimulationContact(SimulationBase):
             PROJECT_PATH, "emsa_examples/contact_sensitivity/configs/model_struct.json"
         )
         super().__init__(
-            data=data, model_struct_path=model_struct_path, sampling_config_path=config_path
+            data=data,
+            model_struct_path=model_struct_path,
+            sampling_config_path=config_path,
         )
 
         self.upper_tri_size = int((self.n_age + 1) * self.n_age / 2)
@@ -62,7 +64,9 @@ class SimulationContact(SimulationBase):
             self.model = ContactModel(sim_object=self, base_r0=base_r0)
             self.model.initialize_matrices()
 
-            param_generator = SamplerContact(sim_object=self, variable_params=variable_params)
+            param_generator = SamplerContact(
+                sim_object=self, variable_params=variable_params
+            )
             param_generator.run()
 
     def plot_prcc_and_p_values(self, filename):

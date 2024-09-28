@@ -1,12 +1,12 @@
 import torch
 from tqdm import tqdm
 
-from emsa.model.r0_calculator import R0Generator
-from emsa.sensitivity.sensitivity_model_base import get_params_col_idx, get_lhs_dict
-from emsa.utils.simulation_base import SimulationBase
+from emsa.model import R0Generator
+from emsa.sensitivity import get_params_col_idx, get_lhs_dict
+from emsa.utils import SimulationBase
 
 
-class R0Calculator:
+class R0CalculatorLHS:
     """
     R0Calculator class for calculating the basic reproduction number (R0) for epidemic models.
 
@@ -38,7 +38,9 @@ class R0Calculator:
                 "Sampled parameters boundaries not specified, automatic R0 generation isn't possible"
             )
         pci = get_params_col_idx(sampled_params_boundaries=spb)
-        lhs_dict = get_lhs_dict(params=spb.keys(), lhs_table=lhs_table, params_col_idx=pci)
+        lhs_dict = get_lhs_dict(
+            params=spb.keys(), lhs_table=lhs_table, params_col_idx=pci
+        )
         r0gen = R0Generator(sim_object.data, sim_object.model_struct)
         r0s = []
         print(f"Calculating R0 for {n_samples} samples")

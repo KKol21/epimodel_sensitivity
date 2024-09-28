@@ -15,7 +15,9 @@ class EpidemicModel(EpidemicModelBase):
         """
         super().__init__(data, model_struct)
 
-    def get_solution(self, y0: torch.Tensor, t_eval: torch.Tensor, **kwargs) -> to.Solution:
+    def get_solution(
+        self, y0: torch.Tensor, t_eval: torch.Tensor, **kwargs
+    ) -> to.Solution:
         """
         Get the solution of the ODE using the initial conditions and evaluation times,
         using the ODE solver in EpidemicModelBase .
@@ -28,6 +30,7 @@ class EpidemicModel(EpidemicModelBase):
         Returns:
             torch.Tensor: Solution of the ODE.
         """
+        self.initialize_matrices()
         odefun = kwargs.get("odefun", self.basic_ode)
         return self.get_sol_from_ode(
             y0=torch.atleast_2d(y0),

@@ -2,7 +2,7 @@ from typing import List, Any, Dict, Callable
 
 import torch
 
-from emsa.model.model_base import get_substates, EpidemicModelBase
+from . import get_substates, EpidemicModelBase
 
 
 def generate_transition_block(transition_param: float, n_states: int) -> torch.Tensor:
@@ -260,10 +260,13 @@ class MatrixGenerator:
         # Fill in the rest of the first-order terms
         idx = self.idx
         end_state = {
-            state: f"{state}_{data.get('n_substates', 1) - 1}" for state, data in state_data.items()
+            state: f"{state}_{data.get('n_substates', 1) - 1}"
+            for state, data in state_data.items()
         }
         # Iterate over the linear transitions
-        for trans in [trans for trans in trans_data if trans.get("type", "basic") == "basic"]:
+        for trans in [
+            trans for trans in trans_data if trans.get("type", "basic") == "basic"
+        ]:
             source = trans["source"]
             trans_param = ps[state_data[source]["rate"]]
             # Multiply the transition parameter by the parameter(s) given

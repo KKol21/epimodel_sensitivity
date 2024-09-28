@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from emsa.utils.dataloader import PROJECT_PATH
-from emsa.model.epidemic_model import EpidemicModel
+from emsa.model import EpidemicModel
+from emsa.utils import PROJECT_PATH
 from emsa_examples.utils.dataloader_16_ag import DataLoader
 from tests.mock_models import (
     MockModelBase,
@@ -21,7 +21,9 @@ from tests.mock_models import (
 SEIR_CONFIG_PATH = "emsa_examples/SEIR_no_age_groups/configs/model_struct.json"
 SEIHR_CONFIG_PATH = "emsa_examples/SEIHR_2_age_groups/configs/model_struct.json"
 CONTACT_CONFIG_PATH = "emsa_examples/contact_sensitivity/configs/model_struct.json"
-VACCINATED_CONFIG_PATH = "emsa_examples/vaccinated_sensitivity/configs/model_struct.json"
+VACCINATED_CONFIG_PATH = (
+    "emsa_examples/vaccinated_sensitivity/configs/model_struct.json"
+)
 
 
 def load_model_struct(rel_path):
