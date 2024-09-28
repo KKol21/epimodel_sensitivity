@@ -1,8 +1,8 @@
-General Usage
-=============
+Preparing Model Inputs for EMSA
+###############################
 
-Inputs
-******
+Input types
+===========
 
 No matter which use case you choose, EMSA will always need the following inputs:
 
@@ -15,21 +15,28 @@ In addition, if you are performing sensitivity analysis, you will need to provid
 **sampling configuration**, which can include data such as the initial values of the simulation,
 sampled parameters and their ranges, varying hyperparameters, and target variables.
 
-For further description see :doc:`Inputs <./inputs>`.
+For further description see :doc:`Format of the inputs <./inputs>`.
+
+.. toctree::
+
 
 
 Passing the inputs to the package
 =================================
 
+Now we will take a look at how we can load the inputs and pass them to EMSA.
+
+
 Model data
 ----------
 
 For the more 'static' part of the inputs (age vector, contact matrix, model parameters), we need to create an object,
-which will contain these as member variables, allowing us to . For this, you can either:
+which will contain these as member variables, allowing us to access them using the dot operator.
 
+To achieve this, you can either:
 
-1. Create a class called e.g. "DataLoader", inheriting from :ref:`DataLoaderBase <dataloader_section>`.
-
+1. Create a class called e.g. "DataLoader", inheriting from :ref:`DataLoaderBase <dataloader_section>`
+******************************************************************************************************
 Example: DataLoader class with separate methods for loading different parts of model data
 
     .. code-block:: python
@@ -50,11 +57,12 @@ Example: DataLoader class with separate methods for loading different parts of m
                # Set the computation device to CPU
                self.device = "cpu"
 
-           # Implementation of the methods need to load and preprocess the data
+           # Implementation of the methods needed to load and preprocess the data
 
-2. Load them into a dictionary and create a SimpleNamespace instance from that dictionary
 
-Example: Model data namespace for an SIR model without age groups
+2. Load them into a dictionary and create a SimpleNamespace object
+******************************************************************
+
 
     .. code-block:: python
 
@@ -84,6 +92,47 @@ Example: Model data namespace for an SIR model without age groups
 
 The first option is more pythonic, however if the data loading logic is simple, option 2 can suffice.
 
+Model structure and parameters
+------------------------------
 
-Model structure
----------------
+These inputs should be handled differently depending on the use case:
+
+
+Case 1: Model evaluation
+************************
+
+When using EMSA for evaluating a certain model, we only need a dictionary containing
+the model structure, and a data object with the attributes described in the previous section.
+
+    .. code-block:: python
+
+        from emsa.model.epidemic_model import EpidemicModel
+
+
+        data = ...
+        model_struct = ...
+
+        model = EpidemicModel(data=data, model_struct=model_struct)
+
+
+Case 2: Sensitivity analysis
+****************************
+
+When performing sensitivity analysis, the model structure and the sampling configuration should be saved inside json
+files, and the path to those json files shall be passed along to the Simulation object.
+
+
+.. code-block:: python
+
+
+    from emsa.generics.simulation_generic import SimulationGeneric
+
+
+    data = ...
+    model_struct_path = '...'
+    sampling_config_path = '...'
+    sim = SimulationGeneric(
+        data=data,
+        model_struct_path=model_struct_path,
+        sampling_config_path=sampling_config_path
+    )
