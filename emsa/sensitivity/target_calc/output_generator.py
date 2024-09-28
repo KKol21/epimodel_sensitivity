@@ -25,9 +25,7 @@ class OutputGenerator:
                 targets=targets,
                 config=self.sim_object.target_calc_config,
             )
-            sol_based_output = target_calc.get_output(
-                lhs_table=lhs, batch_size=self.batch_size
-            )
+            sol_based_output = target_calc.get_output(lhs_table=lhs, batch_size=self.batch_size)
             output.update(sol_based_output)
 
         if "r0" in targets:

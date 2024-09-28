@@ -65,9 +65,7 @@ class SamplerBase(ABC):
             )
 
     def _get_general_param_bounds(self):
-        return np.array(
-            [bound for bound in self.lhs_bounds_dict.values() if len(bound.shape) == 1]
-        )
+        return np.array([bound for bound in self.lhs_bounds_dict.values() if len(bound.shape) == 1])
 
     def _get_age_spec_param_bounds(self):
         age_spec_bounds = [

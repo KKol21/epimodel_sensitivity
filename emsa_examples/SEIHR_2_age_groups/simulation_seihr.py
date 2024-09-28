@@ -38,15 +38,11 @@ class SimulationSEIHR(SimulationBase):
 
         """
         for variable_params in self.variable_param_combinations:
-            susc = torch.Tensor(
-                list(variable_params["susc"].values())[0], device=self.device
-            )
+            susc = torch.Tensor(list(variable_params["susc"].values())[0], device=self.device)
             self.params.update({"susc": susc})
             base_r0 = variable_params["r0"]
             beta = self.get_beta_from_r0(base_r0)
             self.params["beta"] = beta
 
-            param_generator = GenericSampler(
-                sim_object=self, variable_params=variable_params
-            )
+            param_generator = GenericSampler(sim_object=self, variable_params=variable_params)
             param_generator.run()

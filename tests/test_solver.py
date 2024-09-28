@@ -21,9 +21,7 @@ from tests.mock_models import (
 SEIR_CONFIG_PATH = "emsa_examples/SEIR_no_age_groups/configs/model_struct.json"
 SEIHR_CONFIG_PATH = "emsa_examples/SEIHR_2_age_groups/configs/model_struct.json"
 CONTACT_CONFIG_PATH = "emsa_examples/contact_sensitivity/configs/model_struct.json"
-VACCINATED_CONFIG_PATH = (
-    "emsa_examples/vaccinated_sensitivity/configs/model_struct.json"
-)
+VACCINATED_CONFIG_PATH = "emsa_examples/vaccinated_sensitivity/configs/model_struct.json"
 
 
 def load_model_struct(rel_path):

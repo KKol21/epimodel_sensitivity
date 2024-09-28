@@ -30,18 +30,14 @@ class R0Generator:
         self.n_age = len(data.age_data.flatten())
         self.n_states = len(self.inf_states)
         self.params = data.params
-        self.i = {
-            self.inf_states[index]: index for index in torch.arange(0, self.n_states)
-        }
+        self.i = {self.inf_states[index]: index for index in torch.arange(0, self.n_states)}
         self.s_mtx = self.n_age * self.n_states
 
         self._get_e()
 
     def isinf_state(self, state):
         return state in [
-            state
-            for state, data in self.state_data.items()
-            if data.get("type") == "infected"
+            state for state, data in self.state_data.items() if data.get("type") == "infected"
         ]
 
     def get_infected_states(self):
@@ -92,11 +88,7 @@ class R0Generator:
         f = self._get_f(cm)
         v_inv = self._get_v()
         ngm_large = v_inv @ f
-        ngm = (
-            self.e @ ngm_large @ self.e.T
-            if self.n_age > 1
-            else self.e @ ngm_large @ self.e
-        )
+        ngm = self.e @ ngm_large @ self.e.T if self.n_age > 1 else self.e @ ngm_large @ self.e
 
         if self.n_age == 1:
             dom_eig_val = torch.abs(ngm)
@@ -140,9 +132,7 @@ class R0Generator:
             param = self.params[self.state_data[source]["rate"]]
             n_substates = self.state_data[source].get("n_substates", 1)
             distr = get_param_mul(trans_params=trans.get("params"), params=self.params)
-            trans_mtx[idx(end_state_dict[source]), idx(target)] = (
-                param * distr * n_substates
-            )
+            trans_mtx[idx(end_state_dict[source]), idx(target)] = param * distr * n_substates
         return torch.linalg.inv(trans_mtx)
 
     def _get_f(self, contact_mtx: torch.Tensor) -> torch.Tensor:

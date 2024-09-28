@@ -86,31 +86,21 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
             if trans.get("params")
             for param in trans.get("params")
         ]
-        trans_rates = [
-            self.state_data[trans["source"]]["rate"] for trans in self.trans_data
-        ]
+        trans_rates = [self.state_data[trans["source"]]["rate"] for trans in self.trans_data]
         linear_params = [param for param in spb if param in trans_rates + trans_params]
         # Params in T_1
         susc_params = [
-            param
-            for tms_rule in self.tms_rules
-            for param in tms_rule.get("susc_params", [])
+            param for tms_rule in self.tms_rules for param in tms_rule.get("susc_params", [])
         ]
         transmission_params_left = [param for param in spb if param in susc_params]
         # Params in T_2
         actor_params = [
-            param
-            for tms_rule in self.tms_rules
-            for param in tms_rule["actors-params"].values()
+            param for tms_rule in self.tms_rules for param in tms_rule["actors-params"].values()
         ]
         inf_params = actor_params + [
-            param
-            for tms_rule in self.tms_rules
-            for param in tms_rule.get("infection_params", [])
+            param for tms_rule in self.tms_rules for param in tms_rule.get("infection_params", [])
         ]
-        transmission_params_right = [
-            param for param in spb if param in inf_params + ["beta"]
-        ]
+        transmission_params_right = [param for param in spb if param in inf_params + ["beta"]]
 
         pci = get_params_col_idx(sampled_params_boundaries=spb)
 

@@ -35,9 +35,7 @@ class SimulationVaccinated(SimulationBase):
             PROJECT_PATH,
             "emsa_examples/vaccinated_sensitivity/configs/sampling_config.json",
         )
-        super().__init__(
-            data, model_struct_path=struct_path, sampling_config_path=config_path
-        )
+        super().__init__(data, model_struct_path=struct_path, sampling_config_path=config_path)
 
         self.folder_name = os.path.join(self.folder_name, "sens_data_vacc")
         self.model = VaccinatedModel(sim_object=self)
@@ -57,9 +55,7 @@ class SimulationVaccinated(SimulationBase):
             beta = self.get_beta_from_r0(base_r0)
             self.params.update({"beta": beta})
 
-            param_generator = SamplerVaccinated(
-                sim_object=self, variable_params=variable_params
-            )
+            param_generator = SamplerVaccinated(sim_object=self, variable_params=variable_params)
             param_generator.run()
 
     def plot_prcc_tornado_with_p_values(self):

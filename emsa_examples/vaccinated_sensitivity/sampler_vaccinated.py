@@ -11,9 +11,7 @@ class SamplerVaccinated(SamplerBase):
         self.lhs_bounds_dict = {
             "vaccines": np.array(
                 [
-                    np.zeros(
-                        sim_object.n_age
-                    ),  # Ratio of daily vaccines given to each age group
+                    np.zeros(sim_object.n_age),  # Ratio of daily vaccines given to each age group
                     np.ones(sim_object.n_age),
                 ]
             )

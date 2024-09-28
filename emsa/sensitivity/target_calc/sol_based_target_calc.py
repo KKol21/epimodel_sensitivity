@@ -9,12 +9,8 @@ from emsa.sensitivity.sensitivity_model_base import SensitivityModelBase
 class TargetCalc:
     def __init__(self, model: SensitivityModelBase, targets, config: Dict[str, int]):
         self.model = model
-        self.max_targets = [
-            target.split("_")[0] for target in targets if target.endswith("max")
-        ]
-        self.sup_targets = [
-            target.split("_")[0] for target in targets if target.endswith("sup")
-        ]
+        self.max_targets = [target.split("_")[0] for target in targets if target.endswith("max")]
+        self.sup_targets = [target.split("_")[0] for target in targets if target.endswith("sup")]
 
         self.tlim_ini = config["tlim_ini"]
         self.tlim_final = config["tlim_final"]
@@ -26,16 +22,12 @@ class TargetCalc:
         self.sup_targets_output: Dict[str, torch.Tensor] = {}
         self.finished = None
 
-    def get_output(
-        self, lhs_table: torch.Tensor, batch_size: int
-    ) -> Dict[str, torch.Tensor]:
+    def get_output(self, lhs_table: torch.Tensor, batch_size: int) -> Dict[str, torch.Tensor]:
         device = self.model.device
         model = self.model
 
         n_samples = lhs_table.shape[0]
-        self.finished = torch.zeros(
-            n_samples, dtype=torch.bool, device=self.model.device
-        )
+        self.finished = torch.zeros(n_samples, dtype=torch.bool, device=self.model.device)
 
         indices = torch.IntTensor(range(0, n_samples)).to(device)
 
@@ -46,8 +38,7 @@ class TargetCalc:
             comp: torch.zeros(n_samples, device=device) for comp in self.sup_targets
         }
         self.max_targets_finished = {
-            comp: torch.BoolTensor(range(0, n_samples)).to(device)
-            for comp in self.max_targets
+            comp: torch.BoolTensor(range(0, n_samples)).to(device) for comp in self.max_targets
         }
         self.sup_finished = torch.BoolTensor(range(0, n_samples)).to(device)
 
@@ -56,13 +47,9 @@ class TargetCalc:
         time_start = time()
         # Iterate until all the eqs are solved or we reach t=5000
         while indices.numel() and t_limit[1] < self.tlim_final:
-            t_eval = torch.stack([torch.arange(*t_limit)] * len(indices)).to(
-                self.model.device
-            )
+            t_eval = torch.stack([torch.arange(*t_limit)] * len(indices)).to(self.model.device)
             ind_to_keep = []
-            print(
-                f"\n Time limit: {t_limit[1]} \n" f" Samples left: {indices.numel()} \n"
-            )
+            print(f"\n Time limit: {t_limit[1]} \n" f" Samples left: {indices.numel()} \n")
             for batch_idx in range(0, len(indices), batch_size):
                 print(
                     f" Solving batch {int(batch_idx / batch_size) + 1} / {math.ceil(len(indices) / batch_size)}"
@@ -95,14 +82,8 @@ class TargetCalc:
             indices = indices[torch.isin(indices, torch.Tensor(ind_to_keep).to(device))]
         print("\n Elapsed time: ", time() - time_start)
         return {
-            **{
-                f"{comp}_max": output
-                for comp, output in self.max_targets_output.items()
-            },
-            **{
-                f"{comp}_sup": output
-                for comp, output in self.sup_targets_output.items()
-            },
+            **{f"{comp}_max": output for comp, output in self.max_targets_output.items()},
+            **{f"{comp}_sup": output for comp, output in self.sup_targets_output.items()},
         }
 
     def get_batch_solution(
@@ -167,9 +148,7 @@ class TargetCalc:
     def max_metric(self, solutions, comp) -> torch.Tensor:
         comp_max = torch.stack(
             [
-                torch.max(
-                    self.model.aggregate_by_age(solution=solutions[i, :, :], comp=comp)
-                )
+                torch.max(self.model.aggregate_by_age(solution=solutions[i, :, :], comp=comp))
                 for i in range(solutions.shape[0])
             ]
         ).to(self.model.device)

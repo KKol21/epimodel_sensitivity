@@ -107,9 +107,7 @@ class EpidemicModelBase(ABC):
         step_method = to.Euler(term=term)
         step_size_controller = to.FixedStepController()
         solver = to.AutoDiffAdjoint(step_method, step_size_controller)
-        problem = to.InitialValueProblem(
-            y0=torch.atleast_2d(y0), t_eval=torch.atleast_2d(t_eval)
-        )
+        problem = to.InitialValueProblem(y0=torch.atleast_2d(y0), t_eval=torch.atleast_2d(t_eval))
         dt0 = torch.full((y0.shape[0],), 1).to(self.device)
 
         return solver.solve(problem, dt0=dt0)
@@ -138,9 +136,7 @@ class EpidemicModelBase(ABC):
         """
         iv = torch.zeros(self.n_eq).to(self.device)
         susc_state = [
-            state
-            for state, data in self.state_data.items()
-            if data.get("type") == "susceptible"
+            state for state, data in self.state_data.items() if data.get("type") == "susceptible"
         ][0] + "_0"
         iv[self.idx(susc_state)] = self.population
         for comp, comp_iv in init_val_dict.items():

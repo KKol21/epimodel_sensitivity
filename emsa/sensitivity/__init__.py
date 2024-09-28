@@ -5,4 +5,3 @@ from .sensitivity_model_base import (
     get_params_col_idx,
 )
 from .sampler_base import SamplerBase
-

@@ -6,9 +6,7 @@ class MockContactModel(MockModelBase):
         super().__init__(data)
 
     def odefun(self, t, y):
-        (s, l1, l2, ip, ia1, ia2, ia3, is1, is2, is3, h, ic, icr, r, d) = (
-            self.get_comp_vals(y)
-        )
+        (s, l1, l2, ip, ia1, ia2, ia3, is1, is2, is3, h, ic, icr, r, d) = self.get_comp_vals(y)
         ps = self.ps
 
         # Compute transmission

@@ -64,9 +64,7 @@ class SimulationContact(SimulationBase):
             self.model = ContactModel(sim_object=self, base_r0=base_r0)
             self.model.initialize_matrices()
 
-            param_generator = SamplerContact(
-                sim_object=self, variable_params=variable_params
-            )
+            param_generator = SamplerContact(sim_object=self, variable_params=variable_params)
             param_generator.run()
 
     def plot_prcc_and_p_values(self, filename):

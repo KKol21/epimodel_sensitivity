@@ -32,11 +32,7 @@ class MockVaccinatedModel(MockModelBase):
         dic = ps["h"] * ps["xi"] * 5 * ps["gamma"] * i5 - ps["gamma_c"] * ic
         dicr = (1 - ps["mu"]) * ps["gamma_c"] * ic - ps["gamma_cr"] * icr
 
-        dr = (
-            5 * ps["gamma"] * (1 - ps["h"]) * i5
-            + ps["gamma_h"] * h
-            + ps["gamma_cr"] * icr
-        )
+        dr = 5 * ps["gamma"] * (1 - ps["h"]) * i5 + ps["gamma_h"] * h + ps["gamma_cr"] * icr
         dd = ps["mu"] * ps["gamma_c"] * ic
         dv = s / (s + r) * ps["daily_vacc"] * self.vaccination(t)
 

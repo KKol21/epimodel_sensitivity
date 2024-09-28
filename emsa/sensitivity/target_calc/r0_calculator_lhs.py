@@ -38,9 +38,7 @@ class R0CalculatorLHS:
                 "Sampled parameters boundaries not specified, automatic R0 generation isn't possible"
             )
         pci = get_params_col_idx(sampled_params_boundaries=spb)
-        lhs_dict = get_lhs_dict(
-            params=spb.keys(), lhs_table=lhs_table, params_col_idx=pci
-        )
+        lhs_dict = get_lhs_dict(params=spb.keys(), lhs_table=lhs_table, params_col_idx=pci)
         r0gen = R0Generator(sim_object.data, sim_object.model_struct)
         r0s = []
         print(f"Calculating R0 for {n_samples} samples")

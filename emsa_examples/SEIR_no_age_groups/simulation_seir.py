@@ -29,7 +29,5 @@ class SimulationSEIR(SimulationBase):
             beta = self.get_beta_from_r0(base_r0)
             self.params["beta"] = beta
 
-            param_generator = GenericSampler(
-                sim_object=self, variable_params=variable_params
-            )
+            param_generator = GenericSampler(sim_object=self, variable_params=variable_params)
             param_generator.run()
