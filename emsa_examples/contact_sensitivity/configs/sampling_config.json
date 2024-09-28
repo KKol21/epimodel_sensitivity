@@ -7,11 +7,10 @@
   },
   "target_vars": [
     "d_sup",
-    "r_sup",
-    "r0"
+    "r_sup"
   ],
-  "batch_size": 1000,
-  "n_samples": 2000,
+  "batch_size": 100,
+  "n_samples": 200,
   "init_vals": {
     "l": [
       0,

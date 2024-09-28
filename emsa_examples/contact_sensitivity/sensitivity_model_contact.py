@@ -59,17 +59,12 @@ class ContactModel(SensitivityModelBase):
             ratio_mtx = get_ratio_matrix_from_upper_triu(
                 rvector=sample, age_vector=self.sim_object.population.flatten()
             )
-            contact_sim[idx, :, :] = (1 - ratio_mtx) * self.sim_object.cm
+            contact_sim[idx, :, :] = ratio_mtx * self.sim_object.cm
         return contact_sim
 
 
 def get_ratio_matrix_from_upper_triu(rvector, age_vector):
-    return (
-        get_rectangular_matrix_from_upper_triu(
-            rvector=rvector, matrix_size=age_vector.size(0)
-        )
-        / age_vector
-    )
+    return get_rectangular_matrix_from_upper_triu(rvector=rvector, matrix_size=age_vector.size(0))
 
 
 def get_rectangular_matrix_from_upper_triu(rvector, matrix_size):
