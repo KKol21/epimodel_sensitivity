@@ -1,5 +1,4 @@
 import os
-import time
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -96,8 +95,6 @@ class SamplerBase(ABC):
         sim_outputs = output_generator.get_output(lhs_table=lhs_table)
         if sim_outputs == {}:
             raise Exception("No output was produced by OutputGenerator instance!")
-
-        time.sleep(0.3)
 
         # Save samples, target values
         filename = self.sim_object.get_filename(self.variable_params)
