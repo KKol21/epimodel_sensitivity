@@ -38,7 +38,7 @@ class SamplerBase(ABC):
         self.n_samples = sim_object.n_samples
         self.batch_size = sim_object.batch_size
 
-        if (spb := self.sampled_params_boundaries) is not None:
+        if spb := self.sampled_params_boundaries:
             self.lhs_bounds_dict = {param: np.array(spb[param]) for param in spb}
             self.pci = get_params_col_idx(spb)
 
