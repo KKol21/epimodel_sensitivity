@@ -53,7 +53,7 @@ class SimulationBase(ABC):
         self.n_samples = config["n_samples"]
         self.batch_size = config["batch_size"]
 
-        self.test = config.get("test") or True
+        self.test = config.get("is_static") or True
         self.init_vals = config["init_vals"]
 
         self.target_calc_config = {
