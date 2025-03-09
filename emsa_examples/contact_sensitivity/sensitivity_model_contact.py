@@ -55,11 +55,13 @@ class ContactModel(SensitivityModelBase):
         contact_sim = torch.zeros(
             (lhs_table.shape[0], self.sim_object.n_age, self.sim_object.n_age)
         )
+        cm_home = self.data.contact_matrices["home"]
+        cm_diff = self.data.cm - cm_home
         for idx, sample in enumerate(lhs_table):
             ratio_mtx = get_ratio_matrix_from_upper_triu(
                 rvector=sample, age_vector=self.sim_object.population.flatten()
             )
-            contact_sim[idx, :, :] = ratio_mtx * self.sim_object.cm
+            contact_sim[idx, :, :] = cm_home + (1 - ratio_mtx) * cm_diff
         return contact_sim
 
 
