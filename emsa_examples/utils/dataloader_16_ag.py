@@ -63,5 +63,5 @@ class DataLoader(DataLoaderBase):
             wb.unload_sheet(0)
             datalist = self.transform_matrix(datalist)
             contact_matrices.update({cm_type: datalist})
-        self.cm = sum([cm for cm in contact_matrices.values()])
+        self.cm = sum(contact_matrices.values())
         self.contact_matrices = contact_matrices

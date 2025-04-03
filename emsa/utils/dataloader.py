@@ -1,8 +1,30 @@
 from abc import ABC
+from os.path import dirname, realpath, join
+from os import makedirs
+
+import requests
 import torch
-from os.path import dirname, realpath
 
 PROJECT_PATH = dirname(dirname(dirname(realpath(__file__))))
+
+
+def download_contact_matrix(country, path=join(PROJECT_PATH, "contact_data")):
+    BASE_URL = "https://github.com/KKol21/prem_contact_matrices/raw/main/"
+
+    makedirs(path, exist_ok=True)
+
+    file_url = f"{BASE_URL}{country}.xlsx"
+    file_path = join(path, f"{country}.xlsx")
+
+    response = requests.get(file_url, stream=True)
+    if response.status_code == 200:
+        with open(file_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=1024):
+                file.write(chunk)
+        print(f"Downloaded {country}.xlsx successfully to {file_path}")
+        return file_path
+    else:
+        print(f"Failed to download {country}.xlsx. HTTP Status Code: {response.status_code}")
 
 
 class DataLoaderBase(ABC):
