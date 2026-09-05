@@ -74,7 +74,7 @@ This work is licensed under a
 [cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
 
 # Acknowledgements
-PanSim was developed as part of the National Laboratory for Health Security project, supported by the National Research, Development and Innovation Office, Hungary , grants RRF-2.3.1-21-2022-00006
+EMSA was developed as part of the National Laboratory for Health Security project, supported by the National Research, Development and Innovation Office, Hungary , grants RRF-2.3.1-21-2022-00006
 ![Szecsenyi](logo.jpg)
 
 
