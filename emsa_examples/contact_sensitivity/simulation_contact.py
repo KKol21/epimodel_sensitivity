@@ -4,7 +4,8 @@ import numpy as np
 
 from emsa_examples.contact_sensitivity.sampler_contact import SamplerContact
 from emsa_examples.contact_sensitivity.sensitivity_model_contact import ContactModel
-from emsa.utils.plotter import plot_prcc_p_values_as_heatmap
+from emsa.utils.plotter import plot_prcc_p_values_as_heatmap, format_result_label
+from emsa.utils.results import load_result
 from emsa.utils.simulation_base import SimulationBase, PROJECT_PATH
 
 
@@ -57,7 +58,7 @@ class SimulationContact(SimulationBase):
         for variable_params in self.variable_param_combinations:
             # Get beta based on base reproduction number
             base_r0 = variable_params["r0"]
-            beta = self.get_beta_from_r0(base_r0=base_r0)
+            beta = self.model.get_beta_from_r0(base_r0=base_r0, susceptibles=self.susceptibles)
             self.params.update({"beta": beta})
 
             # Generate matrices used in model representation
@@ -79,13 +80,13 @@ class SimulationContact(SimulationBase):
 
         """
         os.makedirs(f"{self.folder_name}/prcc_p_val_plots", exist_ok=True)
-        prcc = np.loadtxt(fname=f"{self.folder_name}/prcc/prcc_{filename}.csv")
-        p_val = np.loadtxt(fname=f"{self.folder_name}/p_values/p_values_{filename}.csv")
+        prcc = load_result(self.folder_name, "prcc", filename)
+        p_val = load_result(self.folder_name, "p_values", filename)
 
         plot_prcc_p_values_as_heatmap(
             n_age=self.n_age,
             prcc_vector=prcc,
             p_values=p_val,
             filename_to_save=f"{self.folder_name}/prcc_p_val_plots/{filename}.pdf",
-            plot_title=f"Contact sensitivity values ({filename})",
+            plot_title=f"Contact sensitivity: {format_result_label(filename)}",
         )

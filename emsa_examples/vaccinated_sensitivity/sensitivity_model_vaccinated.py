@@ -26,7 +26,7 @@ class VaccinatedModel(SensitivityModelBase):
         self.V_1 = self._get_V_1_from_lhs(lhs_table=lhs_table)
         self.V_2 = self.matrix_generator.get_V_2()
         odefun = self.get_vaccinated_ode(curr_batch_size=lhs_table.shape[0])
-        return self.get_sol_from_ode(y0, t_eval, odefun)
+        return self.get_sol_from_ode(y0, t_eval, odefun, solver_config=kwargs.get("solver_config"))
 
     def get_vaccinated_ode(self, curr_batch_size):
         V_1_mul = self.get_mul_method(self.V_1)
@@ -37,11 +37,11 @@ class VaccinatedModel(SensitivityModelBase):
 
         def odefun(t, y):
             base_result = basic_ode(t, y)
-            if self.ps["t_start"] <= t[0] < self.ps["t_start"] + self.ps["T"]:
-                v_div[:, div_idx] = (y @ self.V_2)[:, div_idx]
-                vacc = torch.div(V_1_mul(y, self.V_1), v_div)
-                return base_result + vacc
-            return base_result
+            active = (t >= self.ps["t_start"]) & (t < self.ps["t_start"] + self.ps["T"])
+            v_div[:, div_idx] = (y @ self.V_2)[:, div_idx]
+            safe_div = torch.where(v_div != 0, v_div, torch.ones_like(v_div))
+            vacc = torch.div(V_1_mul(y, self.V_1), safe_div)
+            return base_result + vacc * active[:, None]
 
         return odefun
 

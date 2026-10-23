@@ -22,26 +22,17 @@ class SimulationSEIHR(SimulationBase):
             model_struct_path=model_struct_path,
             sampling_config_path=config_path,
         )
-        self.folder_name += "/sens_data_SEIR_2_ag"
+        self.folder_name = os.path.join(self.folder_name, "sens_data_SEIHR_2_ag")
 
-        # Initalize model
         self.model = GenericModel(sim_object=self)
 
     def run_sampling(self):
-        """
-
-        Runs the sampling-based simulation with different parameter combinations.
-
-        This method generates Latin Hypercube Sampling (LHS) samples of vaccine distributions for each parameter
-        combination. The LHS tables and simulation results are saved in separate files in the 'sens_data_contact/lhs'
-        and 'sens_data_contact/simulations' directories, respectively.
-
-        """
+        """Sample SEIHR parameters for each R0 and susceptibility configuration."""
         for variable_params in self.variable_param_combinations:
-            susc = torch.Tensor(list(variable_params["susc"].values())[0], device=self.device)
+            susc = torch.tensor(next(iter(variable_params["susc"].values())), device=self.device)
             self.params.update({"susc": susc})
             base_r0 = variable_params["r0"]
-            beta = self.get_beta_from_r0(base_r0)
+            beta = self.model.get_beta_from_r0(base_r0=base_r0, susceptibles=self.susceptibles)
             self.params["beta"] = beta
 
             param_generator = GenericSampler(sim_object=self, variable_params=variable_params)

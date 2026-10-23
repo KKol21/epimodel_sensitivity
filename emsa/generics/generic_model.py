@@ -7,4 +7,4 @@ class GenericModel(SensitivityModelBase):
 
     def get_solution(self, y0, t_eval, **kwargs):
         odefun = self.get_basic_ode()
-        return self.get_sol_from_ode(y0, t_eval, odefun)
+        return self.get_sol_from_ode(y0, t_eval, odefun, solver_config=kwargs.get("solver_config"))

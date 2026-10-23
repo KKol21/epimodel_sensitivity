@@ -1,3 +1,14 @@
 venv
 .idea
 sens_data
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+build/
+dist/
+*.egg-info/
+.venv/
+.coverage
+htmlcov/
+/PACKAGE_REVIEW.md

@@ -1,3 +1,5 @@
+from copy import copy
+
 import torch
 from tqdm import tqdm
 
@@ -39,7 +41,10 @@ class R0CalculatorLHS:
             )
         pci = get_params_col_idx(sampled_params_boundaries=spb)
         lhs_dict = get_lhs_dict(params=spb.keys(), lhs_table=lhs_table, params_col_idx=pci)
-        r0gen = R0Generator(sim_object.data, sim_object.model_struct)
+        sample_data = copy(sim_object.data)
+        sample_data.params = sim_object.params.copy()
+        r0gen = R0Generator(sample_data, sim_object.model_struct)
+        susceptibles = sim_object.susceptibles.flatten()
         r0s = []
         print(f"Calculating R0 for {n_samples} samples")
         for idx in tqdm(range(n_samples)):
@@ -49,9 +54,9 @@ class R0CalculatorLHS:
                 for key, value in lhs_dict.items()
             }
             r0gen.params.update(row_dict)
-            r0 = sim_object.params["beta"] * r0gen.get_eig_val(
+            r0 = r0gen.params["beta"] * r0gen.get_eig_val(
                 contact_mtx=sim_object.cm,
-                susceptibles=sim_object.susceptibles.reshape(1, -1),
+                susceptibles=susceptibles,
                 population=sim_object.population,
             )
             r0s.append(r0)

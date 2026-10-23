@@ -7,4 +7,4 @@ class GenericSampler(SamplerBase):
 
     def run(self):
         lhs_table = self.get_lhs_table()
-        self.get_sim_output(lhs_table)
+        return self.get_sim_output(lhs_table)

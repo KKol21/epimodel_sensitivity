@@ -1,5 +1,5 @@
 # EMSA - Epidemic Modeling, Sensitivity Analysis
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![License](https://img.shields.io/badge/license-MIT-blue)
+[![CI](https://github.com/KKol21/epimodel_sensitivity/actions/workflows/cicd.yml/badge.svg?branch=dev)](https://github.com/KKol21/epimodel_sensitivity/actions/workflows/cicd.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ## Introduction
 EMSA is a Python package designed to simplify and optimize sensitivity
@@ -18,11 +18,12 @@ enabling parallel evaluation of the sampled parameter configurations.
 
 If you get stuck at some point, you think the library should have an example on _x_ or you
 want to suggest some other type of improvement, please open an [issue on
-github](https://github.com/KKol21/epimodel-sensitivity/issues/new).
+github](https://github.com/KKol21/epimodel_sensitivity/issues/new).
 
 
 ## Installation
-You can install EMSA via pip:
+The current dependency set supports **Python 3.10 and 3.11**. You can install the
+published package via pip:
 
 ```sh
 pip install emsa
@@ -31,9 +32,30 @@ pip install emsa
 Or clone the development version using git:
 
 ```sh
-git clone https://github.com/KKol21/epimodel-sensitivity
+git clone https://github.com/KKol21/epimodel_sensitivity
 ```
 
+From the repository root, install the development checkout with:
+
+```sh
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
+```
+
+For CPU execution on Linux or Windows, install the CPU PyTorch wheel first, then
+install EMSA and the extras you need:
+
+```sh
+python -m pip install --upgrade pip
+python -m pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -e ".[dev,notebook]"
+```
+
+The CPU index and version follow the [PyTorch installation instructions](https://pytorch.org/get-started/previous-versions/#v231).
+Runtime dependencies live in `pyproject.toml`; `requirements.txt` installs the package,
+`requirements-dev.txt` adds development tools, and `docs/requirements.txt` adds the
+documentation tools. Run these requirements commands from the repository root.
+See [RELEASING.md](RELEASING.md) for building, clean-install checks and tag-based releases.
 
 ## Pipeline Overview
 EMSA requires the following inputs:
@@ -54,30 +76,47 @@ These inputs are processed through the following steps:
 ## Documentation and Examples
 Full documentation is available on [Read the Docs](https://epimodel-sensitivity.readthedocs.io/).
 
-Explore the `examples/` directory to see how EMSA can be applied to various epidemic models,
+Start with the executable [package walkthrough](notebooks/EMSA_demo.ipynb). It defines a
+SIR model, plots a trajectory, checks numerical convergence, and runs reproducible
+LHS/PRCC analysis entirely in memory. From a checkout, install with
+`python -m pip install -e ".[notebook]"`, then open the notebook in JupyterLab or your IDE
+and select that Python environment.
+
+`SimulationGeneric(data, model_struct, sampling_config, save_results=False).run()`
+accepts dictionaries and returns a mapping of scenario names to NumPy arrays under
+`samples`, `targets`, `prcc`, `p_values`, plus `metadata`. JSON paths and the existing
+sampling/analysis methods remain supported. Set `output_dir` and `save_results=True`
+to export CSV files and metadata. Use a separate output directory per concurrent run;
+reusing a directory replaces files with the same scenario names.
+Empty scenario names add no extra separator: for example, `prcc_i_max.csv` and
+`metadata.json`. Existing CSV exports with the older extra underscore remain readable.
+
+Sampling configuration accepts `seed` and `solver`. Solver settings include `method`
+(`euler` or `dopri5`), `step_size`, `rtol`, `atol`, `max_steps` and
+`negative_tolerance`. Euler retains the original one-day default; choose a smaller
+step for faster dynamics. For Dopri5, `step_size` caps the adaptive step size.
+Solver failures, non-finite states and populations below `-negative_tolerance`
+(default `1e-4` people) raise errors. These checks do not replace convergence checks
+for your model, particularly for time-dependent interventions.
+
+Explore the `emsa_examples/` directory to see how EMSA can be applied to various epidemic models,
 or check out the
 ["Introduction to EMSA"](https://colab.research.google.com/drive/1TYhzxvmqc2MLg1ie5vhzmW0UNq8CXJos?usp=sharing)
 Google Collaboratory notebook to get started. For general usage, try the
 ["EMSA template"](https://colab.research.google.com/drive/15qE-WYD_ZfVtYohcfkIaObj5kLQy-ro0?usp=sharing)
 notebook!
 
-# License
-Shield: [![CC BY 4.0][cc-by-shield]][cc-by]
+## License
 
-This work is licensed under a
-[Creative Commons Attribution 4.0 International License][cc-by].
+EMSA is licensed under the [MIT license](LICENSE).
 
-[![CC BY 4.0][cc-by-image]][cc-by]
+## Acknowledgements
 
-[cc-by]: http://creativecommons.org/licenses/by/4.0/
-[cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
-[cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
+EMSA was developed as part of the National Laboratory for Health Security project,
+supported by the National Research, Development and Innovation Office, Hungary,
+grant RRF-2.3.1-21-2022-00006.
 
-# Acknowledgements
-EMSA was developed as part of the National Laboratory for Health Security project, supported by the National Research, Development and Innovation Office, Hungary , grants RRF-2.3.1-21-2022-00006
-![Szecsenyi](logo.jpg)
-
-
+![Szecsenyi](https://raw.githubusercontent.com/KKol21/epimodel_sensitivity/main/logo.jpg)
 
 ## Contributing
 

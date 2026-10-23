@@ -5,7 +5,7 @@ from .model_base import EpidemicModelBase
 
 
 class EpidemicModel(EpidemicModelBase):
-    def __init__(self, data, model_struct: dict):
+    def __init__(self, data, model_struct: dict, solver_config=None):
         """
         Initialize the EpidemicModel, a class for running single simulations of a given model.
 
@@ -13,7 +13,7 @@ class EpidemicModel(EpidemicModelBase):
             data: Model data.
             model_struct (dict): The structure of the model.
         """
-        super().__init__(data, model_struct)
+        super().__init__(data, model_struct, solver_config=solver_config)
 
     def get_solution(self, y0: torch.Tensor, t_eval: torch.Tensor, **kwargs) -> to.Solution:
         """
@@ -34,6 +34,7 @@ class EpidemicModel(EpidemicModelBase):
             y0=torch.atleast_2d(y0),
             t_eval=torch.atleast_2d(t_eval),
             odefun=odefun,
+            solver_config=kwargs.get("solver_config"),
         )
 
     def basic_ode(self, t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:

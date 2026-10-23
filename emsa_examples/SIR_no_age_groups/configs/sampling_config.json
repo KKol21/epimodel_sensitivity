@@ -19,5 +19,9 @@
     "i": [
       10
     ]
+  },
+  "solver": {
+    "method": "euler",
+    "step_size": 0.25
   }
 }

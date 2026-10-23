@@ -6,7 +6,7 @@ from emsa_examples.SEIHR_2_age_groups.simulation_seihr import SimulationSEIHR
 
 
 def main():
-    params = {"gamma": 0.2, "beta": 0.2, "alpha": 0.3, "eta": [0.5, 0.5]}
+    params = {"gamma": 0.2, "gamma_h": 0.1, "beta": 0.2, "alpha": 0.3, "eta": [0.5, 0.5]}
     for key, value in params.items():
         params[key] = torch.tensor(value)
     contact_data = torch.tensor([[1, 1], [2, 1]])

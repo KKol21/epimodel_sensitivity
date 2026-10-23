@@ -1,4 +1,5 @@
 import os
+import json
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -6,6 +7,7 @@ from smt.sampling_methods import LHS
 
 from .sensitivity_model_base import get_params_col_idx
 from .target_calc import OutputGenerator
+from emsa.utils.results import join_result_name
 
 
 class SamplerBase(ABC):
@@ -48,42 +50,17 @@ class SamplerBase(ABC):
 
     def get_lhs_table(self):
         bounds = self._get_lhs_bounds()
-        sampling = LHS(xlimits=bounds)
+        if not np.isfinite(bounds).all() or np.any(bounds[:, 0] >= bounds[:, 1]):
+            raise ValueError("Sampling bounds must be finite with lower < upper")
+        sampling = LHS(xlimits=bounds, random_state=getattr(self.sim_object, "seed", None))
         return sampling(self.n_samples)
 
     def _get_lhs_bounds(self):
-        general_bounds = self._get_general_param_bounds()
-        age_spec_bounds = self._get_age_spec_param_bounds()
-
-        if age_spec_bounds.shape[0] == 0:
-            return general_bounds
-        elif general_bounds.shape[0] == 0:
-            return age_spec_bounds
-        else:
-            return self._concat_bounds(
-                non_spec_bounds=general_bounds, age_spec_bounds=age_spec_bounds
-            )
-
-    def _get_general_param_bounds(self):
-        return np.array([bound for bound in self.lhs_bounds_dict.values() if len(bound.shape) == 1])
-
-    def _get_age_spec_param_bounds(self):
-        age_spec_bounds = [
-            bounds
-            for param in self.lhs_bounds_dict
-            for bounds in self.lhs_bounds_dict[param]
-            if len(self.lhs_bounds_dict[param].shape) == 2
-        ]
-        return np.array(age_spec_bounds).T
-
-    def _concat_bounds(self, non_spec_bounds: np.ndarray, age_spec_bounds: np.ndarray):
-        n_cols = non_spec_bounds.shape[0] + age_spec_bounds.shape[1]
-        bounds = np.zeros(shape=(2, n_cols))
-        bounds_dict = self.lhs_bounds_dict
-        for param, idx in self.pci.items():
-            param_bounds = bounds_dict[param]
-            bounds[:, idx] = param_bounds
-        return bounds.T
+        # Each scalar or age-specific value gets its own [lower, upper] row.
+        return np.concatenate(
+            [np.atleast_2d(bounds.T) for bounds in self.lhs_bounds_dict.values()],
+            axis=0,
+        )
 
     def get_sim_output(self, lhs_table: np.ndarray):
         print(
@@ -96,27 +73,45 @@ class SamplerBase(ABC):
         if sim_outputs == {}:
             raise Exception("No output was produced by OutputGenerator instance!")
 
-        # Save samples, target values
         filename = self.sim_object.get_filename(self.variable_params)
+        result = {
+            "samples": np.array(lhs_table, copy=True),
+            "targets": {
+                name: values.detach().cpu().numpy().copy() for name, values in sim_outputs.items()
+            },
+            "metadata": self.sim_object.get_run_metadata(self.variable_params),
+        }
+        self.sim_object.results[filename] = result
+        if not self.sim_object.save_results:
+            return result
+        # Retain the existing file layout for callers using the file-based API.
         self.save_output(output=lhs_table, output_name="lhs", filename=filename)
         for target_var, sim_output in sim_outputs.items():
             self.save_output(
                 output=sim_output.cpu(),
                 output_name="simulations",
-                filename=filename + f"_{target_var}",
+                filename=join_result_name(filename, target_var),
             )
+        with open(
+            os.path.join(
+                self.sim_object.folder_name, join_result_name("metadata", filename) + ".json"
+            ),
+            "w",
+        ) as f:
+            json.dump(result["metadata"], f, indent=2)
+        return result
 
     def save_output(self, output, output_name: str, filename: str):
         folder_name = self.sim_object.folder_name
         os.makedirs(folder_name, exist_ok=True)
 
         dirname = os.path.join(folder_name, output_name)
-        filename = os.path.join(dirname, f"{output_name}_{filename}")
+        filename = os.path.join(dirname, join_result_name(output_name, filename))
         os.makedirs(dirname, exist_ok=True)
         np.savetxt(fname=filename + ".csv", X=output)
 
 
-def create_latin_table(n_of_samples, lower, upper):
+def create_latin_table(n_of_samples, lower, upper, seed=None):
     bounds = np.array([lower, upper]).T
-    sampling = LHS(xlimits=bounds)
+    sampling = LHS(xlimits=bounds, random_state=seed)
     return sampling(n_of_samples)
