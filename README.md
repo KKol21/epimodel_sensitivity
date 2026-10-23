@@ -106,6 +106,17 @@ Google Collaboratory notebook to get started. For general usage, try the
 ["EMSA template"](https://colab.research.google.com/drive/15qE-WYD_ZfVtYohcfkIaObj5kLQy-ro0?usp=sharing)
 notebook!
 
+## License
+
+EMSA is licensed under the [MIT license](LICENSE).
+
+## Acknowledgements
+
+EMSA was developed as part of the National Laboratory for Health Security project,
+supported by the National Research, Development and Innovation Office, Hungary,
+grant RRF-2.3.1-21-2022-00006.
+
+![Szecsenyi](https://raw.githubusercontent.com/KKol21/epimodel_sensitivity/main/logo.jpg)
 
 ## Contributing
 

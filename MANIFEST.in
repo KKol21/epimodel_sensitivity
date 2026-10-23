@@ -1,4 +1,4 @@
-include LICENSE README.md RELEASING.md pyproject.toml pytest.ini
+include LICENSE README.md RELEASING.md pyproject.toml pytest.ini logo.jpg
 include requirements*.txt .bumpversion.cfg
 exclude PACKAGE_REVIEW.md
 recursive-include emsa_examples *.py *.json *.xls
