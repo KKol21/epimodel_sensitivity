@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=77.0.3,<81", "wheel>=0.45,<1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "emsa"
+version = "1.0.3"
+description = "Efficient sensitivity analysis and evaluation of epidemiological models"
+readme = "README.md"
+requires-python = ">=3.10,<3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Kolos Kovács", email = "kovkol21@gmail.com"}]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "torch~=2.3.0",
+    "torchode~=0.2.0",
+    "numpy~=1.26.4",
+    "matplotlib~=3.7.5",
+    "tqdm~=4.66.5",
+    "smt~=2.6.3",
+    "scipy~=1.14.1",
+    "networkx~=3.3",
+    "requests~=2.32.3",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.3,<9", "coverage>=7.6,<8", "xlrd>=2.0.1,<3"]
+dev = [
+    "pytest>=8.3,<9",
+    "coverage>=7.6,<8",
+    "xlrd>=2.0.1,<3",
+    "black==24.8.0",
+    "flake8==7.1.1",
+    "build>=1.2,<2",
+    "twine>=6.1,<7",
+    "packaging>=24.2",
+]
+docs = ["Sphinx~=7.4.7", "sphinx-rtd-theme~=3.0.2"]
+notebook = ["jupyterlab", "nbformat", "nbclient", "ipykernel"]
+
+[project.urls]
+Repository = "https://github.com/KKol21/epimodel_sensitivity"
+Documentation = "https://epimodel-sensitivity.readthedocs.io/"
+Issues = "https://github.com/KKol21/epimodel_sensitivity/issues"
+
+[tool.setuptools.packages.find]
+include = ["emsa", "emsa.*"]
+namespaces = false
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311"]
+extend-exclude = '/(sens_data|venv|docs/build)/'
+
+[tool.coverage.run]
+source = ["emsa"]

@@ -1,0 +1,12 @@
+include LICENSE README.md RELEASING.md pyproject.toml pytest.ini
+include requirements*.txt .bumpversion.cfg
+exclude PACKAGE_REVIEW.md
+recursive-include emsa_examples *.py *.json *.xls
+recursive-include tests *.py
+recursive-include notebooks *.ipynb
+recursive-include docs *.rst *.py *.txt
+recursive-include images *.png
+recursive-include scripts *.py
+global-exclude *.py[cod]
+prune docs/build
+prune sens_data

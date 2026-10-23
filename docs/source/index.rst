@@ -19,7 +19,7 @@ This guide provides the essential steps to install EMSA on your system.
 
 System Requirements
 --------------------
-- **Python:** Version 3.11 (should work from 3.9, but it may require adjusting the dependencies)
+- **Python:** Version 3.10 or 3.11 with the current dependency set.
 - **Operating System:** Windows, macOS, or Linux.
 - **(Optional) CUDA:** 11.8+
 
@@ -37,7 +37,9 @@ you can install the development version by cloning the repository:
 
 .. code-block::
 
-   git clone https://github.com/KKol21/epimodel-sensitivity
+   git clone https://github.com/KKol21/epimodel_sensitivity
+   cd epimodel_sensitivity
+   python -m pip install -e ".[docs,notebook]"
 
 
 

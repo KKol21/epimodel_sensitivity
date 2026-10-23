@@ -8,7 +8,7 @@ class MockSEIHRModel(MockModelBase):
     def odefun(self, t, y):
         ps = self.ps
         S, E, I, H, R = self.get_comp_vals(y)
-        transmission = self.get_transmission(infectious_terms=I)
+        transmission = self.get_transmission(infectious_terms=I) * ps["susc"]
 
         dSdt = -transmission * S
         dEdt = transmission * S - ps["alpha"] * E

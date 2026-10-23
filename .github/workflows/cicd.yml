@@ -1,136 +1,139 @@
 name: CI/CD Pipeline
 
 on:
+  pull_request:
+    branches: [main, dev]
   push:
-    branches:
-      - main
-      - dev
+    branches: [main, dev]
+    tags: ["v*"]
+  workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  MPLBACKEND: Agg
+  PYTHONDONTWRITEBYTECODE: "1"
 
 jobs:
   lint:
-    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install flake8 black
-
-      - name: Lint with flake8
-        run: flake8 . --ignore E501,W503,F401
-
-      - name: Lint with black
-        run: black --check emsa emsa_examples tests --line-length=100
-
-      - name: Notify failure if linting fails
-        if: failure()
-        run: echo "Linting failed. Please run 'black .' and fix flake8 errors locally, then push the changes."
+          python-version: "3.11"
+      - run: python -m pip install black==24.8.0 flake8==7.1.1
+      - run: python -m black --check emsa emsa_examples tests scripts setup.py
+      - run: python -m flake8 emsa emsa_examples tests scripts setup.py --ignore E501,W503,F401
 
   test:
-    if: github.ref == 'refs/heads/dev'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.10"
+          - os: ubuntu-latest
+            python: "3.11"
+          - os: windows-latest
+            python: "3.11"
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
-
-      - name: Install dependencies
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install --upgrade pip
+      - name: Install CPU PyTorch and test dependencies
         run: |
-          pip install -r requirements.txt
-          pip install pytest coverage
-
-      - name: Run tests and generate coverage
+          python -m pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install ".[test]"
+          python -m pip check
+      - name: Run tests and coverage
         run: |
-          coverage run -m pytest
-          coverage report
-
-  bump:
-    if: |
-      github.ref == 'refs/heads/main' &&
-      contains(github.event.head_commit.message, '[bump]')
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Bump version and push tag
-        uses: QustodioPablo/github-bumpversion-action@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
-
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GHUB_TOKEN }}
-          tags: true
-      - name: Wait for push to propagate
-        run: sleep 30
+          python -m coverage run -m pytest -q
+          python -m coverage report -m
 
   build:
-    name: Build distribution 📦
+    needs: [lint, test]
     runs-on: ubuntu-latest
-    needs: bump
-    if: |
-      always() &&
-      contains(github.event.head_commit.message, '[publish]') &&
-      github.ref == 'refs/heads/main' &&
-      !failure() &&
-      !cancelled()
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.x"
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: python -m pip install "build>=1.2,<2" "twine>=6.1,<7"
+      - name: Check release tag version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+          version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
+          expected = "v" + version
+          if os.environ["GITHUB_REF_NAME"] != expected:
+              raise SystemExit(f"Release tag must match package version: {expected}")
+          PY
+      - name: Build sdist and wheel from this checkout
+        run: |
+          python -m build
+          python -m twine check --strict dist/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: python-package-distributions
+          path: dist/*
+          if-no-files-found: error
 
-    - name: Fetch latest changes
-      run: git pull
-
-    - name: Install dependencies
-      run: pip install twine setuptools
-
-    - name: Build package
-      run: python setup.py sdist
-
-    - name: Store the distribution packages
-      uses: actions/upload-artifact@v3
-      with:
-        name: python-package-distributions
-        path: dist/
-
-  publish-to-pypi:
-    if: |
-      always() &&
-      needs.build.result == 'success' &&
-      github.ref == 'refs/heads/main'
-    name: Publish Python 🐍 distribution 📦 to PyPI
+  wheel-smoke:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist
+      - name: Install and exercise wheel outside the checkout
+        shell: bash
+        run: |
+          python -m venv "$RUNNER_TEMP/emsa-wheel"
+          wheel_python="$RUNNER_TEMP/emsa-wheel/bin/python"
+          "$wheel_python" -m pip install --upgrade pip
+          "$wheel_python" -m pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cpu
+          "$wheel_python" -m pip install "$GITHUB_WORKSPACE"/dist/*.whl
+          "$wheel_python" -m pip check
+          cd "$RUNNER_TEMP"
+          "$wheel_python" "$GITHUB_WORKSPACE/scripts/smoke_installed.py"
 
+  publish-to-pypi:
+    needs: wheel-smoke
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/emsa
     permissions:
       id-token: write
-
     steps:
-    - name: Download all the dists
-      uses: actions/download-artifact@v3
-      with:
-        name: python-package-distributions
-        path: dist/
-
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist
+      - name: Publish the tested distributions
+        uses: pypa/gh-action-pypi-publish@release/v1

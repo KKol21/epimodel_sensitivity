@@ -57,3 +57,27 @@ implementation (assuming the required inputs are available) is as follows:
 
 Running this code will execute the full simulation pipeline, including sampling, PRCC calculation, and visualization
 using tornado plots.
+
+
+Target calculation
+------------------
+
+The built-in ``comp_max`` stopping rule assumes a single epidemic peak: a declining
+compartment total, or extinction, completes that peak target. Maxima are retained
+across consecutive time windows. ``comp_sup`` is intended for cumulative compartments
+such as recovered or dead; it returns their value once the total in states marked
+``infected`` falls below one. A sample finishes when all its requested targets finish.
+If any samples remain unfinished at ``tlim_final``, calculation raises ``RuntimeError``
+instead of returning placeholder zeros. Increase the horizon or inspect the model.
+
+
+Statistical results
+-------------------
+
+PRCC uses average ranks for ties. Constant or non-finite columns and dependent input
+columns raise ``ValueError`` because their correlations are not identifiable. If an
+output has no variation left after conditioning on the other inputs, the affected
+coefficient and p-value are ``NaN``, a warning is emitted, and its tornado-plot entry
+is labelled ``undefined``. Other identifiable coefficients are still returned.
+P-values use ``n_samples - p - 1`` degrees of freedom, where ``p`` is the number of
+sampled columns, including separate columns for age-specific parameters.

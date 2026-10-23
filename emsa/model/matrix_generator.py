@@ -61,37 +61,41 @@ def generate_transition_matrix(
     return trans_matrix
 
 
-def get_susc_mul(tms_rule: dict, data) -> torch.Tensor:
+def get_susc_mul(tms_rule: dict, data, params=None) -> torch.Tensor:
     """
     Get the susceptibility multiplier.
 
     Args:
         tms_rule (Dict[str, Any]): Transmission rule.
         data (Any): Model data.
+        params (dict, optional): Parameters for the current sample; defaults to data.params.
 
     Returns:
         torch.Tensor: Susceptibility multiplier.
     """
+    params = data.params if params is None else params
     susc_mul = torch.ones(data.n_age).to(data.device)
     for susc_param in tms_rule.get("susc_params", []):
-        susc_mul *= data.params[susc_param]
+        susc_mul *= params[susc_param]
     return susc_mul
 
 
-def get_inf_mul(tms_rule: dict, data) -> torch.Tensor:
+def get_inf_mul(tms_rule: dict, data, params=None) -> torch.Tensor:
     """
     Get the infection multiplier.
 
     Args:
         tms_rule (Dict[str, Any]): Transmission rule.
         data (Any): Model data.
+        params (dict, optional): Parameters for the current sample; defaults to data.params.
 
     Returns:
         torch.Tensor: Infection multiplier.
     """
+    params = data.params if params is None else params
     inf_mul = torch.ones(data.n_age).to(data.device)
     for inf_param in tms_rule.get("infection_params", []):
-        inf_mul *= data.params[inf_param]
+        inf_mul *= params[inf_param]
     return inf_mul
 
 
@@ -202,7 +206,7 @@ class MatrixGenerator:
         for tms in self.tms_rules:
             source = f"{tms['source']}_0"
             target = f"{tms['target']}_0"
-            susc_mul = get_susc_mul(tms_rule=tms, data=self.data)
+            susc_mul = get_susc_mul(tms_rule=tms, data=self.data, params=self.ps)
             transmission_rate = susc_mul / self.population
             A[idx(source), idx(source)] = -transmission_rate
             A[idx(source), idx(target)] = transmission_rate
@@ -215,7 +219,7 @@ class MatrixGenerator:
         for tms in self.tms_rules:
             source = f"{tms['source']}_0"
             target = f"{tms['target']}_0"
-            inf_mul = get_inf_mul(tms_rule=tms, data=self.data)
+            inf_mul = get_inf_mul(tms_rule=tms, data=self.data, params=self.ps)
             infection_spread_rate = (
                 self.ps["beta"] * torch.atleast_2d(cm).T * inf_mul.unsqueeze(0)
             )  # Broadcast inf_mul to columns

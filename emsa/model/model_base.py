@@ -1,3 +1,4 @@
+import math
 import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Callable
@@ -7,7 +8,7 @@ import torchode as to
 
 
 class EpidemicModelBase(ABC):
-    def __init__(self, data, model_struct: Dict[str, Any]):
+    def __init__(self, data, model_struct: Dict[str, Any], solver_config=None):
         """
         Initialises Abstract base class for epidemic models.
 
@@ -45,6 +46,7 @@ class EpidemicModelBase(ABC):
         self.A = None
         self.T = None
         self.B = None
+        self.solver_config = dict(solver_config or {})
 
     def validate_params(self):
         for param, value in self.ps.items():
@@ -90,10 +92,14 @@ class EpidemicModelBase(ABC):
         pass
 
     def get_sol_from_ode(
-        self, y0: torch.Tensor, t_eval: torch.Tensor, odefun: Callable
+        self,
+        y0: torch.Tensor,
+        t_eval: torch.Tensor,
+        odefun: Callable,
+        solver_config=None,
     ) -> to.Solution:
         """
-        Solve the ODE system using the Euler method with a step size of 1.
+        Solve with configurable Euler or adaptive Dopri5 and validate the result.
 
         Args:
             y0 (torch.Tensor): Initial values.
@@ -103,14 +109,66 @@ class EpidemicModelBase(ABC):
         Returns:
             Any: Solution of the ODE system.
         """
+        config = {**self.solver_config, **(solver_config or {})}
+        allowed = {
+            "method",
+            "step_size",
+            "rtol",
+            "atol",
+            "max_steps",
+            "negative_tolerance",
+        }
+        if set(config) - allowed:
+            raise ValueError(f"Unknown solver settings: {set(config) - allowed}")
+        method = config.get("method", "euler").lower()
+        step_size = config.get("step_size", 1.0)
+        rtol, atol = config.get("rtol", 1e-5), config.get("atol", 1e-6)
+        negative_tolerance = config.get("negative_tolerance", 1e-4)
+        if any(not math.isfinite(v) or v <= 0 for v in (step_size, rtol, atol)):
+            raise ValueError("Solver step size and tolerances must be finite and positive")
+        if not math.isfinite(negative_tolerance) or negative_tolerance < 0:
+            raise ValueError("negative_tolerance must be finite and nonnegative")
+        max_steps = config.get("max_steps", 100000)
+        if not isinstance(max_steps, int) or max_steps < 1:
+            raise ValueError("max_steps must be a positive integer")
+        y0 = torch.atleast_2d(y0).to(self.device)
+        t_eval = torch.atleast_2d(t_eval).to(device=self.device, dtype=y0.dtype)
+        if t_eval.shape[0] == 1 and y0.shape[0] > 1:
+            t_eval = t_eval.expand(y0.shape[0], -1)
+        if (
+            y0.ndim != 2
+            or y0.shape[1] != self.n_eq
+            or t_eval.ndim != 2
+            or t_eval.shape[0] != y0.shape[0]
+            or t_eval.shape[1] < 2
+        ):
+            raise ValueError("Expected y0 [batch, equations] and t_eval [batch, times >= 2]")
+        if not torch.isfinite(y0).all() or (y0 < -negative_tolerance).any():
+            raise ValueError("Initial populations must be finite and nonnegative")
+        if not torch.isfinite(t_eval).all() or (t_eval.diff(dim=1) <= 0).any():
+            raise ValueError("Evaluation times must be finite and strictly increasing")
         term = to.ODETerm(odefun)
-        step_method = to.Euler(term=term)
-        step_size_controller = to.FixedStepController()
-        solver = to.AutoDiffAdjoint(step_method, step_size_controller)
-        problem = to.InitialValueProblem(y0=torch.atleast_2d(y0), t_eval=torch.atleast_2d(t_eval))
-        dt0 = torch.full((y0.shape[0],), 1).to(self.device)
-
-        return solver.solve(problem, dt0=dt0)
+        if method == "euler":
+            step_method = to.Euler(term=term)
+            controller = to.FixedStepController()
+        elif method == "dopri5":
+            step_method = to.Dopri5(term=term)
+            controller = to.IntegralController(atol=atol, rtol=rtol, dt_max=step_size)
+        else:
+            raise ValueError("Solver method must be 'euler' or 'dopri5'")
+        solver = to.AutoDiffAdjoint(step_method, controller, max_steps=max_steps)
+        problem = to.InitialValueProblem(y0=y0, t_eval=t_eval)
+        dt0 = y0.new_full((y0.shape[0],), step_size)
+        solution = solver.solve(problem, dt0=dt0)
+        if (solution.status != to.Status.SUCCESS.value).any():
+            raise RuntimeError(f"ODE solver failed with status codes {solution.status.tolist()}")
+        if not torch.isfinite(solution.ys).all():
+            raise RuntimeError("ODE solver returned non-finite populations")
+        if (solution.ys < -negative_tolerance).any():
+            raise RuntimeError(
+                "ODE solver returned negative populations; reduce step_size or use dopri5"
+            )
+        return solution
 
     def get_compartments(self) -> list:
         """
@@ -143,6 +201,10 @@ class EpidemicModelBase(ABC):
             comp_iv = torch.as_tensor(comp_iv, dtype=torch.float32, device=self.device)
             iv[self.idx(f"{comp}_0")] = comp_iv
             iv[self.idx(susc_state)] -= comp_iv
+        if not torch.isfinite(iv).all() or (iv < 0).any():
+            raise ValueError(
+                "Initial compartment populations must be finite, nonnegative and fit the population"
+            )
         return iv
 
     def idx(self, state: str) -> torch.BoolTensor:

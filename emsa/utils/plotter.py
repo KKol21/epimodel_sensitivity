@@ -6,6 +6,8 @@ from matplotlib import pyplot as plt, colors
 from matplotlib.cm import ScalarMappable
 from matplotlib.tri import Triangulation
 
+from .results import join_result_name
+
 
 def visualize_transmission_graph(state_data, trans_data, tms_rules):
     # LEGACY
@@ -98,75 +100,111 @@ def visualize_transmission_graph(state_data, trans_data, tms_rules):
     plt.show()
 
 
+P_VALUE_CMAP = colors.ListedColormap(["#3c914b", "#edcf56", "#ce5a55"])
+CONTACT_P_VALUE_CMAP = colors.ListedColormap(["Orange", "red", "darkred"])
+P_VALUE_NORM = colors.BoundaryNorm([0, 0.01, 0.1, 1], P_VALUE_CMAP.N, clip=True)
+
+
+def format_result_label(filename):
+    """Use readable outcome/scenario labels without changing parameter identifiers."""
+    name = filename.strip("_")
+    parts = name.rsplit("_", 2)
+    if len(parts) >= 2 and parts[-1] in ("max", "sup"):
+        compartment = {
+            "i": "infected",
+            "h": "hospitalized",
+            "r": "recovered",
+            "d": "deaths",
+            "e": "exposed",
+            "l": "latent",
+        }.get(parts[-2], parts[-2])
+        outcome = ("Peak " if parts[-1] == "max" else "Final ") + compartment
+        scenario = parts[0] if len(parts) == 3 else ""
+        name = outcome + (" | " + scenario if scenario else "")
+    elif name == "r0":
+        return "Basic reproduction number"
+    elif name.endswith("_r0"):
+        name = "Basic reproduction number | " + name[:-3]
+    return name.replace("_", " ").replace("r0-", r"$R_0$ = ")
+
+
 def generate_tornado_plot(
     sim_object, labels, prcc: np.ndarray, p_val, filename: str, title=None, verbose=True
 ):
-    """
-    Generate a tornado plot to visualize the Partial Rank Correlation Coefficient (PRCC) values.
-    """
-    prcc = np.round(prcc, 3)
-    prcc = np.atleast_1d(prcc)
-    ys = range(len(labels))[::-1]
+    """Plot signed PRCCs with the original green/yellow/red p-value color scheme."""
+    prcc = np.asarray(prcc, dtype=float).reshape(-1)
+    p_val = np.broadcast_to(np.asarray(p_val, dtype=float).reshape(-1), prcc.shape)
+    fig, ax = plt.subplots(figsize=(8.2, max(3.5, 1.6 + 0.38 * len(labels))), layout="constrained")
+    fig.set_facecolor("white")
+    ax.set_facecolor("white")
+    ax.set_axisbelow(True)
+    ax.grid(axis="x", color="#e5eaf0", linewidth=0.8)
+    ax.axvline(0, color="#9ba9b7", linewidth=1)
 
-    p_val_colors = ["green", "yellow", "red"]
-    thresholds = [0, 0.01, 0.1, 1]
-    cmap = colors.ListedColormap(p_val_colors)
-    norm = colors.BoundaryNorm(boundaries=thresholds, ncolors=cmap.N, clip=True)
-
-    sm = ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    cbar = plt.colorbar(sm, orientation="vertical", shrink=0.7, pad=0.02, ax=plt.gca())
-    cbar.set_label("p-values")
-
-    # Plot the bars one by one
-    for y, value in zip(ys, prcc):
-        p = p_val[len(prcc) - 1 - y] if p_val.ndim > 0 else p_val
-        facecolor = cmap(norm((p)))
-        plt.broken_barh(
-            [(value if value < 0 else 0, abs(value))],
-            (y - 0.4, 0.8),
-            facecolors=[facecolor, facecolor],
-            edgecolors=["black", "black"],
-            linewidth=1,
+    for y, (value, p) in enumerate(zip(prcc, p_val)):
+        if not np.isfinite(value):
+            ax.text(0.03, y, "undefined", va="center", color="#798593", style="italic")
+            continue
+        facecolor = P_VALUE_CMAP(P_VALUE_NORM(p)) if np.isfinite(p) else "#b5bdc6"
+        ax.barh(
+            y,
+            value,
+            height=0.62,
+            color=facecolor,
+        )
+        value_label = f"{value if round(value, 3) else 0:.3f}"
+        inside = abs(value) >= 0.25
+        x = value / 2 if inside else value + (0.025 if value >= 0 else -0.025)
+        ax.text(
+            x,
+            y,
+            value_label,
+            va="center",
+            ha="center" if inside else "left" if value >= 0 else "right",
+            fontsize=9,
+            color="white" if inside and np.isfinite(p) and (p < 0.01 or p >= 0.1) else "#344256",
         )
 
-        if value != 0:
-            x = (value / 2) if np.abs(value) >= 0.2 else (-np.sign(value) * 0.1)
-        else:
-            x = -0.1
-        plt.text(x, y - 0.01, str(value), va="center", ha="center")
-
-    plt.axvline(0, color="black")
-
-    # Position the x-axis on the top, hide all the other spines (=axis lines)
-    axes = plt.gca()  # (gca = get current axes)
-    axes.spines["left"].set_visible(False)
-    axes.spines["right"].set_visible(False)
-    axes.spines["bottom"].set_visible(False)
-    axes.xaxis.set_ticks_position("top")
-
-    # Display age groups next to y axis
-
-    plt.yticks(ys, labels)
-
-    # Set the portion of the x- and y-axes to show
-    plt.xlim(-1.1, 1.1)
-    plt.ylim(-1, len(labels))
-
-    if title is not None:
-        plt.title(title)
-    if verbose and title is None:
-        plt.title(f"PRCC values for {filename}")
-    plot_path = os.path.join(sim_object.folder_name, f"prcc_plots/prcc_tornado_plot_{filename}.pdf")
-    plt.savefig(plot_path, format="pdf", bbox_inches="tight")
+    ax.set_yticks(np.arange(len(labels)), labels)
+    ax.tick_params(axis="y", length=0, pad=10, labelsize=10, colors="#344256")
+    ax.tick_params(axis="x", length=0, pad=7, labelsize=9, colors="#637282")
+    ax.set(
+        xticks=np.linspace(-1, 1, 5),
+        xlim=(-1.08, 1.08),
+        ylim=(len(labels) - 0.35, -0.65),
+        xlabel="Partial rank correlation (PRCC)",
+    )
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    if title is not None or verbose:
+        ax.set_title(
+            title if title is not None else f"Sensitivity: {format_result_label(filename)}",
+            loc="left",
+            fontsize=13,
+            fontweight="semibold",
+            color="#263647",
+            pad=16,
+        )
+    colorbar = fig.colorbar(
+        ScalarMappable(norm=P_VALUE_NORM, cmap=P_VALUE_CMAP),
+        ax=ax,
+        shrink=0.75,
+        pad=0.03,
+        ticks=[0, 0.01, 0.1, 1],
+        label="p-value",
+    )
+    colorbar.outline.set_visible(False)
+    colorbar.ax.tick_params(length=0, labelsize=8, colors="#637282")
+    directory = os.path.join(sim_object.folder_name, "prcc_plots")
+    os.makedirs(directory, exist_ok=True)
+    plot_path = os.path.join(directory, join_result_name("prcc_tornado_plot", filename) + ".pdf")
+    fig.savefig(plot_path, format="pdf", bbox_inches="tight")
     plt.show()
+    return fig
 
 
 def get_age_groups():
-    return [
-        f"{5 * age_start}-{5 * age_start + 5}" if 5 * age_start != 75 else "75+"
-        for age_start in range(16)
-    ]
+    return [f"{5 * age}-{5 * age + 4}" if age < 15 else "75+" for age in range(16)]
 
 
 def construct_triangle_grid(n_age):
@@ -197,56 +235,69 @@ def construct_triangle_grid(n_age):
 
 
 def get_prcc_and_p_values(n_age, prcc_vector, p_values):
-    from emsa_examples.contact_sensitivity.sensitivity_model_contact import (
-        get_rectangular_matrix_from_upper_triu,
-    )
-
-    prcc_mtx = np.array(
-        get_rectangular_matrix_from_upper_triu(rvector=prcc_vector, matrix_size=n_age)
-    )
-    p_values_mtx = np.array(
-        get_rectangular_matrix_from_upper_triu(rvector=p_values, matrix_size=n_age)
-    )
-    values = np.array([prcc_mtx, p_values_mtx])
-    return values
+    indices = np.triu_indices(n_age)
+    matrices = np.empty((2, n_age, n_age))
+    for matrix, values in zip(matrices, (prcc_vector, p_values)):
+        matrix[indices] = values
+        matrix[(indices[1], indices[0])] = values
+    return matrices
 
 
 def plot_prcc_p_values_as_heatmap(n_age, prcc_vector, p_values, filename_to_save, plot_title):
-    p_value_cmap = colors.ListedColormap(["Orange", "red", "darkred"])
-    cmaps = ["Greens", p_value_cmap]
-
-    thresholds = [0, 0.01, 0.1, 1]
-    log_norm = colors.BoundaryNorm(
-        boundaries=thresholds, ncolors=p_value_cmap.N, clip=True
-    )  # used for p_values
-    norm = plt.Normalize(vmin=0, vmax=1)  # used for PRCC_values
-
-    fig, ax = plt.subplots()
-    triang = construct_triangle_grid(n_age=n_age)
-    mask = get_prcc_and_p_values(n_age=n_age, prcc_vector=prcc_vector, p_values=p_values)
-    images = [
-        ax.tripcolor(t, np.ravel(val), cmap=cmap, ec="white")
-        for t, val, cmap in zip(triang, mask, cmaps)
-    ]
-
-    fig.colorbar(images[0], ax=ax, shrink=0.7, aspect=20 * 0.7, label="PRCC")  # for the prcc values
-    fig.colorbar(
-        images[1], ax=ax, shrink=0.7, aspect=20 * 0.7, pad=0.1, label="p-value"
-    )  # p-values
-
-    images[1].set_norm(norm=log_norm)
-    images[0].set_norm(norm=norm)
-
-    ax.set_xticks(range(n_age))
-    ax.set_yticks(range(n_age))
+    """Plot PRCC magnitude and p-value in the original split-triangle contact matrix."""
+    matrices = get_prcc_and_p_values(n_age, prcc_vector, p_values)
+    # The green 0-1 scale represents strength, independent of coefficient sign.
+    matrices[0] = np.abs(matrices[0])
+    triangulations = construct_triangle_grid(n_age)
+    fig, ax = plt.subplots(figsize=(10, 8), layout="constrained")
+    fig.set_facecolor("white")
+    ax.set_facecolor("#e4e8ee")
+    images = []
+    for triangulation, matrix, cmap, norm in zip(
+        triangulations,
+        matrices,
+        ("Greens", CONTACT_P_VALUE_CMAP),
+        (colors.Normalize(vmin=0, vmax=1), P_VALUE_NORM),
+    ):
+        values = matrix.ravel()
+        triangulation.set_mask(~np.isfinite(values))
+        images.append(
+            ax.tripcolor(
+                triangulation,
+                facecolors=values,
+                cmap=cmap,
+                norm=norm,
+                edgecolors="white",
+                linewidth=0.35,
+            )
+        )
+    prcc_bar = fig.colorbar(
+        images[0], ax=ax, shrink=0.75, pad=0.03, ticks=np.linspace(0, 1, 6), label="|PRCC|"
+    )
+    p_bar = fig.colorbar(
+        images[1], ax=ax, shrink=0.75, pad=0.1, ticks=[0, 0.01, 0.1, 1], label="p-value"
+    )
+    for colorbar in (prcc_bar, p_bar):
+        colorbar.outline.set_visible(False)
+        colorbar.ax.tick_params(length=0, labelsize=8, colors="#637282")
+    age_labels = get_age_groups() if n_age == 16 else [str(i) for i in range(n_age)]
+    ax.set_xticks(range(n_age), age_labels, rotation=90)
+    ax.set_yticks(range(n_age), age_labels)
+    ax.set(xlabel="Age group", ylabel="Age group")
     ax.yaxis.set_label_position("right")
     ax.yaxis.tick_right()
-    ax.set(frame_on=False)
-    plt.gca().grid(which="minor", color="gray", linestyle="-", linewidth=1)
+    ax.tick_params(which="both", length=0, labelsize=8, colors="#637282")
     ax.margins(x=0, y=0)
     ax.set_aspect("equal", "box")
-    plt.tight_layout()
-    plt.title(plot_title, y=1.03, fontsize=25)
-    plt.savefig(filename_to_save, format="pdf", bbox_inches="tight")
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.set_title(plot_title, fontsize=14, fontweight="semibold", color="#263647", pad=16)
+    fig.supxlabel(
+        "Lower-left triangles: |PRCC|   |   Upper-right triangles: p-value",
+        fontsize=9,
+        color="#637282",
+    )
+    fig.savefig(filename_to_save, format="pdf", bbox_inches="tight")
     plt.show()
-    plt.close()
+    plt.close(fig)
+    return fig

@@ -8,5 +8,7 @@ Explore the following sections to get up and running with EMSA:
    :caption: Contents:
 
    general_use
+   inputs
+   model_struct
    model_eval
    sens_anal

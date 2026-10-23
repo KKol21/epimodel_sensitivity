@@ -11,16 +11,17 @@ State Template
 --------------
 To define the states (compartments) of the model, use the following structure. The `type` of state
 (e.g., susceptible, infected) and the `rate` of transition out of the state can be specified.
-Substates represent multiple stages within a state.
+Substates represent multiple stages within a state. The optional ``n_substates``
+setting gives the number of stages; the template below uses three as an example.
 
 .. code-block:: json
 
    {
      "state_data": {
-       "state_name": {          // The string used for referencing this state
-         "type": "state_type",  // Optional: "susceptible", "infected", "recovered", "dead", etc.
-         "n_substates": N,      // Optional: Number of substates (for Erlan states)
-         "rate": "rate_name"    // Optional: "Decay" rate
+       "state_name": {
+         "type": "state_type",
+         "n_substates": 3,
+         "rate": "rate_name"
        }
      }
    }
@@ -44,7 +45,7 @@ Substates represent multiple stages within a state.
         },
        "h": {
           "n_substates": 1,
-          "rate": "gamma"
+          "rate": "gamma_h"
         },
         "r": {
           "type": "recovered"
@@ -62,9 +63,9 @@ Define how individuals move from one state to another with the transition rules.
    {
      "trans_data": [
        {
-         "source": "source_state",  // The state from which the transition starts
-         "target": "target_state",  // The state to which individuals move
-         "params": ["param_name"]   // Optional: Parameters controlling the transition (e.g., probabilities, rates)
+         "source": "source_state",
+         "target": "target_state",
+         "params": ["param_name"]
        }
      ]
    }
@@ -113,13 +114,13 @@ infected states contribute to transmission and any parameters influencing the tr
    {
      "tms_rules": [
        {
-         "source": "susceptible_state",      // The susceptible state that will become infected
-         "target": "infected_state",         // The state individuals move to after infection
-         "actors-params": {                  // Infectious states contributing to transmission
-           "infectious_state_1": "param_1",  // Key - name of infectious state, value - relative infectiousness (can be null)
-         }
-         "susc_params": ["susc"],             // (Optional) Susceptibility parameters
-         "inf_params": ["inf"]               // (Optional) Infectivity parameters
+         "source": "susceptible_state",
+         "target": "infected_state",
+         "actors-params": {
+           "infectious_state_1": "param_1"
+         },
+         "susc_params": ["susc"],
+         "infection_params": ["inf"]
        }
      ]
    }

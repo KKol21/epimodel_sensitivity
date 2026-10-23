@@ -28,7 +28,11 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
     """
 
     def __init__(self, sim_object):
-        super().__init__(data=sim_object.data, model_struct=sim_object.model_struct)
+        super().__init__(
+            data=sim_object.data,
+            model_struct=sim_object.model_struct,
+            solver_config=getattr(sim_object, "solver_config", None),
+        )
         self.sim_object = sim_object
         self.test = sim_object.test
 
@@ -56,17 +60,14 @@ class SensitivityModelBase(EpidemicModelBase, ABC):
         n_eq = self.n_eq
         n_samples = next(iter(lhs_dict.values())).shape[0]
         mtx = torch.zeros((n_samples, n_eq, n_eq)).to(self.device)
-        ps_original = self.matrix_generator.ps.copy()
-        for idx in range(n_samples):
-            # Select idx. value from lhs table for each parameter
-            row_dict = {
-                key: value[idx] if len(value.size()) < 2 else value[idx, :]
-                for key, value in lhs_dict.items()
-            }
-            self.matrix_generator.ps.update(row_dict)
-
-            mtx[idx, :, :] = self.matrix_generator.generate_matrix(matrix_name)
-        self.matrix_generator.ps = ps_original
+        ps_original = self.matrix_generator.ps
+        try:
+            for idx in range(n_samples):
+                row_dict = {key: value[idx] for key, value in lhs_dict.items()}
+                self.matrix_generator.ps = {**ps_original, **row_dict}
+                mtx[idx, :, :] = self.matrix_generator.generate_matrix(matrix_name)
+        finally:
+            self.matrix_generator.ps = ps_original
         return mtx
 
     def get_initial_values(self):

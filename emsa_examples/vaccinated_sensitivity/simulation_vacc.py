@@ -7,6 +7,7 @@ from .sensitivity_model_vaccinated import (
 )
 from emsa.utils.dataloader import PROJECT_PATH
 from emsa.utils.simulation_base import SimulationBase
+from emsa.utils.results import join_result_name
 
 
 class SimulationVaccinated(SimulationBase):
@@ -84,5 +85,5 @@ class SimulationVaccinated(SimulationBase):
         for variable_params, target in itertools.product(
             self.variable_param_combinations, self.target_vars
         ):
-            filename = self.get_filename(variable_params) + f"_{target}"
+            filename = join_result_name(self.get_filename(variable_params), target)
             self.plot_prcc(filename, labels)

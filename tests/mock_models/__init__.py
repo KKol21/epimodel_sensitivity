@@ -1,4 +1,5 @@
 from .mock_model_base import MockModelBase
+from .mock_SIR import MockSIRModel
 from .mock_SEIR import MockSEIRModel
 from .mock_vacc import MockVaccinatedModel
 from .mock_SEIHR import MockSEIHRModel
