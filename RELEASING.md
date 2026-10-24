@@ -10,6 +10,8 @@ CI runs the checks, bumps the patch version with `bumpversion`, builds and tests
 the package, then commits the version changes, pushes the `vX.Y.Z` tag and publishes
 the tested files to PyPI. All version references update automatically.
 
+After CI bumps the version, run `git pull --ff-only` on your local `main` to sync it.
+
 For a minor or major release, run `bumpversion minor` or `bumpversion major` on
 `main`, then push the commit and tag with `git push origin main --follow-tags`.
 Tag pushes run the same checks and publish without another bump.

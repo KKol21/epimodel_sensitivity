@@ -32,7 +32,18 @@ Other than the previously described inputs, we will also need to provide a sampl
       subtracting these initial values from the total age vector.
 
 - (Optional) **is_static:** Whether the total population of the model is static, eg. there are no birth/death mechanisms, aging, etc. If not set to false, but the population size changes, a warning shall be triggered.
-- (Optional) **sampled_parameters_boundaries:**
+- **sampled_params_boundaries:** Parameter names mapped to sampling bounds. A scalar
+  parameter uses ``[lower, upper]``. An age-dependent parameter uses
+  ``[[lower_age_0, lower_age_1], [upper_age_0, upper_age_1]]`` for two age groups.
+  Columns follow dictionary order, with one column per age-specific value.
+- (Optional) **seed:** Integer random seed for reproducible Latin Hypercube samples.
+- (Optional) **solver:** Dictionary of numerical settings, described in :doc:`model_eval`.
+- (Optional) **tlim_ini**, **tdelta**, **tlim_final:** Initial target-calculation
+  horizon, extension length and maximum horizon in days. Defaults are 300, 50 and
+  5000. See :doc:`sens_anal` for completion rules.
+- (Optional) **variable_params:** Scenario values used by custom simulation classes,
+  such as the contact and vaccination examples. ``SimulationGeneric.run()`` performs
+  one analysis; scenario loops belong in a subclass's ``run_sampling()`` method.
 
 
 Model data
@@ -62,16 +73,16 @@ Example of model parameters in JSON format:
 Age Vector
 ==========
 
-This is a 1D array (or list) representing the population distribution across different age groups.
-Each entry in the vector corresponds to the proportion or number of individuals in a specific age group.
+Use a one-dimensional PyTorch tensor of positive population counts, with one entry
+per age group. Initial compartment values use the same population units and order.
 
 
 Contact matrix
 ==============
 
-The contact matrix is a 2D array representing interaction rates between different age groups. Symmetrization is
-performed to ensure that the interaction rates between age groups are mathematically correct, since the data
-is collected through surveys, inconsistent values are nearly always introduced.
+The contact matrix is a nonnegative PyTorch tensor of shape ``(n_age, n_age)``
+representing daily interactions between age groups. For survey data, the example
+loaders use ``DataLoaderBase.transform_matrix()`` to make contacts reciprocal.
 
 Symmetrization Process:
 -----------------------
@@ -88,7 +99,7 @@ After these operations, the following will hold:
 
    .. math::
 
-     C'[i, j] = \frac{C[i, j] N_i + C[i, j] N_j}{2N_i},
+     C'[i, j] = \frac{C[i, j] N_i + C[j, i] N_j}{2N_i},
 
 where the element `C[i, j]` represents the *average number of interactions* a member of age
 group `i` has with members of age group `j`. Likewise, `C[j, i]` represents the average number of interactions

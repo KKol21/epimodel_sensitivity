@@ -118,8 +118,9 @@ the model structure, and a data object with the attributes described in the prev
 Case 2: Sensitivity analysis
 ****************************
 
-When performing sensitivity analysis, the model structure and the sampling configuration should be saved inside json
-files, and the path to those json files shall be passed along to the Simulation object.
+For sensitivity analysis, pass the model structure and sampling configuration as
+dictionaries or JSON file paths. Absolute paths are recommended for files outside
+the package checkout. :doc:`quickstart` shows a complete dictionary-based run.
 
 
 .. code-block:: python

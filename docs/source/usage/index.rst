@@ -7,6 +7,7 @@ Explore the following sections to get up and running with EMSA:
    :maxdepth: 2
    :caption: Contents:
 
+   quickstart
    general_use
    inputs
    model_struct
