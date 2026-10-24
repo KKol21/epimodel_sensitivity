@@ -55,7 +55,7 @@ The CPU index and version follow the [PyTorch installation instructions](https:/
 Runtime dependencies live in `pyproject.toml`; `requirements.txt` installs the package,
 `requirements-dev.txt` adds development tools, and `docs/requirements.txt` adds the
 documentation tools. Run these requirements commands from the repository root.
-See [RELEASING.md](RELEASING.md) for building, clean-install checks and tag-based releases.
+See [RELEASING.md](RELEASING.md) for automatic version bumps and publishing.
 
 ## Pipeline Overview
 EMSA requires the following inputs:

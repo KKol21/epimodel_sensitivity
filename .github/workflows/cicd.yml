@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
 
 env:
   MPLBACKEND: Agg
@@ -64,23 +64,36 @@ jobs:
   build:
     needs: [lint, test]
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      bumped: ${{ steps.bump.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - run: python -m pip install "build>=1.2,<2" "twine>=6.1,<7"
-      - name: Check release tag version
-        if: startsWith(github.ref, 'refs/tags/')
+      - run: python -m pip install "build>=1.2,<2" "twine>=6.1,<7" bump2version==1.0.1
+      # Record the new version in Git only after its built wheel passes the checks.
+      - name: Prepare automatic patch release
+        id: bump
+        if: >-
+          github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+          contains(github.event.head_commit.message, '[bump]') &&
+          contains(github.event.head_commit.message, '[publish]')
+        run: bumpversion --no-commit --no-tag patch
+      - name: Read version and check release tags
+        id: version
         run: |
           python - <<'PY'
           import os
           import tomllib
           from pathlib import Path
           version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
-          expected = "v" + version
-          if os.environ["GITHUB_REF_NAME"] != expected:
-              raise SystemExit(f"Release tag must match package version: {expected}")
+          if os.environ["GITHUB_REF_TYPE"] == "tag":
+              if os.environ["GITHUB_REF_NAME"] != "v" + version:
+                  raise SystemExit(f"Release tag must match package version: v{version}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"version={version}\n")
           PY
       - name: Build sdist and wheel from this checkout
         run: |
@@ -122,15 +135,35 @@ jobs:
           "$wheel_python" "$GITHUB_WORKSPACE/scripts/smoke_installed.py"
 
   publish-to-pypi:
-    needs: wheel-smoke
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [build, wheel-smoke]
+    if: >-
+      github.event_name == 'push' &&
+      (startsWith(github.ref, 'refs/tags/v') || needs.build.outputs.bumped == 'true')
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/emsa
     permissions:
+      contents: write
       id-token: write
     steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Commit and tag the tested release
+        if: needs.build.outputs.bumped == 'true'
+        env:
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          python -m pip install bump2version==1.0.1
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          bumpversion --new-version "$RELEASE_VERSION" patch
+          git push --atomic origin HEAD:main "refs/tags/v$RELEASE_VERSION"
       - uses: actions/download-artifact@v8
         with:
           name: python-package-distributions
